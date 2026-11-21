@@ -1,0 +1,38 @@
+import { lazy, Suspense, type ReactNode } from 'react'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { LoaderCircle } from 'lucide-react'
+import { ComingSoon } from '@/components/common/ComingSoon'
+import { MainLayout } from '@/components/layout/MainLayout'
+import { PATHS } from '@/routes/paths'
+
+const SalesPage = lazy(() => import('@/modules/sales/pages/SalesPage'))
+
+const Loadable = ({ children }: { children: ReactNode }) => (
+  <Suspense
+    fallback={
+      <div className="grid flex-1 place-items-center py-20">
+        <LoaderCircle className="size-8 animate-spin text-primary-600" />
+      </div>
+    }
+  >
+    {children}
+  </Suspense>
+)
+
+export const router = createBrowserRouter([
+  {
+    element: <MainLayout />,
+    children: [
+      { path: PATHS.home, element: <Navigate to={PATHS.pos} replace /> },
+      {
+        path: PATHS.pos,
+        element: (
+          <Loadable>
+            <SalesPage />
+          </Loadable>
+        ),
+      },
+      { path: '*', element: <ComingSoon /> },
+    ],
+  },
+])

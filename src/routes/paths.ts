@@ -1,0 +1,18 @@
+export const PATHS = {
+  home: '/',
+  dashboard: '/dashboard',
+  ai: '/ai-assistant',
+  pos: '/sales/pos',
+  orders: '/sales/orders',
+  returns: '/sales/returns',
+  products: '/products',
+  categories: '/products/categories',
+  inventory: '/inventory',
+  suppliers: '/suppliers',
+  customers: '/customers',
+  promotions: '/promotions',
+  revenueReport: '/reports/revenue',
+  productReport: '/reports/products',
+  staffReport: '/reports/staff',
+  settings: '/settings',
+} as const
