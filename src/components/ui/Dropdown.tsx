@@ -340,7 +340,7 @@ export interface FilterDropdownProps<T extends string> {
   label: string
   title: string
   value: T
-  options: { value: T; label: string; icon?: LucideIcon }[]
+  options: { value: T; label: string; icon?: LucideIcon; count?: number }[]
   onChange: (value: T) => void
   active?: boolean
 }
@@ -369,7 +369,16 @@ export function FilterDropdown<T extends string>({ icon: Icon, label, title, val
           icon={o.icon}
           label={o.label}
           active={o.value === value}
-          shortcut={o.value === value ? <Check className="size-4" /> : undefined}
+          shortcut={
+            o.count !== undefined ? (
+              <span className="flex items-center gap-1.5">
+                <span className={cn('rounded-full px-2 text-[11px] leading-5 font-semibold', o.value === value ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-500')}>{o.count}</span>
+                {o.value === value && <Check className="size-4" />}
+              </span>
+            ) : o.value === value ? (
+              <Check className="size-4" />
+            ) : undefined
+          }
           onClick={() => onChange(o.value)}
         />
       ))}

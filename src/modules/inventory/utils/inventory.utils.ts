@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight, PackageOpen, RotateCcw, ShoppingCart, Truck, type LucideIcon } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight, Boxes, Hourglass, PackageCheck, PackageOpen, PackageX, RotateCcw, ShoppingCart, TriangleAlert, Truck, type LucideIcon } from 'lucide-react'
 import type { BadgeProps } from '@/components/ui/Badge'
 import { removeAccents } from '@/lib/format'
 import type {
@@ -35,12 +35,12 @@ export const MOVEMENT_TYPE_OPTIONS: { value: MovementFilters['type']; label: str
   ...(Object.keys(MOVEMENT_TYPES) as MovementType[]).map((t) => ({ value: t, label: MOVEMENT_TYPES[t].label })),
 ]
 
-export const LEVEL_TABS: { value: StockLevelFilter; label: string }[] = [
-  { value: 'all', label: 'Tất cả' },
-  { value: 'ok', label: 'Đủ hàng' },
-  { value: 'low', label: 'Sắp hết' },
-  { value: 'out', label: 'Hết hàng' },
-  { value: 'slow', label: 'Tồn lâu' },
+export const LEVEL_TABS: { value: StockLevelFilter; label: string; icon: LucideIcon }[] = [
+  { value: 'all', label: 'Tất cả mức tồn', icon: Boxes },
+  { value: 'ok', label: 'Đủ hàng', icon: PackageCheck },
+  { value: 'low', label: 'Sắp hết', icon: TriangleAlert },
+  { value: 'out', label: 'Hết hàng', icon: PackageX },
+  { value: 'slow', label: 'Tồn lâu', icon: Hourglass },
 ]
 
 export const INVENTORY_SORT_OPTIONS: { value: InventorySort; label: string }[] = [
