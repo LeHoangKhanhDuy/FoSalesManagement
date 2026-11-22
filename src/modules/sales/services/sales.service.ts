@@ -7,10 +7,6 @@ import { MOCK_TODAY_STATS } from '@/modules/sales/mocks/stats.mock'
 import type { Category, CreateOrderPayload, Customer, Order, Product, SalesStats } from '@/modules/sales/types/sales.types'
 import { calcDiscountAmount, generateOrderCode } from '@/modules/sales/utils/cart.utils'
 
-/**
- * Service layer cho module Bán hàng.
- * Khi có BE: đặt VITE_USE_MOCK=false + VITE_API_BASE_URL, các hàm sẽ gọi API thật.
- */
 export const salesService = {
   async getCategories(): Promise<Category[]> {
     if (USE_MOCK) return sleep(150).then(() => MOCK_CATEGORIES)
@@ -51,6 +47,8 @@ export const salesService = {
         price: i.price,
         quantity: i.quantity,
         stock: product.stock,
+        image: product.image,
+        imageFit: product.imageFit,
       }
     })
     const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0)

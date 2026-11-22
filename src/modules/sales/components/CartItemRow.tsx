@@ -14,7 +14,7 @@ export function CartItemRow({ item, index, onQuantityChange, onRemove }: CartIte
   return (
     <li className="group flex animate-slide-up gap-3 rounded-xl p-2 transition hover:bg-slate-50">
       <div className="relative">
-        <ProductThumb categoryId={item.categoryId} size="sm" />
+        <ProductThumb categoryId={item.categoryId} image={item.image} fit={item.imageFit} alt={item.name} size="sm" />
         <span className="absolute -top-1.5 -left-1.5 grid size-5 place-items-center rounded-full bg-white text-[10px] font-bold text-slate-500 ring-1 ring-slate-200">
           {index}
         </span>

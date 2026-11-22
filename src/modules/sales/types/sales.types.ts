@@ -5,6 +5,8 @@ export interface Category {
   name: string
 }
 
+export type ImageFit = 'cover' | 'contain' | 'auto'
+
 export interface Product {
   id: string
   sku: string
@@ -12,11 +14,12 @@ export interface Product {
   name: string
   categoryId: Exclude<CategoryId, 'all'>
   price: number
-  /** Giá gốc trước khuyến mãi (nếu có) */
   originalPrice?: number
   unit: string
   stock: number
   isBestSeller?: boolean
+  image?: string
+  imageFit?: ImageFit
 }
 
 export type CustomerTier = 'retail' | 'silver' | 'gold' | 'diamond'
@@ -38,6 +41,8 @@ export interface CartItem {
   price: number
   quantity: number
   stock: number
+  image?: string
+  imageFit?: ImageFit
 }
 
 export type DiscountType = 'percent' | 'amount'
@@ -46,8 +51,6 @@ export interface Discount {
   type: DiscountType
   value: number
 }
-
-/** Một hóa đơn nháp (tab) trên màn hình POS */
 export interface Invoice {
   id: string
   name: string

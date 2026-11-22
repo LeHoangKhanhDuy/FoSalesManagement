@@ -38,7 +38,7 @@ export const ProductCard = memo(function ProductCard({ product, inCart, view, on
           inCart > 0 && 'border-primary-200 bg-primary-50/40',
         )}
       >
-        <ProductThumb categoryId={product.categoryId} size="sm" />
+        <ProductThumb categoryId={product.categoryId} image={product.image} fit={product.imageFit} alt={product.name} size="sm" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-800">{product.name}</p>
           <p className="text-[11px] text-slate-400">
@@ -64,7 +64,7 @@ export const ProductCard = memo(function ProductCard({ product, inCart, view, on
       )}
     >
       <div className="relative">
-        <ProductThumb categoryId={product.categoryId} />
+        <ProductThumb categoryId={product.categoryId} image={product.image} fit={product.imageFit} alt={product.name} />
         <div className="absolute top-2 left-2 flex flex-col gap-1">
           {product.isBestSeller && (
             <span className="flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-bold text-orange-600 shadow-sm">

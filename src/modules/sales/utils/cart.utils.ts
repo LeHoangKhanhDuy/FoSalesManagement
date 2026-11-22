@@ -19,6 +19,8 @@ export const productToCartItem = (product: Product): CartItem => ({
   price: product.price,
   quantity: 1,
   stock: product.stock,
+  image: product.image,
+  imageFit: product.imageFit,
 })
 
 export const calcDiscountAmount = (subtotal: number, discount: Discount) => {
@@ -33,7 +35,6 @@ export const calcTotals = (invoice: Invoice): InvoiceTotals => {
   return { itemCount, subtotal, discountAmount, total: subtotal - discountAmount }
 }
 
-/** Gợi ý mệnh giá tiền khách đưa: 87.000 -> [87.000, 90.000, 100.000, 200.000, 500.000] */
 export const suggestCashAmounts = (total: number, limit = 6) => {
   if (total <= 0) return []
   const steps = [10_000, 50_000, 100_000, 200_000, 500_000]
