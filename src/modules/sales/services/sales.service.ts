@@ -7,6 +7,7 @@ import { MOCK_TODAY_STATS } from '@/modules/sales/mocks/stats.mock'
 import type { Category, CreateOrderPayload, Customer, Order, Product, SalesStats, Voucher } from '@/modules/sales/types/sales.types'
 import { calcVoucherDiscount, generateOrderCode } from '@/modules/sales/utils/cart.utils'
 import { MOCK_VOUCHERS } from '@/modules/sales/mocks/vouchers.mock'
+import { MOCK_ORDERS } from '@/modules/orders/mocks/orders.mock'
 
 export const salesService = {
   async getCategories(): Promise<Category[]> {
@@ -65,7 +66,7 @@ export const salesService = {
     const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0)
     const discountAmount = calcVoucherDiscount(subtotal, context.voucher)
     const total = subtotal - discountAmount
-    return {
+    const order: Order = {
       id: crypto.randomUUID(),
       code: generateOrderCode(),
       createdAt: new Date().toISOString(),
@@ -79,5 +80,7 @@ export const salesService = {
       note: payload.note,
       cashier: 'Khánh Duy',
     }
+    MOCK_ORDERS.unshift({ ...order, status: 'completed', channel: 'pos' })
+    return order
   },
 }

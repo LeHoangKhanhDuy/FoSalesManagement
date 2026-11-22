@@ -12,7 +12,6 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
   return (
     <>
-      {/* Overlay mobile */}
       <div
         onClick={onCloseMobile}
         className={cn(
