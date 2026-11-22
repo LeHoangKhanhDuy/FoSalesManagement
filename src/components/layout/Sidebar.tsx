@@ -12,7 +12,6 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
   return (
     <>
-      {/* Overlay mobile */}
       <div
         onClick={onCloseMobile}
         className={cn(
@@ -37,7 +36,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-5 overflow-y-auto px-3 pt-2 pb-4">
+        <nav className="scrollbar-none flex-1 space-y-5 overflow-y-auto px-3 pt-2 pb-4">
           {NAVIGATION.map((group) => (
             <div key={group.title}>
               <p className="mb-1.5 px-3 text-[11px] font-bold tracking-wider text-slate-400 uppercase">{group.title}</p>
@@ -50,7 +49,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                       onClick={onCloseMobile}
                       className={({ isActive }) =>
                         cn(
-                          'group flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-all',
+                          'group flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-all',
                           isActive
                             ? 'bg-primary-600 font-semibold text-white shadow-primary'
                             : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',

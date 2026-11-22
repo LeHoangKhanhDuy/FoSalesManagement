@@ -1,5 +1,21 @@
 import { forwardRef, type KeyboardEvent } from 'react'
-import { ArrowDownUp, LayoutGrid, List, ScanBarcode, Search, X } from 'lucide-react'
+import {
+  ArrowDownAZ,
+  ArrowDownUp,
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide,
+  Check,
+  ChevronDown,
+  Flame,
+  LayoutGrid,
+  List,
+  ListOrdered,
+  ScanBarcode,
+  Search,
+  X,
+  type LucideIcon,
+} from 'lucide-react'
+import { Dropdown, DropdownItem, DropdownLabel } from '@/components/ui/Dropdown'
 import { Input } from '@/components/ui/Input'
 import { Kbd } from '@/components/ui/Kbd'
 import { cn } from '@/lib/cn'
@@ -17,16 +33,18 @@ interface ProductToolbarProps {
   onViewChange: (v: ViewMode) => void
 }
 
-const SORT_OPTIONS: { value: ProductSort; label: string }[] = [
-  { value: 'default', label: 'Mặc định' },
-  { value: 'best-seller', label: 'Bán chạy' },
-  { value: 'price-asc', label: 'Giá tăng dần' },
-  { value: 'price-desc', label: 'Giá giảm dần' },
-  { value: 'name', label: 'Tên A → Z' },
+const SORT_OPTIONS: { value: ProductSort; label: string; description: string; icon: LucideIcon }[] = [
+  { value: 'default', label: 'Mặc định', description: 'Theo thứ tự nhập hàng', icon: ListOrdered },
+  { value: 'best-seller', label: 'Bán chạy', description: 'Sản phẩm bán chạy lên đầu', icon: Flame },
+  { value: 'price-asc', label: 'Giá tăng dần', description: 'Từ thấp đến cao', icon: ArrowUpNarrowWide },
+  { value: 'price-desc', label: 'Giá giảm dần', description: 'Từ cao đến thấp', icon: ArrowDownWideNarrow },
+  { value: 'name', label: 'Tên A → Z', description: 'Sắp xếp theo bảng chữ cái', icon: ArrowDownAZ },
 ]
 
 export const ProductToolbar = forwardRef<HTMLInputElement, ProductToolbarProps>(
   ({ keyword, onKeywordChange, onSubmit, sort, onSortChange, view, onViewChange }, ref) => {
+    const currentSort = SORT_OPTIONS.find((o) => o.value === sort) ?? SORT_OPTIONS[0]
+
     const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') onSubmit()
       if (e.key === 'Escape') onKeywordChange('')
@@ -56,22 +74,32 @@ export const ProductToolbar = forwardRef<HTMLInputElement, ProductToolbarProps>(
           }
         />
 
-        <label className="relative flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white pr-3 pl-3 text-sm text-slate-600 focus-within:border-primary-500">
-          <ArrowDownUp className="size-4 text-slate-400" />
-          <select
-            value={sort}
-            onChange={(e) => onSortChange(e.target.value as ProductSort)}
-            className="cursor-pointer appearance-none bg-transparent pr-1 font-medium text-slate-700 outline-none"
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Dropdown
+          align="end"
+          width={260}
+          trigger={
+            <button className="group flex h-11 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-600 transition hover:border-slate-300 focus-visible:border-primary-500 focus-visible:outline-none data-[state=open]:border-primary-500 data-[state=open]:ring-4 data-[state=open]:ring-primary-100">
+              <ArrowDownUp className="size-4 text-slate-400" />
+              <span className="font-medium text-slate-700">{currentSort.label}</span>
+              <ChevronDown className="size-4 text-slate-400 transition group-data-[state=open]:rotate-180" />
+            </button>
+          }
+        >
+          <DropdownLabel>Sắp xếp theo</DropdownLabel>
+          {SORT_OPTIONS.map((o) => (
+            <DropdownItem
+              key={o.value}
+              icon={o.icon}
+              label={o.label}
+              description={o.description}
+              active={o.value === sort}
+              shortcut={o.value === sort ? <Check className="size-4" /> : undefined}
+              onClick={() => onSortChange(o.value)}
+            />
+          ))}
+        </Dropdown>
 
-        <div className="flex h-11 items-center rounded-xl border border-slate-200 bg-white p-1">
+        <div className="flex h-11 items-center rounded-lg border border-slate-200 bg-white p-1">
           {(
             [
               { value: 'grid', icon: LayoutGrid, label: 'Lưới' },

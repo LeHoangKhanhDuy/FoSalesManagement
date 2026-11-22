@@ -58,7 +58,6 @@ export function useProducts() {
     }
   }, [products, debouncedKeyword, categoryId, sort])
 
-  /** Tìm chính xác theo mã vạch / SKU — dùng khi quét barcode + Enter */
   const findByCode = useCallback(
     (code: string) => {
       const c = code.trim().toLowerCase()
@@ -67,7 +66,6 @@ export function useProducts() {
     [products],
   )
 
-  /** Trừ tồn kho sau khi thanh toán thành công */
   const decreaseStock = useCallback((items: CartItem[]) => {
     setProducts((prev) =>
       prev.map((p) => {

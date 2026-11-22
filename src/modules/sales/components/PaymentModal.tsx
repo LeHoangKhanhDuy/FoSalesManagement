@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Banknote, CircleCheck, CreditCard, Printer, QrCode, ShoppingCart, Smartphone, type LucideIcon } from 'lucide-react'
+import { memo, useCallback, useMemo, useState } from 'react'
+import { Banknote, CircleCheck, CreditCard, Printer, QrCode, RotateCcw, ShoppingCart, Smartphone, type LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/lib/cn'
 import { formatCurrency, formatDateTime, formatNumber, parseNumber } from '@/lib/format'
 import type { Order, PaymentMethod } from '@/modules/sales/types/sales.types'
-import { suggestCashAmounts } from '@/modules/sales/utils/cart.utils'
 import { PAYMENT_METHOD_LABEL } from '@/modules/sales/utils/constants'
+import { ProductCode } from '@/components/common/ProductCode'
+
+const CASH_DENOMINATIONS = [1_000, 2_000, 5_000, 10_000, 20_000, 50_000, 100_000, 200_000, 500_000]
 
 const METHODS: { value: PaymentMethod; icon: LucideIcon }[] = [
   { value: 'cash', icon: Banknote },
@@ -23,60 +25,62 @@ interface PaymentModalProps {
   onConfirm: (method: PaymentMethod, paidAmount: number) => Promise<Order>
 }
 
-/** QR minh họa (giả lập) — thay bằng VietQR từ BE khi tích hợp */
-function FakeQr({ seed }: { seed: number }) {
-  const cells = useMemo(() => {
-    const out: boolean[] = []
+const FakeQr = memo(function FakeQr({ seed }: { seed: number }) {
+  const d = useMemo(() => {
+    const inFinder = (r: number, c: number) => (r < 7 && c < 7) || (r < 7 && c >= 14) || (r >= 14 && c < 7)
+    const finderOn = (r: number, c: number) => {
+      const lr = r >= 14 ? r - 14 : r
+      const lc = c >= 14 ? c - 14 : c
+      return lr === 0 || lr === 6 || lc === 0 || lc === 6 || (lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4)
+    }
     let x = seed || 1
+    let path = ''
     for (let i = 0; i < 21 * 21; i++) {
       x = (x * 1103515245 + 12345) & 0x7fffffff
-      out.push(x % 3 === 0)
+      const r = Math.floor(i / 21)
+      const c = i % 21
+      if (inFinder(r, c) ? finderOn(r, c) : x % 3 === 0) path += `M${c} ${r}h1v1h-1z`
     }
-    return out
+    return path
   }, [seed])
-  const finder = (r: number, c: number) =>
-    [
-      [0, 0],
-      [0, 14],
-      [14, 0],
-    ].some(([fr, fc]) => r >= fr && r < fr + 7 && c >= fc && c < fc + 7)
-  const finderOn = (r: number, c: number) => {
-    const lr = r % 14 === r ? r : r - 14
-    const lc = c % 14 === c ? c : c - 14
-    const edge = lr === 0 || lr === 6 || lc === 0 || lc === 6
-    const core = lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4
-    return edge || core
-  }
+
   return (
     <svg viewBox="0 0 21 21" className="size-40" shapeRendering="crispEdges">
-      {cells.map((on, i) => {
-        const r = Math.floor(i / 21)
-        const c = i % 21
-        const fill = finder(r, c) ? finderOn(r, c) : on
-        return fill ? <rect key={i} x={c} y={r} width={1} height={1} fill="#0f172a" /> : null
-      })}
+      <path d={d} fill="#0f172a" />
     </svg>
   )
-}
+})
 
-export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalProps) {
+export const PaymentModal = memo(function PaymentModal(props: PaymentModalProps) {
+  if (!props.open) return null
+  return <PaymentModalContent {...props} />
+})
+
+function PaymentModalContent({ total, onClose, onConfirm }: PaymentModalProps) {
   const [method, setMethod] = useState<PaymentMethod>('cash')
-  const [paid, setPaid] = useState(total)
+  const [paid, setPaid] = useState(0)
+  const [noteCounts, setNoteCounts] = useState<Record<number, number>>({})
   const [submitting, setSubmitting] = useState(false)
   const [order, setOrder] = useState<Order | null>(null)
-
-  useEffect(() => {
-    if (open) {
-      setMethod('cash')
-      setPaid(total)
-      setOrder(null)
-    }
-  }, [open, total])
 
   const isCash = method === 'cash'
   const paidAmount = isCash ? paid : total
   const change = paidAmount - total
-  const suggestions = suggestCashAmounts(total)
+  const addNote = (value: number) => {
+    setPaid((p) => p + value)
+    setNoteCounts((c) => ({ ...c, [value]: (c[value] ?? 0) + 1 }))
+  }
+  const payExact = () => {
+    setPaid(total)
+    setNoteCounts({})
+  }
+  const resetPaid = () => {
+    setPaid(0)
+    setNoteCounts({})
+  }
+  const handleClose = useCallback(() => {
+    if (!submitting) onClose()
+  }, [submitting, onClose])
 
   const submit = async () => {
     if (paidAmount < total) {
@@ -95,10 +99,9 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
     }
   }
 
-  // Màn hình hóa đơn sau khi thanh toán
   if (order) {
     return (
-      <Modal open={open} onClose={onClose} hideClose className="max-w-md">
+      <Modal open onClose={onClose} hideClose className="max-w-md">
         <div className="text-center">
           <div className="mx-auto grid size-16 place-items-center rounded-full bg-primary-50 ring-8 ring-primary-50/60">
             <CircleCheck className="size-9 text-primary-600" />
@@ -109,23 +112,35 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
           </p>
         </div>
 
-        <div className="mt-5 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm">
+        <div className="mt-5 rounded-lg border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm">
           <ul className="space-y-1.5">
             {order.items.map((i) => (
-              <li key={i.productId} className="flex justify-between gap-3">
-                <span className="truncate text-slate-600">
-                  {i.quantity} × {i.name}
+              <li key={`${i.productId}-${i.isGift ? 'gift' : 'item'}`} className="flex justify-between gap-3">
+                <span className="min-w-0 text-slate-600">
+                  <span className="block truncate">
+                    {i.quantity} × {i.name}
+                    {i.isGift && <span className="ml-1.5 rounded bg-violet-100 px-1.5 text-[10px] font-bold text-violet-700">Quà tặng</span>}
+                  </span>
+                  <ProductCode barcode={i.barcode} className="text-[11px]" />
                 </span>
-                <span className="shrink-0 font-medium text-slate-800">{formatCurrency(i.price * i.quantity)}</span>
+                <span className="shrink-0 font-medium text-slate-800">{formatCurrency(i.price * i.quantity - (i.discount ?? 0))}</span>
               </li>
             ))}
           </ul>
           <div className="my-3 border-t border-dashed border-slate-200" />
           <dl className="space-y-1.5">
-            {order.totals.discountAmount > 0 && (
-              <div className="flex justify-between text-rose-500">
-                <dt>Giảm giá</dt>
-                <dd>-{formatCurrency(order.totals.discountAmount)}</dd>
+            {(order.promotions ?? [])
+              .filter((p) => p.kind !== 'gift' && p.kind !== 'product')
+              .map((p) => (
+                <div key={p.id} className="flex justify-between gap-3 text-rose-500">
+                  <dt className="truncate">{p.kind === 'voucher' ? `Mã ${p.code}` : p.name}</dt>
+                  <dd className="shrink-0">-{formatCurrency(p.amount)}</dd>
+                </div>
+              ))}
+            {!!order.pointsEarned && order.customer && (
+              <div className="flex justify-between text-amber-600">
+                <dt>Điểm tích lũy ({order.customer.name})</dt>
+                <dd className="font-semibold">+{order.pointsEarned} điểm</dd>
               </div>
             )}
             <div className="flex justify-between text-base font-bold text-slate-900">
@@ -159,8 +174,8 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
 
   return (
     <Modal
-      open={open}
-      onClose={() => !submitting && onClose()}
+      open
+      onClose={handleClose}
       title="Thanh toán"
       description="Chọn phương thức và xác nhận số tiền"
       className="max-w-xl"
@@ -175,7 +190,7 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
         </>
       }
     >
-      <div className="rounded-2xl bg-gradient-to-br from-primary-600 to-primary-800 p-5 text-white">
+      <div className="rounded-lg bg-gradient-to-br from-primary-600 to-primary-800 p-5 text-white">
         <p className="text-sm text-primary-100">Khách cần trả</p>
         <p className="mt-1 text-3xl font-extrabold tracking-tight">{formatCurrency(total)}</p>
       </div>
@@ -187,7 +202,7 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
             key={value}
             onClick={() => setMethod(value)}
             className={cn(
-              'flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border p-3 text-xs font-semibold transition',
+              'flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border p-3 text-xs font-semibold transition',
               method === value
                 ? 'border-primary-500 bg-primary-50 text-primary-700 ring-4 ring-primary-100'
                 : 'border-slate-200 text-slate-600 hover:border-slate-300',
@@ -201,38 +216,73 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
 
       {isCash && (
         <div className="mt-5">
-          <label className="mb-2 block text-sm font-semibold text-slate-800">Tiền khách đưa</label>
-          <div className="flex h-12 items-center rounded-xl border border-slate-200 px-4 focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-100">
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-sm font-semibold text-slate-800">Tiền khách đưa</label>
+            {paid > 0 && (
+              <button
+                type="button"
+                onClick={resetPaid}
+                className="flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                <RotateCcw className="size-3.5" /> Nhập lại
+              </button>
+            )}
+          </div>
+          <div className="flex h-12 items-center rounded-lg border border-slate-200 px-4 focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-100">
             <input
               autoFocus
               inputMode="numeric"
               value={paid ? formatNumber(paid) : ''}
-              onChange={(e) => setPaid(parseNumber(e.target.value))}
+              onChange={(e) => {
+                setPaid(parseNumber(e.target.value))
+                setNoteCounts({})
+              }}
               onKeyDown={(e) => e.key === 'Enter' && submit()}
               className="w-full text-lg font-bold text-slate-900 outline-none"
               placeholder="0"
             />
             <span className="font-semibold text-slate-400">đ</span>
           </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {suggestions.map((s) => (
-              <button
-                key={s}
-                onClick={() => setPaid(s)}
-                className={cn(
-                  'h-8 cursor-pointer rounded-lg border px-3 text-xs font-semibold transition',
-                  paid === s
-                    ? 'border-primary-500 bg-primary-50 text-primary-700'
-                    : 'border-slate-200 text-slate-600 hover:border-primary-300',
-                )}
-              >
-                {formatNumber(s)}
-              </button>
-            ))}
+          <div className="mt-3 grid grid-cols-5 gap-2">
+            {CASH_DENOMINATIONS.map((value) => {
+              const count = noteCounts[value] ?? 0
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => addNote(value)}
+                  className={cn(
+                    'relative h-11 cursor-pointer rounded-lg border text-sm font-semibold transition select-none active:scale-95',
+                    count > 0
+                      ? 'border-primary-500 bg-primary-50 text-primary-700'
+                      : 'border-slate-200 text-slate-700 hover:border-primary-300 hover:bg-slate-50',
+                  )}
+                >
+                  {formatNumber(value)}
+                  {count > 0 && (
+                    <span className="absolute -top-2 -right-2 grid h-5 min-w-5 place-items-center rounded-full bg-primary-600 px-1 text-[10px] font-bold text-white ring-2 ring-white">
+                      ×{count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+            <button
+              type="button"
+              onClick={payExact}
+              className={cn(
+                'h-11 cursor-pointer rounded-lg text-sm font-bold transition select-none active:scale-95',
+                paid === total && Object.keys(noteCounts).length === 0
+                  ? 'bg-primary-600 text-white shadow-primary'
+                  : 'bg-primary-50 text-primary-700 hover:bg-primary-100',
+              )}
+            >
+              Đủ tiền
+            </button>
           </div>
           <div
             className={cn(
-              'mt-4 flex items-center justify-between rounded-xl px-4 py-3',
+              'mt-4 flex items-center justify-between rounded-lg px-4 py-3',
               change >= 0 ? 'bg-primary-50 text-primary-800' : 'bg-rose-50 text-rose-600',
             )}
           >
@@ -243,8 +293,8 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
       )}
 
       {method === 'transfer' && (
-        <div className="mt-5 flex flex-col items-center gap-4 rounded-xl border border-slate-100 bg-slate-50/60 p-5 sm:flex-row">
-          <div className="rounded-xl bg-white p-2 shadow-soft">
+        <div className="mt-5 flex flex-col items-center gap-4 rounded-lg border border-slate-100 bg-slate-50/60 p-5 sm:flex-row">
+          <div className="rounded-lg bg-white p-2 shadow-soft">
             <FakeQr seed={total} />
           </div>
           <dl className="space-y-1.5 text-sm">
@@ -266,7 +316,7 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
       )}
 
       {(method === 'card' || method === 'ewallet') && (
-        <p className="mt-5 rounded-xl bg-sky-50 px-4 py-3 text-sm text-sky-700">
+        <p className="mt-5 rounded-lg bg-sky-50 px-4 py-3 text-sm text-sky-700">
           Vui lòng thực hiện giao dịch trên {method === 'card' ? 'máy POS' : 'ứng dụng ví'} và xác nhận khi hoàn tất.
         </p>
       )}

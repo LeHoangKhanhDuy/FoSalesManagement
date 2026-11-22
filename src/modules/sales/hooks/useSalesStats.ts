@@ -9,7 +9,6 @@ export function useSalesStats() {
     salesService.getTodayStats().then(setStats)
   }, [])
 
-  /** Cập nhật số liệu realtime sau mỗi đơn */
   const applyOrder = useCallback((order: Order) => {
     setStats((s) =>
       s

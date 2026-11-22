@@ -12,7 +12,7 @@ export const TIER_LABEL: Record<CustomerTier, { label: string; tone: 'neutral' |
 export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
   cash: 'Tiền mặt',
   transfer: 'Chuyển khoản',
-  card: 'Quẹt thẻ',
+  card: 'Thẻ',
   ewallet: 'Ví điện tử',
 }
 

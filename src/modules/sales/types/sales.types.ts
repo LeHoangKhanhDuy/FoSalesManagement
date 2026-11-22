@@ -1,23 +1,45 @@
-export type CategoryId = 'all' | 'drinks' | 'snacks' | 'dairy' | 'instant' | 'fruit' | 'personal' | 'household'
+import type { PromotionKind, PromotionScope } from '@/modules/promotions/types/promotions.types'
+
+export type CategoryId = string
+
+export type CategoryStatus = 'active' | 'inactive'
 
 export interface Category {
   id: CategoryId
   name: string
+  description?: string
+  icon?: string
+  color?: string
+  status?: CategoryStatus
+  sortOrder?: number
+  createdAt?: string
+  updatedAt?: string
 }
+
+export type ImageFit = 'cover' | 'contain' | 'auto'
 
 export interface Product {
   id: string
   sku: string
   barcode: string
   name: string
-  categoryId: Exclude<CategoryId, 'all'>
+  categoryId: CategoryId
   price: number
-  /** Giá gốc trước khuyến mãi (nếu có) */
   originalPrice?: number
   unit: string
   stock: number
   isBestSeller?: boolean
+  image?: string
+  imageFit?: ImageFit
+  costPrice?: number
+  minStock?: number
+  status?: ProductStatus
+  description?: string
+  createdAt?: string
+  updatedAt?: string
 }
+
+export type ProductStatus = 'active' | 'inactive'
 
 export type CustomerTier = 'retail' | 'silver' | 'gold' | 'diamond'
 
@@ -33,27 +55,47 @@ export interface CartItem {
   productId: string
   name: string
   sku: string
+  barcode: string
   unit: string
   categoryId: Product['categoryId']
   price: number
   quantity: number
   stock: number
+  image?: string
+  imageFit?: ImageFit
+  discount?: number
+  promotionId?: string
+  isGift?: boolean
 }
 
-export type DiscountType = 'percent' | 'amount'
-
-export interface Discount {
-  type: DiscountType
+export type VoucherType = 'percent' | 'amount'
+export interface Voucher {
+  id?: string
+  code: string
+  name: string
+  type: VoucherType
   value: number
+  maxDiscount?: number
+  minOrder?: number
+  expiresAt?: string
+  scope?: PromotionScope
+  stackable?: boolean
 }
 
-/** Một hóa đơn nháp (tab) trên màn hình POS */
+export interface AppliedPromotion {
+  id: string
+  code: string
+  name: string
+  kind: PromotionKind | 'member'
+  amount: number
+}
+
 export interface Invoice {
   id: string
   name: string
   items: CartItem[]
   customer: Customer | null
-  discount: Discount
+  voucher: Voucher | null
   note: string
   createdAt: string
 }
@@ -65,12 +107,15 @@ export interface InvoiceTotals {
   subtotal: number
   discountAmount: number
   total: number
+  promoDiscount?: number
+  voucherDiscount?: number
+  memberDiscount?: number
 }
 
 export interface CreateOrderPayload {
   items: Pick<CartItem, 'productId' | 'price' | 'quantity'>[]
   customerId: string | null
-  discount: Discount
+  voucherCode: string | null
   note: string
   paymentMethod: PaymentMethod
   paidAmount: number
@@ -81,6 +126,9 @@ export interface Order {
   code: string
   createdAt: string
   customer: Customer | null
+  voucher: Voucher | null
+  promotions?: AppliedPromotion[]
+  pointsEarned?: number
   items: CartItem[]
   totals: InvoiceTotals
   paymentMethod: PaymentMethod

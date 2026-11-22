@@ -23,7 +23,6 @@ const buildUrl = (path: string, params?: RequestOptions['params']) => {
   return url.toString()
 }
 
-/** Wrapper fetch dùng chung — sẵn sàng cho kết nối BE */
 async function request<T>(path: string, { body, params, headers, ...init }: RequestOptions = {}): Promise<T> {
   const token = localStorage.getItem('fosales_token')
   const res = await fetch(buildUrl(path, params), {
@@ -52,5 +51,4 @@ export const http = {
   delete: <T>(path: string, options?: RequestOptions) => request<T>(path, { ...options, method: 'DELETE' }),
 }
 
-/** Giả lập độ trễ mạng cho mock */
 export const sleep = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms))
