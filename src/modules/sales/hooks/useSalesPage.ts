@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { useBarcodeScanner } from '@/hooks/useBarcodeScanner'
 import { useHotkey } from '@/hooks/useHotkey'
 import type { ViewMode } from '@/modules/sales/components/ProductToolbar'
+import { useActivePromotions } from '@/modules/sales/hooks/useActivePromotions'
 import { useInvoices } from '@/modules/sales/hooks/useInvoices'
 import { useProducts } from '@/modules/sales/hooks/useProducts'
 import { salesService } from '@/modules/sales/services/sales.service'
@@ -14,8 +15,9 @@ export function useSalesPage() {
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null)
   const productState = useProducts()
-  const invoice = useInvoices()
-  const { active, totals } = invoice
+  const promo = useActivePromotions(productState.products)
+  const invoice = useInvoices(promo.promotions, productState.products, promo.memberOf)
+  const { active, totals, pricing } = invoice
   const focusSearch = useCallback(() => searchRef.current?.focus(), [])
   const addItemRef = useRef(invoice.addItem)
   addItemRef.current = invoice.addItem
@@ -94,6 +96,8 @@ export function useSalesPage() {
     invoice,
     active,
     totals,
+    pricing,
+    promoBadges: promo.badges,
     handleAdd,
     handleSearchSubmit,
     openPayment,

@@ -133,13 +133,21 @@ export function OrderDetailDrawer({ order: openOrder, onClose, onAction, onConfi
       <Section title={`Sản phẩm (${order.totals.itemCount})`}>
         <ul className="divide-y divide-slate-100 rounded-lg border border-slate-100">
           {order.items.map((i) => (
-            <li key={i.productId} className="flex items-center gap-3 p-3">
+            <li key={`${i.productId}-${i.isGift ? 'gift' : 'item'}`} className={cn('flex items-center gap-3 p-3', i.isGift && 'bg-violet-50/50')}>
               <ProductThumb categoryId={i.categoryId} image={i.image} fit={i.imageFit} alt={i.name} size="sm" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-800">{i.name}</p>
-                <ProductCode sku={i.sku} barcode={i.barcode} extra={`SL: ${i.quantity} × ${formatCurrency(i.price)}`} />
+                <p className="truncate text-sm font-semibold text-slate-800">
+                  {i.name}
+                  {i.isGift && <span className="ml-1.5 rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold text-violet-700">Quà tặng</span>}
+                </p>
+                <ProductCode sku={i.sku} barcode={i.barcode} extra={i.isGift ? `Tặng ${i.quantity}` : `SL: ${i.quantity} × ${formatCurrency(i.price)}`} />
               </div>
-              <p className="text-sm font-bold text-slate-900">{formatCurrency(i.price * i.quantity)}</p>
+              <div className="text-right">
+                {!!i.discount && <p className="text-[11px] text-slate-400 line-through">{formatCurrency(i.price * i.quantity)}</p>}
+                <p className={cn('text-sm font-bold', i.discount ? 'text-rose-600' : i.isGift ? 'text-violet-600' : 'text-slate-900')}>
+                  {formatCurrency(i.price * i.quantity - (i.discount ?? 0))}
+                </p>
+              </div>
             </li>
           ))}
         </ul>
@@ -148,25 +156,28 @@ export function OrderDetailDrawer({ order: openOrder, onClose, onAction, onConfi
       <Section title="Thanh toán">
         <dl className="space-y-2.5 rounded-lg bg-slate-50 p-4 text-sm">
           <Row label="Tạm tính">{formatCurrency(order.totals.subtotal)}</Row>
-          {order.totals.discountAmount > 0 && (
+          {(order.promotions?.length
+            ? order.promotions.filter((p) => p.kind !== 'gift')
+            : order.totals.discountAmount > 0
+              ? [{ id: 'discount', code: order.voucher?.code ?? '', name: 'Giảm giá', kind: 'voucher' as const, amount: order.totals.discountAmount }]
+              : []
+          ).map((p) => (
             <Row
+              key={p.id}
               label={
-                <span>
-                  Giảm giá
-                  {order.voucher && (
-                    <span
-                      className="ml-1.5 rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-bold text-primary-700"
-                      title={describeVoucher(order.voucher)}
-                    >
-                      {order.voucher.code}
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span className="truncate">{p.kind === 'voucher' ? 'Mã giảm giá' : p.name}</span>
+                  {p.kind === 'voucher' && p.code && (
+                    <span className="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-bold text-primary-700" title={order.voucher ? describeVoucher(order.voucher) : undefined}>
+                      {p.code}
                     </span>
                   )}
                 </span>
               }
             >
-              <span className="text-rose-500">-{formatCurrency(order.totals.discountAmount)}</span>
+              <span className="text-rose-500">-{formatCurrency(p.amount)}</span>
             </Row>
-          )}
+          ))}
           <Row label={<span className="font-bold text-slate-900">Tổng cộng</span>} className="border-t border-slate-200 pt-2.5">
             <span className={cn('text-lg font-extrabold', inactive ? 'text-slate-400 line-through' : 'text-primary-600')}>
               {formatCurrency(order.totals.total)}

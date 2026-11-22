@@ -1,8 +1,7 @@
 import { memo } from 'react'
-import { ArrowDownUp, RotateCcw, ScanBarcode, Search, Tags, X } from 'lucide-react'
+import { ArrowDownUp, Boxes, RotateCcw, ScanBarcode, Search, Tags, X } from 'lucide-react'
 import { FilterDropdown } from '@/components/ui/Dropdown'
 import { Input } from '@/components/ui/Input'
-import { cn } from '@/lib/cn'
 import type { InventoryFilters, StockLevelFilter } from '@/modules/inventory/types/inventory.types'
 import { INVENTORY_SORT_OPTIONS, LEVEL_TABS } from '@/modules/inventory/utils/inventory.utils'
 import type { Category } from '@/modules/sales/types/sales.types'
@@ -18,31 +17,11 @@ interface StockFiltersProps {
 
 export const StockFilters = memo(function StockFilters({ filters, categories, counts, onChange, onReset, hasActiveFilters }: StockFiltersProps) {
   const categoryLabel = filters.categoryId === 'all' ? 'Danh mục' : (categories.find((c) => c.id === filters.categoryId)?.name ?? '')
+  const levelOption = LEVEL_TABS.find((t) => t.value === filters.level)
   const sortLabel = INVENTORY_SORT_OPTIONS.find((o) => o.value === filters.sort)?.label ?? ''
 
   return (
     <div>
-      <div className="scrollbar-none flex gap-1 overflow-x-auto border-b border-slate-100 px-4">
-        {LEVEL_TABS.map((tab) => {
-          const active = filters.level === tab.value
-          return (
-            <button
-              key={tab.value}
-              onClick={() => onChange('level', tab.value)}
-              className={cn(
-                'relative flex h-12 shrink-0 cursor-pointer items-center gap-2 px-3 text-sm font-semibold transition',
-                active ? 'text-primary-700' : 'text-slate-500 hover:text-slate-800',
-              )}
-            >
-              {tab.label}
-              <span className={cn('rounded-full px-2 text-[11px] leading-5', active ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-500')}>
-                {counts[tab.value] ?? 0}
-              </span>
-              {active && <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-primary-600" />}
-            </button>
-          )
-        })}
-      </div>
       <div className="flex flex-wrap items-center gap-2.5 p-4">
         <Input
           value={filters.keyword}
@@ -59,6 +38,15 @@ export const StockFilters = memo(function StockFilters({ filters, categories, co
               <ScanBarcode className="size-[18px] text-slate-400" />
             )
           }
+        />
+        <FilterDropdown
+          icon={levelOption?.icon ?? Boxes}
+          label={filters.level === 'all' ? 'Mức tồn' : `${levelOption?.label} (${counts[filters.level] ?? 0})`}
+          title="Mức tồn kho"
+          value={filters.level}
+          options={LEVEL_TABS.map((t) => ({ ...t, count: counts[t.value] ?? 0 }))}
+          onChange={(v) => onChange('level', v)}
+          active={filters.level !== 'all'}
         />
         <FilterDropdown
           icon={Tags}

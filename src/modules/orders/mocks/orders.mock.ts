@@ -1,8 +1,10 @@
-import { MOCK_CUSTOMERS } from '@/modules/sales/mocks/customers.mock'
+import { MOCK_CUSTOMERS } from '@/modules/customers/mocks/customers.mock'
 import { MOCK_PRODUCTS } from '@/modules/sales/mocks/products.mock'
-import { MOCK_VOUCHERS } from '@/modules/sales/mocks/vouchers.mock'
+import { MOCK_PROMOTIONS } from '@/modules/promotions/mocks/promotions.mock'
+import { priceCart } from '@/modules/promotions/utils/promotion-engine'
+import { isRunningAt, toVoucher } from '@/modules/promotions/utils/promotions.utils'
 import type { CartItem, PaymentMethod } from '@/modules/sales/types/sales.types'
-import { calcVoucherDiscount, suggestCashAmounts } from '@/modules/sales/utils/cart.utils'
+import { suggestCashAmounts } from '@/modules/sales/utils/cart.utils'
 import type { OrderRecord, OrderStatus } from '@/modules/orders/types/orders.types'
 
 const createRandom = (seed: number) => () => {
@@ -46,11 +48,13 @@ const generateOrders = (count: number): OrderRecord[] => {
         imageFit: p.imageFit,
       })
     }
-    const items = [...lines.values()]
-    const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0)
-    const candidate = rand() < 0.2 ? pick(MOCK_VOUCHERS.filter((v) => v.code !== 'BLACKFRIDAY')) : null
-    const discountAmount = calcVoucherDiscount(subtotal, candidate)
-    const total = subtotal - discountAmount
+    const cart = [...lines.values()]
+    const running = MOCK_PROMOTIONS.filter((p) => isRunningAt(p, date.getTime()))
+    const vouchers = running.filter((p) => p.kind === 'voucher')
+    const candidate = vouchers.length && rand() < 0.25 ? toVoucher(pick(vouchers)) : null
+    const pricing = priceCart({ items: cart, promotions: running.filter((p) => p.kind !== 'voucher'), voucher: candidate, products: MOCK_PRODUCTS })
+    const items = [...cart.map((i) => ({ ...i, discount: pricing.lines[i.productId].discount || undefined, promotionId: pricing.lines[i.productId].promotionId })), ...pricing.gifts.map(({ promoName: _, ...g }) => g)]
+    const { subtotal, discountAmount, total } = pricing
 
     const r = rand()
     const status: OrderStatus = r < 0.8 ? 'completed' : r < 0.88 ? 'pending' : r < 0.94 ? 'cancelled' : 'refunded'
@@ -64,10 +68,14 @@ const generateOrders = (count: number): OrderRecord[] => {
       id: `ord-${String(n + 1).padStart(4, '0')}`,
       code: `HD${yymmdd}-${String(1000 + Math.floor(rand() * 9000))}`,
       createdAt: date.toISOString(),
-      customer: rand() < 0.55 ? pick(MOCK_CUSTOMERS) : null,
-      voucher: discountAmount > 0 ? candidate : null,
+      customer: (() => {
+        const eligible = MOCK_CUSTOMERS.filter((c) => c.status === 'active' && c.createdAt <= date.toISOString())
+        return rand() < 0.55 && eligible.length ? pick(eligible) : null
+      })(),
+      voucher: pricing.voucherDiscount > 0 ? candidate : null,
+      promotions: pricing.applied,
       items,
-      totals: { itemCount: items.reduce((s, i) => s + i.quantity, 0), subtotal, discountAmount, total },
+      totals: { itemCount: pricing.itemCount, subtotal, discountAmount, total, promoDiscount: pricing.productDiscount + pricing.orderDiscount, voucherDiscount: pricing.voucherDiscount },
       paymentMethod,
       paidAmount,
       changeAmount: Math.max(0, paidAmount - total),

@@ -4,16 +4,18 @@ import { cn } from '@/lib/cn'
 import { formatCurrency } from '@/lib/format'
 import { salesService } from '@/modules/sales/services/sales.service'
 import type { Voucher } from '@/modules/sales/types/sales.types'
-import { calcVoucherDiscount, describeVoucher } from '@/modules/sales/utils/cart.utils'
+import { describeVoucher } from '@/modules/sales/utils/cart.utils'
 
 interface VoucherInputProps {
   voucher: Voucher | null
-  subtotal: number
+  discount: number
+  issue?: string
+  customerId: string | null
   onApply: (voucher: Voucher) => void
   onRemove: () => void
 }
 
-export const VoucherInput = memo(function VoucherInput({ voucher, subtotal, onApply, onRemove }: VoucherInputProps) {
+export const VoucherInput = memo(function VoucherInput({ voucher, discount, issue, customerId, onApply, onRemove }: VoucherInputProps) {
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -25,7 +27,7 @@ export const VoucherInput = memo(function VoucherInput({ voucher, subtotal, onAp
     setLoading(true)
     setError(null)
     try {
-      onApply(await salesService.applyVoucher(value, subtotal))
+      onApply(await salesService.applyVoucher(value, customerId))
       setCode('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không áp dụng được mã giảm giá')
@@ -35,9 +37,7 @@ export const VoucherInput = memo(function VoucherInput({ voucher, subtotal, onAp
   }
 
   if (voucher) {
-    const amount = calcVoucherDiscount(subtotal, voucher)
-    const missing = (voucher.minOrder ?? 0) - subtotal
-    const eligible = missing <= 0
+    const eligible = !issue && discount > 0
 
     return (
       <div
@@ -57,10 +57,10 @@ export const VoucherInput = memo(function VoucherInput({ voucher, subtotal, onAp
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-1.5 text-xs font-bold tracking-wide text-slate-900">
             {voucher.code}
-            {eligible && <span className="font-semibold text-primary-700">· -{formatCurrency(amount)}</span>}
+            {eligible && <span className="font-semibold text-primary-700">· -{formatCurrency(discount)}</span>}
           </p>
           <p className={cn('truncate text-[11px]', eligible ? 'text-slate-500' : 'text-amber-700')}>
-            {eligible ? describeVoucher(voucher) : `Mua thêm ${formatCurrency(missing)} để được áp dụng`}
+            {eligible ? describeVoucher(voucher) : (issue ?? describeVoucher(voucher))}
           </p>
         </div>
         <button

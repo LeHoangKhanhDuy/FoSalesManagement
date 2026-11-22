@@ -18,11 +18,11 @@ export function PageBar() {
         <Link to="/" className="flex items-center gap-1.5 text-slate-500 hover:text-primary-600">
           <House className="size-4" /> Trang chủ
         </Link>
-        {crumbs.map((c, i) => {
+        {crumbs.filter((c, i) => c.label !== crumbs[i - 1]?.label).map((c, i, list) => {
           const Icon = c.icon
-          const last = i === crumbs.length - 1
+          const last = i === list.length - 1
           return (
-            <Fragment key={c.label}>
+            <Fragment key={`${i}-${c.label}`}>
               <ChevronRight className="size-4 text-slate-300" />
               <span className={last ? 'flex items-center gap-1.5 font-semibold text-slate-900' : 'text-slate-500'}>
                 {Icon && <Icon className="size-4" />}

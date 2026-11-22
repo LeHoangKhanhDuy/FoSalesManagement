@@ -16,6 +16,8 @@ export default function SalesPage() {
     invoice,
     active,
     totals,
+    pricing,
+    promoBadges,
     handleAdd,
     handleSearchSubmit,
     openPayment, 
@@ -51,6 +53,7 @@ export default function SalesPage() {
               cartItems={active.items}
               loading={productState.loading}
               view={view}
+              promoBadges={promoBadges}
               onAdd={handleAdd}
             />
           </div>
@@ -62,6 +65,7 @@ export default function SalesPage() {
           invoices={invoice.invoices}
           active={active}
           totals={totals}
+          pricing={pricing}
           onSwitchInvoice={invoice.switchInvoice}
           onAddInvoice={invoice.addInvoice}
           onCloseInvoice={invoice.closeInvoice}

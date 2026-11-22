@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Kbd } from '@/components/ui/Kbd'
 import { formatCurrency } from '@/lib/format'
+import type { CartPricing } from '@/modules/promotions/utils/promotion-engine'
 import type { Customer, Invoice, InvoiceTotals, Voucher } from '@/modules/sales/types/sales.types'
-import { CartItemRow } from '@/modules/sales/components/CartItemRow'
+import { CartItemRow, GiftItemRow } from '@/modules/sales/components/CartItemRow'
 import { CustomerPicker } from '@/modules/sales/components/CustomerPicker'
 import { InvoiceTabs } from '@/modules/sales/components/InvoiceTabs'
 import { VoucherInput } from '@/modules/sales/components/VoucherInput'
@@ -14,6 +15,7 @@ interface CartPanelProps {
   invoices: Invoice[]
   active: Invoice
   totals: InvoiceTotals
+  pricing: CartPricing
   onSwitchInvoice: (id: string) => void
   onAddInvoice: () => void
   onCloseInvoice: (id: string) => void
@@ -27,7 +29,8 @@ interface CartPanelProps {
 }
 
 export const CartPanel = memo(function CartPanel(props: CartPanelProps) {
-  const { active, totals, onVoucherChange } = props
+  const { active, totals, pricing, onVoucherChange } = props
+  const autoPromos = pricing.applied.filter((p) => p.kind === 'product' || p.kind === 'order')
   const voucher = active.voucher ?? null
   const removeVoucher = useCallback(() => onVoucherChange(null), [onVoucherChange])
   const empty = active.items.length === 0
@@ -76,9 +79,13 @@ export const CartPanel = memo(function CartPanel(props: CartPanelProps) {
                 key={item.productId}
                 item={item}
                 index={idx + 1}
+                line={pricing.lines[item.productId]}
                 onQuantityChange={props.onQuantityChange}
                 onRemove={props.onRemove}
               />
+            ))}
+            {pricing.gifts.map((g) => (
+              <GiftItemRow key={`gift-${g.promotionId}-${g.productId}`} gift={g} />
             ))}
           </ul>
         )}
@@ -95,24 +102,46 @@ export const CartPanel = memo(function CartPanel(props: CartPanelProps) {
           />
         </label>
 
-        <VoucherInput voucher={voucher} subtotal={totals.subtotal} onApply={onVoucherChange} onRemove={removeVoucher} />
+        <VoucherInput
+          voucher={voucher}
+          discount={pricing.voucherDiscount}
+          issue={pricing.voucherIssue}
+          customerId={active.customer?.id ?? null}
+          onApply={onVoucherChange}
+          onRemove={removeVoucher}
+        />
 
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between">
             <dt className="text-slate-500">Tạm tính</dt>
             <dd className="font-semibold text-slate-800">{formatCurrency(totals.subtotal)}</dd>
           </div>
+          {autoPromos.length > 0 && (
+            <div className="flex justify-between gap-3">
+              <dt className="min-w-0 text-slate-500">
+                Khuyến mãi
+                <span className="block truncate text-[11px] text-rose-400" title={autoPromos.map((p) => p.name).join(', ')}>
+                  {autoPromos.map((p) => p.name).join(', ')}
+                </span>
+              </dt>
+              <dd className="shrink-0 font-semibold text-rose-500">-{formatCurrency(totals.promoDiscount ?? 0)}</dd>
+            </div>
+          )}
+          {pricing.memberDiscount > 0 && (
+            <div className="flex justify-between">
+              <dt className="text-slate-500">{pricing.applied.find((p) => p.kind === 'member')?.name}</dt>
+              <dd className="font-semibold text-rose-500">-{formatCurrency(pricing.memberDiscount)}</dd>
+            </div>
+          )}
           <div className="flex justify-between">
             <dt className="text-slate-500">
-              Giảm giá
-              {voucher && totals.discountAmount > 0 && (
-                <span className="ml-1.5 rounded bg-primary-50 px-1.5 py-0.5 text-[10px] font-bold text-primary-700">
-                  {voucher.code}
-                </span>
+              Mã giảm giá
+              {voucher && pricing.voucherDiscount > 0 && (
+                <span className="ml-1.5 rounded bg-primary-50 px-1.5 py-0.5 text-[10px] font-bold text-primary-700">{voucher.code}</span>
               )}
             </dt>
-            <dd className={totals.discountAmount > 0 ? 'font-semibold text-rose-500' : 'font-semibold text-slate-400'}>
-              {totals.discountAmount > 0 ? `-${formatCurrency(totals.discountAmount)}` : formatCurrency(0)}
+            <dd className={pricing.voucherDiscount > 0 ? 'font-semibold text-rose-500' : 'font-semibold text-slate-400'}>
+              {pricing.voucherDiscount > 0 ? `-${formatCurrency(pricing.voucherDiscount)}` : formatCurrency(0)}
             </dd>
           </div>
           <div className="flex items-end justify-between border-t border-slate-100 pt-3">

@@ -1,8 +1,10 @@
 import { useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
-import type { Customer, Invoice, Product, Voucher } from '@/modules/sales/types/sales.types'
-import { calcTotals, createInvoice, productToCartItem } from '@/modules/sales/utils/cart.utils'
+import type { Promotion } from '@/modules/promotions/types/promotions.types'
+import { priceCart } from '@/modules/promotions/utils/promotion-engine'
+import type { Customer, Invoice, InvoiceTotals, Product, Voucher } from '@/modules/sales/types/sales.types'
+import { createInvoice, productToCartItem } from '@/modules/sales/utils/cart.utils'
 import { MAX_INVOICES } from '@/modules/sales/utils/constants'
 
 interface InvoiceState {
@@ -15,10 +17,25 @@ const initState = (): InvoiceState => {
   return { invoices: [first], activeId: first.id }
 }
 
-export function useInvoices() {
+export function useInvoices(promotions: Promotion[], products: Product[], memberOf: (tier: Customer['tier']) => { tier: string; label: string; discountPercent: number } | null) {
   const [state, setState] = useLocalStorage<InvoiceState>('fosales_pos_invoices', initState)
   const active = state.invoices.find((i) => i.id === state.activeId) ?? state.invoices[0] ?? createInvoice(1)
-  const totals = useMemo(() => calcTotals(active), [active])
+  const pricing = useMemo(
+    () => priceCart({ items: active.items, promotions, voucher: active.voucher ?? null, member: active.customer ? memberOf(active.customer.tier) : null, products }),
+    [active.items, active.voucher, active.customer, promotions, products, memberOf],
+  )
+  const totals = useMemo<InvoiceTotals>(
+    () => ({
+      itemCount: pricing.itemCount,
+      subtotal: pricing.subtotal,
+      discountAmount: pricing.discountAmount,
+      total: pricing.total,
+      promoDiscount: pricing.productDiscount + pricing.orderDiscount,
+      voucherDiscount: pricing.voucherDiscount,
+      memberDiscount: pricing.memberDiscount,
+    }),
+    [pricing],
+  )
 
   const updateActive = useCallback(
     (updater: (inv: Invoice) => Invoice) =>
@@ -120,6 +137,7 @@ export function useInvoices() {
     invoices: state.invoices,
     active,
     totals,
+    pricing,
     addItem,
     updateQuantity,
     removeItem,

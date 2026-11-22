@@ -8,6 +8,8 @@ import { formatNumber } from '@/lib/format'
 import { salesService } from '@/modules/sales/services/sales.service'
 import type { Customer } from '@/modules/sales/types/sales.types'
 import { TIER_LABEL } from '@/modules/sales/utils/constants'
+import { QuickCustomerModal } from '@/modules/sales/components/QuickCustomerModal'
+import { useQuickCustomer } from '@/modules/sales/hooks/useQuickCustomer'
 
 interface CustomerPickerProps {
   customer: Customer | null
@@ -20,6 +22,10 @@ export function CustomerPicker({ customer, onChange }: CustomerPickerProps) {
   const [results, setResults] = useState<Customer[]>([])
   const ref = useRef<HTMLDivElement>(null)
   const debounced = useDebounce(keyword, 200)
+  const quick = useQuickCustomer((c) => {
+    onChange(c)
+    setKeyword('')
+  })
 
   useClickOutside(ref, () => setOpen(false), open)
 
@@ -57,6 +63,7 @@ export function CustomerPicker({ customer, onChange }: CustomerPickerProps) {
 
   return (
     <div ref={ref} className="relative">
+      <QuickCustomerModal quick={quick} />
       <button
         onClick={() => setOpen((v) => !v)}
         className="flex h-11 w-full cursor-pointer items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3 text-left text-sm transition hover:border-slate-300"
@@ -106,7 +113,13 @@ export function CustomerPicker({ customer, onChange }: CustomerPickerProps) {
             ))}
             {results.length === 0 && <li className="py-4 text-center text-xs text-slate-400">Không tìm thấy khách hàng</li>}
           </ul>
-          <button className="mt-1 flex h-9 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-primary-300 text-xs font-semibold text-primary-700 hover:bg-primary-50">
+          <button
+            onClick={() => {
+              quick.start(keyword)
+              setOpen(false)
+            }}
+            className="mt-1 flex h-9 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-primary-300 text-xs font-semibold text-primary-700 hover:bg-primary-50"
+          >
             <UserPlus className="size-4" /> Thêm khách hàng mới
           </button>
         </div>
