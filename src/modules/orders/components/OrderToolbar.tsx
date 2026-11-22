@@ -1,7 +1,7 @@
 import { memo } from 'react'
-import { ArrowDownUp, ArrowRight, CalendarDays, Check, ChevronDown, RotateCcw, Search, Wallet, X, type LucideIcon } from 'lucide-react'
+import { ArrowDownUp, ArrowRight, CalendarDays, RotateCcw, Search, Wallet, X, type LucideIcon } from 'lucide-react'
 import { DatePicker } from '@/components/ui/DatePicker'
-import { Dropdown, DropdownItem, DropdownLabel } from '@/components/ui/Dropdown'
+import { FilterDropdown } from '@/components/ui/Dropdown'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
 import type { OrderFilters, OrderStatus } from '@/modules/orders/types/orders.types'
@@ -16,48 +16,6 @@ const PAYMENT_OPTIONS: { value: PaymentMethod | 'all'; label: string; icon?: Luc
     label: PAYMENT_METHOD_LABEL[m],
   })),
 ]
-
-interface FilterDropdownProps<T extends string> {
-  icon: LucideIcon
-  label: string
-  title: string
-  value: T
-  options: { value: T; label: string; icon?: LucideIcon }[]
-  onChange: (value: T) => void
-  active?: boolean
-}
-
-function FilterDropdown<T extends string>({ icon: Icon, label, title, value, options, onChange, active }: FilterDropdownProps<T>) {
-  return (
-    <Dropdown
-      align="start"
-      trigger={
-        <button
-          className={cn(
-            'group flex h-11 cursor-pointer items-center gap-2 rounded-lg border bg-white px-3 text-sm transition hover:border-slate-300 focus-visible:outline-none data-[state=open]:border-primary-500 data-[state=open]:ring-4 data-[state=open]:ring-primary-100',
-            active ? 'border-primary-300 text-primary-700' : 'border-slate-200 text-slate-600',
-          )}
-        >
-          <Icon className={cn('size-4', active ? 'text-primary-600' : 'text-slate-400')} />
-          <span className="font-medium whitespace-nowrap">{label}</span>
-          <ChevronDown className="size-4 text-slate-400 transition group-data-[state=open]:rotate-180" />
-        </button>
-      }
-    >
-      <DropdownLabel>{title}</DropdownLabel>
-      {options.map((o) => (
-        <DropdownItem
-          key={o.value}
-          icon={o.icon}
-          label={o.label}
-          active={o.value === value}
-          shortcut={o.value === value ? <Check className="size-4" /> : undefined}
-          onClick={() => onChange(o.value)}
-        />
-      ))}
-    </Dropdown>
-  )
-}
 
 interface OrderToolbarProps {
   filters: OrderFilters

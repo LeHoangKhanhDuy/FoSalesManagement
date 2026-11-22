@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useBarcodeScanner } from '@/hooks/useBarcodeScanner'
 import { useHotkey } from '@/hooks/useHotkey'
 import type { ViewMode } from '@/modules/sales/components/ProductToolbar'
 import { useInvoices } from '@/modules/sales/hooks/useInvoices'
@@ -30,6 +31,18 @@ export function useSalesPage() {
     } else if (filtered.length === 0) {
       toast.error(`Không tìm thấy sản phẩm "${keyword}"`)
     }
+  }
+
+  const handleScan = (code: string) => {
+    const product = productState.findByCode(code)
+    if (!product) {
+      productState.setKeyword(code)
+      toast.error(`Không tìm thấy sản phẩm có mã "${code}"`)
+      return
+    }
+    invoice.addItem(product)
+    productState.setKeyword('')
+    toast.success(`Đã thêm ${product.name}`, { duration: 1200 })
   }
 
   const hasItems = active.items.length > 0
@@ -67,6 +80,7 @@ export function useSalesPage() {
     }
   }
 
+  useBarcodeScanner(handleScan, { enabled: !paymentOpen })
   useHotkey('F2', focusSearch)
   useHotkey('F4', invoice.addInvoice)
   useHotkey('F9', openPayment, !paymentOpen)

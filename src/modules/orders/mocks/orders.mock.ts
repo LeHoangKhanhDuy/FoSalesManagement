@@ -17,7 +17,7 @@ const generateOrders = (count: number): OrderRecord[] => {
   const rand = createRandom(20261122)
   const pick = <T,>(list: T[]) => list[Math.floor(rand() * list.length)]
   const now = Date.now()
-  const products = MOCK_PRODUCTS.filter((p) => p.stock > 0)
+  const products = MOCK_PRODUCTS.filter((p) => p.stock > 0 && p.status !== 'inactive' && p.sku !== 'SP0014')
   const orders: OrderRecord[] = []
 
   for (let n = 0; n < count; n++) {

@@ -4,7 +4,15 @@ let seq = 0
 const p = (data: Omit<Product, 'id' | 'sku' | 'barcode'>): Product => {
   seq += 1
   const n = String(seq).padStart(4, '0')
-  return { id: `p-${n}`, sku: `SP${n}`, barcode: `893${String(1000000000 + seq * 7919).slice(0, 10)}`, ...data }
+  return {
+    id: `p-${n}`,
+    sku: `SP${n}`,
+    barcode: `893${String(1000000000 + seq * 7919).slice(0, 10)}`,
+    costPrice: Math.round((data.price * (0.68 + ((seq * 7) % 13) / 100)) / 100) * 100,
+    status: 'active',
+    createdAt: new Date(Date.UTC(2026, 8, 1 + seq * 2, 3)).toISOString(),
+    ...data,
+  }
 }
 
 export const MOCK_PRODUCTS: Product[] = [
@@ -13,7 +21,7 @@ export const MOCK_PRODUCTS: Product[] = [
   p({ name: 'Nước suối Aquafina 500ml', categoryId: 'drinks', price: 6000, unit: 'Chai', stock: 240, isBestSeller: true }),
   p({ name: 'Nước tăng lực Red Bull 250ml', categoryId: 'drinks', price: 12000, unit: 'Lon', stock: 72 }),
   p({ name: 'Cà phê sữa đá lon 235ml', categoryId: 'drinks', price: 18000, originalPrice: 22000, unit: 'Lon', stock: 35 }),
-  p({ name: 'Trà sữa Oolong chai 450ml', categoryId: 'drinks', price: 15000, unit: 'Chai', stock: 4 }),
+  p({ name: 'Trà sữa Oolong chai 450ml', categoryId: 'drinks', price: 15000, unit: 'Chai', stock: 4, status: 'inactive' }),
   p({ name: 'Bánh quy Oreo vani 133g', categoryId: 'snacks', price: 18000, unit: 'Gói', stock: 60 }),
   p({ name: 'Snack khoai tây vị tảo biển', categoryId: 'snacks', price: 12000, unit: 'Gói', stock: 88, isBestSeller: true }),
   p({ name: 'Bánh Chocopie hộp 12 cái', categoryId: 'snacks', price: 52000, originalPrice: 58000, unit: 'Hộp', stock: 24 }),
@@ -35,5 +43,5 @@ export const MOCK_PRODUCTS: Product[] = [
   p({ name: 'Nước rửa chén hương chanh 750g', categoryId: 'household', price: 38000, unit: 'Chai', stock: 44 }),
   p({ name: 'Giấy vệ sinh 3 lớp 10 cuộn', categoryId: 'household', price: 89000, unit: 'Lốc', stock: 26 }),
   p({ name: 'Bột giặt hương nắng mai 3kg', categoryId: 'household', price: 168000, originalPrice: 185000, unit: 'Túi', stock: 0 }),
-  p({ name: 'Túi rác tự hủy 3 cuộn', categoryId: 'household', price: 29000, unit: 'Lốc', stock: 63 }),
+  p({ name: 'Túi rác tự hủy 3 cuộn', categoryId: 'household', price: 29000, unit: 'Lốc', stock: 63, status: 'inactive' }),
 ]
