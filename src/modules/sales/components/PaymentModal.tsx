@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { Banknote, CircleCheck, CreditCard, Printer, QrCode, ShoppingCart, Smartphone, type LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
@@ -23,60 +23,52 @@ interface PaymentModalProps {
   onConfirm: (method: PaymentMethod, paidAmount: number) => Promise<Order>
 }
 
-/** QR minh họa (giả lập) — thay bằng VietQR từ BE khi tích hợp */
-function FakeQr({ seed }: { seed: number }) {
-  const cells = useMemo(() => {
-    const out: boolean[] = []
+/** QR minh họa (giả lập) — thay bằng VietQR từ BE khi tích hợp. Vẽ bằng 1 <path> để render nhẹ */
+const FakeQr = memo(function FakeQr({ seed }: { seed: number }) {
+  const d = useMemo(() => {
+    const inFinder = (r: number, c: number) => (r < 7 && c < 7) || (r < 7 && c >= 14) || (r >= 14 && c < 7)
+    const finderOn = (r: number, c: number) => {
+      const lr = r >= 14 ? r - 14 : r
+      const lc = c >= 14 ? c - 14 : c
+      return lr === 0 || lr === 6 || lc === 0 || lc === 6 || (lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4)
+    }
     let x = seed || 1
+    let path = ''
     for (let i = 0; i < 21 * 21; i++) {
       x = (x * 1103515245 + 12345) & 0x7fffffff
-      out.push(x % 3 === 0)
+      const r = Math.floor(i / 21)
+      const c = i % 21
+      if (inFinder(r, c) ? finderOn(r, c) : x % 3 === 0) path += `M${c} ${r}h1v1h-1z`
     }
-    return out
+    return path
   }, [seed])
-  const finder = (r: number, c: number) =>
-    [
-      [0, 0],
-      [0, 14],
-      [14, 0],
-    ].some(([fr, fc]) => r >= fr && r < fr + 7 && c >= fc && c < fc + 7)
-  const finderOn = (r: number, c: number) => {
-    const lr = r % 14 === r ? r : r - 14
-    const lc = c % 14 === c ? c : c - 14
-    const edge = lr === 0 || lr === 6 || lc === 0 || lc === 6
-    const core = lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4
-    return edge || core
-  }
+
   return (
     <svg viewBox="0 0 21 21" className="size-40" shapeRendering="crispEdges">
-      {cells.map((on, i) => {
-        const r = Math.floor(i / 21)
-        const c = i % 21
-        const fill = finder(r, c) ? finderOn(r, c) : on
-        return fill ? <rect key={i} x={c} y={r} width={1} height={1} fill="#0f172a" /> : null
-      })}
+      <path d={d} fill="#0f172a" />
     </svg>
   )
-}
+})
 
-export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalProps) {
+/** Chỉ mount nội dung khi mở → state khởi tạo đúng ngay lần render đầu (không cần useEffect reset) */
+export const PaymentModal = memo(function PaymentModal(props: PaymentModalProps) {
+  if (!props.open) return null
+  return <PaymentModalContent {...props} />
+})
+
+function PaymentModalContent({ total, onClose, onConfirm }: PaymentModalProps) {
   const [method, setMethod] = useState<PaymentMethod>('cash')
   const [paid, setPaid] = useState(total)
   const [submitting, setSubmitting] = useState(false)
   const [order, setOrder] = useState<Order | null>(null)
 
-  useEffect(() => {
-    if (open) {
-      setMethod('cash')
-      setPaid(total)
-      setOrder(null)
-    }
-  }, [open, total])
-
   const isCash = method === 'cash'
   const paidAmount = isCash ? paid : total
   const change = paidAmount - total
-  const suggestions = suggestCashAmounts(total)
+  const suggestions = useMemo(() => suggestCashAmounts(total), [total])
+  const handleClose = useCallback(() => {
+    if (!submitting) onClose()
+  }, [submitting, onClose])
 
   const submit = async () => {
     if (paidAmount < total) {
@@ -98,7 +90,7 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
   // Màn hình hóa đơn sau khi thanh toán
   if (order) {
     return (
-      <Modal open={open} onClose={onClose} hideClose className="max-w-md">
+      <Modal open onClose={onClose} hideClose className="max-w-md">
         <div className="text-center">
           <div className="mx-auto grid size-16 place-items-center rounded-full bg-primary-50 ring-8 ring-primary-50/60">
             <CircleCheck className="size-9 text-primary-600" />
@@ -159,8 +151,8 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
 
   return (
     <Modal
-      open={open}
-      onClose={() => !submitting && onClose()}
+      open
+      onClose={handleClose}
       title="Thanh toán"
       description="Chọn phương thức và xác nhận số tiền"
       className="max-w-xl"

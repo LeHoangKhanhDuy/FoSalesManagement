@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { NotebookPen, ShoppingBasket, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -25,7 +26,7 @@ interface CartPanelProps {
   onCheckout: () => void
 }
 
-export function CartPanel(props: CartPanelProps) {
+export const CartPanel = memo(function CartPanel(props: CartPanelProps) {
   const { active, totals } = props
   const empty = active.items.length === 0
 
@@ -122,4 +123,4 @@ export function CartPanel(props: CartPanelProps) {
       </div>
     </aside>
   )
-}
+})

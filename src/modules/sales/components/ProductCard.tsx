@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Flame, Plus } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { cn } from '@/lib/cn'
@@ -23,7 +24,7 @@ function StockBadge({ stock, unit }: { stock: number; unit: string }) {
   )
 }
 
-export function ProductCard({ product, inCart, view, onAdd }: ProductCardProps) {
+export const ProductCard = memo(function ProductCard({ product, inCart, view, onAdd }: ProductCardProps) {
   const outOfStock = product.stock <= 0
   const discountPct = product.originalPrice ? Math.round((1 - product.price / product.originalPrice) * 100) : 0
 
@@ -103,4 +104,4 @@ export function ProductCard({ product, inCart, view, onAdd }: ProductCardProps) 
       </div>
     </button>
   )
-}
+})

@@ -19,7 +19,10 @@ export function useSalesPage() {
 
   const focusSearch = useCallback(() => searchRef.current?.focus(), [])
 
-  const handleAdd = useCallback((product: Product) => invoice.addItem(product), [invoice])
+  // Giữ tham chiếu ổn định → ProductGrid/ProductCard (memo) không render lại khi mở modal
+  const addItemRef = useRef(invoice.addItem)
+  addItemRef.current = invoice.addItem
+  const handleAdd = useCallback((product: Product) => addItemRef.current(product), [])
 
   const handleSearchSubmit = () => {
     const { keyword, findByCode, filtered, setKeyword } = productState
@@ -33,13 +36,14 @@ export function useSalesPage() {
     }
   }
 
-  const openPayment = () => {
-    if (active.items.length === 0) {
+  const hasItems = active.items.length > 0
+  const openPayment = useCallback(() => {
+    if (!hasItems) {
       toast.info('Giỏ hàng đang trống')
       return
     }
     setPaymentOpen(true)
-  }
+  }, [hasItems])
 
   const handleConfirmPayment = async (method: PaymentMethod, paidAmount: number) => {
     const order = await salesService.createOrder(

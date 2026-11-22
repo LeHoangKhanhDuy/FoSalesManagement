@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react'
 import { PackageSearch } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
@@ -13,7 +14,9 @@ interface ProductGridProps {
   onAdd: (product: Product) => void
 }
 
-export function ProductGrid({ products, cartItems, loading, view, onAdd }: ProductGridProps) {
+export const ProductGrid = memo(function ProductGrid({ products, cartItems, loading, view, onAdd }: ProductGridProps) {
+  const qtyMap = useMemo(() => new Map(cartItems.map((i) => [i.productId, i.quantity])), [cartItems])
+
   const gridClass =
     view === 'grid' ? 'grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-5 xl:grid-cols-4' : 'flex flex-col gap-2'
 
@@ -57,10 +60,10 @@ export function ProductGrid({ products, cartItems, loading, view, onAdd }: Produ
           key={p.id}
           product={p}
           view={view}
-          inCart={cartItems.find((i) => i.productId === p.id)?.quantity ?? 0}
+          inCart={qtyMap.get(p.id) ?? 0}
           onAdd={onAdd}
         />
       ))}
     </div>
   )
-}
+})
