@@ -17,12 +17,12 @@ const initState = (): InvoiceState => {
   return { invoices: [first], activeId: first.id }
 }
 
-export function useInvoices(promotions: Promotion[], products: Product[]) {
+export function useInvoices(promotions: Promotion[], products: Product[], memberOf: (tier: Customer['tier']) => { tier: string; label: string; discountPercent: number } | null) {
   const [state, setState] = useLocalStorage<InvoiceState>('fosales_pos_invoices', initState)
   const active = state.invoices.find((i) => i.id === state.activeId) ?? state.invoices[0] ?? createInvoice(1)
   const pricing = useMemo(
-    () => priceCart({ items: active.items, promotions, voucher: active.voucher ?? null, products }),
-    [active.items, active.voucher, promotions, products],
+    () => priceCart({ items: active.items, promotions, voucher: active.voucher ?? null, member: active.customer ? memberOf(active.customer.tier) : null, products }),
+    [active.items, active.voucher, active.customer, promotions, products, memberOf],
   )
   const totals = useMemo<InvoiceTotals>(
     () => ({
@@ -32,6 +32,7 @@ export function useInvoices(promotions: Promotion[], products: Product[]) {
       total: pricing.total,
       promoDiscount: pricing.productDiscount + pricing.orderDiscount,
       voucherDiscount: pricing.voucherDiscount,
+      memberDiscount: pricing.memberDiscount,
     }),
     [pricing],
   )

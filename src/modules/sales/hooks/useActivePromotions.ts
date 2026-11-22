@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { formatCurrency } from '@/lib/format'
+import { customersService } from '@/modules/customers/services/customers.service'
+import type { MembershipSettings } from '@/modules/customers/types/customers.types'
 import { promotionsService } from '@/modules/promotions/services/promotions.service'
 import type { Promotion } from '@/modules/promotions/types/promotions.types'
 import { calcDiscount, inScope } from '@/modules/promotions/utils/promotions.utils'
-import type { Product } from '@/modules/sales/types/sales.types'
+import type { CustomerTier, Product } from '@/modules/sales/types/sales.types'
 
 export interface ProductPromoBadge {
   label: string
@@ -14,10 +16,20 @@ export interface ProductPromoBadge {
 
 export function useActivePromotions(products: Product[]) {
   const [promotions, setPromotions] = useState<Promotion[]>([])
+  const [membership, setMembership] = useState<MembershipSettings | null>(null)
 
   useEffect(() => {
     promotionsService.getRunningAuto().then(setPromotions).catch(() => setPromotions([]))
+    customersService.getMembership().then(setMembership).catch(() => setMembership(null))
   }, [])
+
+  const memberOf = useCallback(
+    (tier: CustomerTier) => {
+      const t = membership?.tiers.find((x) => x.tier === tier)
+      return t && t.discountPercent > 0 ? { tier: t.tier, label: t.label, discountPercent: t.discountPercent } : null
+    },
+    [membership],
+  )
 
   const badges = useMemo(() => {
     const map = new Map<string, ProductPromoBadge>()
@@ -42,5 +54,5 @@ export function useActivePromotions(products: Product[]) {
     return map
   }, [promotions, products])
 
-  return { promotions, badges }
+  return { promotions, badges, memberOf, membership }
 }

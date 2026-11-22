@@ -86,7 +86,7 @@ export interface AppliedPromotion {
   id: string
   code: string
   name: string
-  kind: PromotionKind
+  kind: PromotionKind | 'member'
   amount: number
 }
 
@@ -109,6 +109,7 @@ export interface InvoiceTotals {
   total: number
   promoDiscount?: number
   voucherDiscount?: number
+  memberDiscount?: number
 }
 
 export interface CreateOrderPayload {
@@ -127,6 +128,7 @@ export interface Order {
   customer: Customer | null
   voucher: Voucher | null
   promotions?: AppliedPromotion[]
+  pointsEarned?: number
   items: CartItem[]
   totals: InvoiceTotals
   paymentMethod: PaymentMethod

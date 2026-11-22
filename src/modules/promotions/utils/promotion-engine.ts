@@ -21,6 +21,7 @@ export interface CartPricing {
   subtotal: number
   productDiscount: number
   orderDiscount: number
+  memberDiscount: number
   voucherDiscount: number
   discountAmount: number
   total: number
@@ -31,10 +32,11 @@ interface PriceCartInput {
   items: CartItem[]
   promotions: Promotion[]
   voucher: Voucher | null
+  member?: { tier: string; label: string; discountPercent: number } | null
   products: Pick<Product, 'id' | 'name' | 'sku' | 'barcode' | 'unit' | 'categoryId' | 'stock' | 'price' | 'image' | 'imageFit'>[]
 }
 
-export function priceCart({ items, promotions, voucher, products }: PriceCartInput): CartPricing {
+export function priceCart({ items, promotions, voucher, member, products }: PriceCartInput): CartPricing {
   const applied = new Map<string, AppliedPromotion>()
   const addApplied = (p: Promotion, amount: number) => {
     const cur = applied.get(p.id)
@@ -117,10 +119,12 @@ export function priceCart({ items, promotions, voucher, products }: PriceCartInp
 
   const orderDiscount = order?.amount ?? 0
   if (order) addApplied(order.promo, orderDiscount)
-  voucherDiscount = Math.min(voucherDiscount, afterItems - orderDiscount)
+  const memberDiscount = member && member.discountPercent > 0 && items.length ? calcDiscount(afterItems - orderDiscount, 'percent', member.discountPercent) : 0
+  if (member && memberDiscount > 0) applied.set(`member-${member.tier}`, { id: `member-${member.tier}`, code: member.tier.toUpperCase(), name: `Ưu đãi hạng ${member.label}`, kind: 'member', amount: memberDiscount })
+  voucherDiscount = Math.min(voucherDiscount, afterItems - orderDiscount - memberDiscount)
   if (voucher && voucherDiscount > 0) applied.set(voucher.id ?? voucher.code, { id: voucher.id ?? voucher.code, code: voucher.code, name: voucher.name, kind: 'voucher', amount: voucherDiscount })
 
-  const discountAmount = productDiscount + orderDiscount + voucherDiscount
+  const discountAmount = productDiscount + orderDiscount + memberDiscount + voucherDiscount
   return {
     lines,
     gifts,
@@ -129,6 +133,7 @@ export function priceCart({ items, promotions, voucher, products }: PriceCartInp
     subtotal,
     productDiscount,
     orderDiscount,
+    memberDiscount,
     voucherDiscount,
     discountAmount,
     total: subtotal - discountAmount,

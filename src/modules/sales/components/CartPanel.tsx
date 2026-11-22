@@ -127,6 +127,12 @@ export const CartPanel = memo(function CartPanel(props: CartPanelProps) {
               <dd className="shrink-0 font-semibold text-rose-500">-{formatCurrency(totals.promoDiscount ?? 0)}</dd>
             </div>
           )}
+          {pricing.memberDiscount > 0 && (
+            <div className="flex justify-between">
+              <dt className="text-slate-500">{pricing.applied.find((p) => p.kind === 'member')?.name}</dt>
+              <dd className="font-semibold text-rose-500">-{formatCurrency(pricing.memberDiscount)}</dd>
+            </div>
+          )}
           <div className="flex justify-between">
             <dt className="text-slate-500">
               Mã giảm giá

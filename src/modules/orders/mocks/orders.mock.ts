@@ -1,4 +1,4 @@
-import { MOCK_CUSTOMERS } from '@/modules/sales/mocks/customers.mock'
+import { MOCK_CUSTOMERS } from '@/modules/customers/mocks/customers.mock'
 import { MOCK_PRODUCTS } from '@/modules/sales/mocks/products.mock'
 import { MOCK_PROMOTIONS } from '@/modules/promotions/mocks/promotions.mock'
 import { priceCart } from '@/modules/promotions/utils/promotion-engine'
@@ -68,7 +68,10 @@ const generateOrders = (count: number): OrderRecord[] => {
       id: `ord-${String(n + 1).padStart(4, '0')}`,
       code: `HD${yymmdd}-${String(1000 + Math.floor(rand() * 9000))}`,
       createdAt: date.toISOString(),
-      customer: rand() < 0.55 ? pick(MOCK_CUSTOMERS) : null,
+      customer: (() => {
+        const eligible = MOCK_CUSTOMERS.filter((c) => c.status === 'active' && c.createdAt <= date.toISOString())
+        return rand() < 0.55 && eligible.length ? pick(eligible) : null
+      })(),
       voucher: pricing.voucherDiscount > 0 ? candidate : null,
       promotions: pricing.applied,
       items,

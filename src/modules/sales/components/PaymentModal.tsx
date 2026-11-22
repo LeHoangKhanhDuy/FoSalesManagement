@@ -137,6 +137,12 @@ function PaymentModalContent({ total, onClose, onConfirm }: PaymentModalProps) {
                   <dd className="shrink-0">-{formatCurrency(p.amount)}</dd>
                 </div>
               ))}
+            {!!order.pointsEarned && order.customer && (
+              <div className="flex justify-between text-amber-600">
+                <dt>Điểm tích lũy ({order.customer.name})</dt>
+                <dd className="font-semibold">+{order.pointsEarned} điểm</dd>
+              </div>
+            )}
             <div className="flex justify-between text-base font-bold text-slate-900">
               <dt>Tổng cộng</dt>
               <dd className="text-primary-600">{formatCurrency(order.totals.total)}</dd>
