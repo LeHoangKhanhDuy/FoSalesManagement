@@ -16,7 +16,7 @@ export const salesService = {
   },
 
   async getProducts(): Promise<Product[]> {
-    if (USE_MOCK) return sleep(500).then(() => structuredClone(MOCK_PRODUCTS))
+    if (USE_MOCK) return sleep(500).then(() => structuredClone(MOCK_PRODUCTS.filter((p) => p.status !== 'inactive')))
     return http.get<Product[]>('/api/products', { params: { status: 'active' } })
   },
 

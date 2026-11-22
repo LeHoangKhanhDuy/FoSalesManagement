@@ -20,7 +20,14 @@ export interface Product {
   isBestSeller?: boolean
   image?: string
   imageFit?: ImageFit
+  costPrice?: number
+  status?: ProductStatus
+  description?: string
+  createdAt?: string
+  updatedAt?: string
 }
+
+export type ProductStatus = 'active' | 'inactive'
 
 export type CustomerTier = 'retail' | 'silver' | 'gold' | 'diamond'
 
