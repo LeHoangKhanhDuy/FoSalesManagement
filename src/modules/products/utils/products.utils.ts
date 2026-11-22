@@ -158,7 +158,7 @@ export const validateProductForm = (v: ProductFormValues, products: Product[], e
   else if (others.some((p) => p.sku.toLowerCase() === v.sku.trim().toLowerCase())) errors.sku = 'Mã SKU đã tồn tại'
   if (v.barcode.trim() && !/^\d{8,14}$/.test(v.barcode.trim())) errors.barcode = 'Mã vạch gồm 8–14 chữ số'
   else if (v.barcode.trim() && others.some((p) => p.barcode === v.barcode.trim())) errors.barcode = 'Mã vạch đã tồn tại'
-  if (v.image.trim() && !/^(https?:\/\/|\/)/.test(v.image.trim())) errors.image = 'Đường dẫn ảnh phải bắt đầu bằng http(s):// hoặc /'
+  if (v.image.trim() && !/^(https?:\/\/|\/|data:image\/)/.test(v.image.trim())) errors.image = 'Đường dẫn ảnh phải bắt đầu bằng http(s):// hoặc /'
   return errors
 }
 

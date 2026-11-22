@@ -1,5 +1,6 @@
-import { USE_MOCK } from '@/lib/constants'
+import { API_BASE_URL, USE_MOCK } from '@/lib/constants'
 import { http, sleep } from '@/lib/http'
+import { compressImage } from '@/lib/image'
 import { MOCK_PRODUCTS } from '@/modules/sales/mocks/products.mock'
 import type { Product, ProductStatus } from '@/modules/sales/types/sales.types'
 
@@ -10,6 +11,24 @@ const findIndex = (id: string) => {
 }
 
 export const productsService = {
+  async uploadImage(file: File): Promise<string> {
+    if (USE_MOCK) {
+      const [url] = await Promise.all([compressImage(file), sleep(500)])
+      return url
+    }
+    const body = new FormData()
+    body.append('file', file)
+    const token = localStorage.getItem('fosales_token')
+    const res = await fetch(`${API_BASE_URL}/api/uploads/images`, {
+      method: 'POST',
+      body,
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    })
+    if (!res.ok) throw new Error('Tải ảnh thất bại')
+    const data = (await res.json()) as { url: string }
+    return data.url
+  },
+
   async getProducts(): Promise<Product[]> {
     if (USE_MOCK) return sleep(400).then(() => structuredClone(MOCK_PRODUCTS))
     return http.get<Product[]>('/api/products')

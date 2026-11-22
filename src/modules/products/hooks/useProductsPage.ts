@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useBarcodeScanner } from '@/hooks/useBarcodeScanner'
 import { useDebounce } from '@/hooks/useDebounce'
+import type { ProductFormMode } from '@/modules/products/hooks/useProductForm'
 import { productsService } from '@/modules/products/services/products.service'
 import type { ProductFilters, ProductFormValues } from '@/modules/products/types/products.types'
 import {
@@ -16,7 +17,6 @@ import {
 import { salesService } from '@/modules/sales/services/sales.service'
 import type { Category, Product, ProductStatus } from '@/modules/sales/types/sales.types'
 
-type FormState = { mode: 'create' } | { mode: 'edit'; product: Product } | { mode: 'duplicate'; product: Product } | null
 
 export function useProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -25,7 +25,7 @@ export function useProductsPage() {
   const [filters, setFilters] = useState<ProductFilters>(DEFAULT_FILTERS)
   const [page, setPage] = useState(1)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [form, setForm] = useState<FormState>(null)
+  const [form, setForm] = useState<ProductFormMode | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Product[] | null>(null)
   const [deleting, setDeleting] = useState(false)
