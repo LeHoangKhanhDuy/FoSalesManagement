@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Check, History, Pencil, SlidersHorizontal, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Drawer } from '@/components/ui/Drawer'
+import { useLastValue } from '@/hooks/useLastValue'
 import { FormSection } from '@/components/ui/FormField'
 import { cn } from '@/lib/cn'
 import { formatCurrency, formatDateTime, formatNumber, parseNumber } from '@/lib/format'
@@ -68,14 +69,16 @@ function MinStockEditor({ value, onSave }: { value: number; onSave: (v: number) 
   )
 }
 
-export function StockDetailDrawer({ item, movements, onClose, onAdjust, onSaveMinStock, onViewHistory }: StockDetailDrawerProps) {
+export function StockDetailDrawer({ item: openItem, movements: openMovements, onClose, onAdjust, onSaveMinStock, onViewHistory }: StockDetailDrawerProps) {
+  const item = useLastValue(openItem)
+  const movements = useLastValue(openItem ? openMovements : null) ?? []
   const points = useMemo(() => (item ? buildStockSeries(item.stock, movements) : []), [item, movements])
   if (!item) return null
   const recent = movements.slice(0, 8)
 
   return (
     <Drawer
-      open
+      open={!!openItem}
       onClose={onClose}
       title={item.name}
       description={`${item.sku} · ${item.barcode}`}

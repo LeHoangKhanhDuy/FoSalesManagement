@@ -1,5 +1,7 @@
+import { useRef } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Drawer } from '@/components/ui/Drawer'
+import { useLastValue } from '@/hooks/useLastValue'
 import { FormSection } from '@/components/ui/FormField'
 import { ProductBasicFields } from '@/modules/products/components/ProductBasicFields'
 import { ProductImageField } from '@/modules/products/components/ProductImageField'
@@ -19,18 +21,31 @@ interface ProductFormDrawerProps {
   onSubmit: (values: ProductFormValues) => void
 }
 
-export function ProductFormDrawer({ state, ...props }: ProductFormDrawerProps) {
+export function ProductFormDrawer({ state: openState, ...props }: ProductFormDrawerProps) {
+  const state = useLastValue(openState)
+  const session = useRef({ count: 0, open: false })
+  if (openState && !session.current.open) session.current.count += 1
+  session.current.open = !!openState
   if (!state) return null
-  const key = state.mode === 'create' ? 'create' : `${state.mode}-${state.product.id}`
-  return <ProductFormContent key={key} state={state} {...props} />
+  const key = `${session.current.count}-${state.mode === 'create' ? 'create' : `${state.mode}-${state.product.id}`}`
+  return <ProductFormContent key={key} state={state} open={!!openState} {...props} />
 }
 
-function ProductFormContent({ state, products, categories, units, saving, onClose, onSubmit }: ProductFormDrawerProps & { state: ProductFormMode }) {
+function ProductFormContent({
+  state,
+  open,
+  products,
+  categories,
+  units,
+  saving,
+  onClose,
+  onSubmit,
+}: ProductFormDrawerProps & { state: ProductFormMode; open: boolean }) {
   const { values, errors, set, submit, title, description, submitLabel } = useProductForm(state, products, onSubmit)
 
   return (
     <Drawer
-      open
+      open={open}
       onClose={onClose}
       title={title}
       description={description}

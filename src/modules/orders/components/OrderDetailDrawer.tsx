@@ -4,6 +4,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Drawer } from '@/components/ui/Drawer'
+import { useLastValue } from '@/hooks/useLastValue'
 import { cn } from '@/lib/cn'
 import { formatCurrency, formatDateTime } from '@/lib/format'
 import type { OrderAction, OrderRecord } from '@/modules/orders/types/orders.types'
@@ -34,7 +35,8 @@ const Row = ({ label, children, className }: { label: ReactNode; children: React
   </div>
 )
 
-export function OrderDetailDrawer({ order, onClose, onAction, onConfirmPayment, onPrint }: OrderDetailDrawerProps) {
+export function OrderDetailDrawer({ order: openOrder, onClose, onAction, onConfirmPayment, onPrint }: OrderDetailDrawerProps) {
+  const order = useLastValue(openOrder)
   if (!order) return null
   const status = ORDER_STATUS[order.status]
   const inactive = order.status === 'cancelled' || order.status === 'refunded'
@@ -49,7 +51,7 @@ export function OrderDetailDrawer({ order, onClose, onAction, onConfirmPayment, 
 
   return (
     <Drawer
-      open
+      open={!!openOrder}
       onClose={onClose}
       title={order.code}
       description={

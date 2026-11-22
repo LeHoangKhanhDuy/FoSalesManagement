@@ -1,7 +1,9 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/cn'
+
+const EXIT_DURATION = 250
 
 interface DrawerProps {
   open: boolean
@@ -18,11 +20,28 @@ export function Drawer({ open, onClose, title, description, headerExtra, childre
   const panelRef = useRef<HTMLElement>(null)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
+  const [mounted, setMounted] = useState(open)
+  const [closing, setClosing] = useState(false)
 
   useEffect(() => {
-    if (!open) return
+    if (open) {
+      setMounted(true)
+      setClosing(false)
+      return
+    }
+    if (!mounted) return
+    setClosing(true)
+    const timer = setTimeout(() => {
+      setMounted(false)
+      setClosing(false)
+    }, EXIT_DURATION)
+    return () => clearTimeout(timer)
+  }, [open, mounted])
+
+  useEffect(() => {
+    if (!mounted) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
+      if (e.key !== 'Escape' || !open) return
       const dialogs = document.querySelectorAll('[aria-modal="true"]')
       if (dialogs[dialogs.length - 1] !== panelRef.current) return
       onCloseRef.current()
@@ -33,19 +52,20 @@ export function Drawer({ open, onClose, title, description, headerExtra, childre
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
     }
-  }, [open])
+  }, [mounted, open])
 
-  if (!open) return null
+  if (!mounted) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 animate-fade-in bg-slate-900/40" onClick={onClose} />
+    <div className={cn('fixed inset-0 z-50 flex justify-end', closing && 'pointer-events-none')}>
+      <div className={cn('absolute inset-0 bg-slate-900/40', closing ? 'animate-fade-out' : 'animate-fade-in')} onClick={onClose} />
       <aside
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         className={cn(
-          'relative flex h-full w-full max-w-[520px] animate-slide-in-right flex-col bg-white shadow-2xl will-change-transform',
+          'relative flex h-full w-full max-w-[520px] flex-col bg-white shadow-2xl will-change-transform',
+          closing ? 'animate-slide-out-right' : 'animate-slide-in-right',
           className,
         )}
       >
