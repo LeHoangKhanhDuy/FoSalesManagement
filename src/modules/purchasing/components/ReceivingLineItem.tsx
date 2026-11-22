@@ -7,6 +7,7 @@ import { formatNumber, parseNumber } from '@/lib/format'
 import type { ReceivingLine } from '@/modules/purchasing/types/purchasing.types'
 import { getLineState, LINE_STATE } from '@/modules/purchasing/utils/receiving.utils'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
+import { ProductCode } from '@/components/common/ProductCode'
 
 interface Props {
   line: ReceivingLine
@@ -31,9 +32,7 @@ export const ReceivingLineItem = memo(function ReceivingLineItem({ line, highlig
             <span className={cn('size-2 shrink-0 rounded-full', meta.dot)} />
             <p className="truncate text-sm font-semibold text-slate-900">{line.name}</p>
           </div>
-          <p className="text-xs text-slate-400">
-            {line.sku} · {line.barcode}
-          </p>
+          <ProductCode sku={line.sku} barcode={line.barcode} />
           <div className="mt-1.5 h-1.5 w-full max-w-[240px] overflow-hidden rounded-full bg-slate-100">
             <div className={cn('h-full rounded-full transition-all', state === 'complete' ? 'bg-primary-500' : state === 'partial' ? 'bg-amber-400' : 'bg-rose-400')} style={{ width: `${percent}%` }} />
           </div>

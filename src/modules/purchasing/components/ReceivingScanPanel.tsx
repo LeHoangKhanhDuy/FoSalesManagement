@@ -4,6 +4,7 @@ import { cn } from '@/lib/cn'
 import type { ScanFlash } from '@/modules/purchasing/hooks/useReceiving'
 import type { ReceivingScan } from '@/modules/purchasing/types/purchasing.types'
 import type { summarizeReceiving } from '@/modules/purchasing/utils/receiving.utils'
+import { ProductCode } from '@/components/common/ProductCode'
 
 interface Props {
   flash: ScanFlash | null
@@ -82,7 +83,10 @@ export function ReceivingScanPanel({ flash, scans, summary, onManualCode, onUndo
           {scans.slice(0, 15).map((s) => (
             <li key={s.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs">
               <span className={cn('size-1.5 shrink-0 rounded-full', RESULT_DOT[s.result])} />
-              <span className="min-w-0 flex-1 truncate text-slate-700">{s.name}</span>
+              <span className="min-w-0 flex-1 text-slate-700">
+                <span className="block truncate">{s.name}</span>
+                {s.barcode && <ProductCode barcode={s.barcode} className="text-[10px]" />}
+              </span>
               <span className="font-bold text-slate-900">+{s.quantity}</span>
               <span className="text-slate-400">{new Date(s.at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
             </li>

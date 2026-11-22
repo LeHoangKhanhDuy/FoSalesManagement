@@ -74,7 +74,7 @@ export const OrderToolbar = memo(function OrderToolbar({
         <Input
           value={filters.keyword}
           onChange={(e) => onChange('keyword', e.target.value)}
-          placeholder="Tìm mã đơn, tên hoặc SĐT khách hàng..."
+          placeholder="Tìm mã đơn, khách hàng, SĐT hoặc mã vạch sản phẩm..."
           leftIcon={<Search />}
           wrapperClassName="min-w-[260px] flex-1"
           rightSlot={

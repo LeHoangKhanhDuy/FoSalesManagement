@@ -11,6 +11,7 @@ import { StockChart } from '@/modules/inventory/components/StockChart'
 import type { InventoryItem, StockMovement } from '@/modules/inventory/types/inventory.types'
 import { buildStockSeries } from '@/modules/inventory/utils/inventory.utils'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
+import { ProductCode } from '@/components/common/ProductCode'
 
 interface StockDetailDrawerProps {
   item: InventoryItem | null
@@ -81,7 +82,7 @@ export function StockDetailDrawer({ item: openItem, movements: openMovements, on
       open={!!openItem}
       onClose={onClose}
       title={item.name}
-      description={`${item.sku} · ${item.barcode}`}
+      description={<ProductCode sku={item.sku} barcode={item.barcode} className="text-sm" />}
       footer={
         <>
           <Button variant="outline" leftIcon={<History className="size-4" />} onClick={() => onViewHistory(item)}>

@@ -12,7 +12,9 @@ import { PoItemsEditor } from '@/modules/purchasing/components/PoItemsEditor'
 import { ProductSearchPicker } from '@/modules/purchasing/components/ProductSearchPicker'
 import { usePurchaseOrderForm } from '@/modules/purchasing/hooks/usePurchaseOrderForm'
 import type { PoFormState } from '@/modules/purchasing/hooks/usePurchaseOrders'
-import type { PurchaseOrderFormValues, Supplier } from '@/modules/purchasing/types/purchasing.types'
+import type { PurchaseOrderFormValues} from '@/modules/purchasing/types/purchasing.types'
+import type { Supplier } from '@/modules/suppliers/types/suppliers.types'
+import { formatPhone } from '@/modules/suppliers/utils/suppliers.utils'
 import type { Product } from '@/modules/sales/types/sales.types'
 
 interface PurchaseOrderFormDrawerProps {
@@ -76,7 +78,7 @@ function FormContent({ state, open, products, suppliers, saving, onClose, onSubm
               }
             >
               {suppliers.map((s) => (
-                <DropdownItem key={s.id} label={s.name} description={`${s.contact} · ${s.phone}`} active={s.id === values.supplierId} onClick={() => form.set('supplierId', s.id)} />
+                <DropdownItem key={s.id} label={s.name} description={`${s.contact} · ${formatPhone(s.phone)}`} active={s.id === values.supplierId} onClick={() => form.set('supplierId', s.id)} />
               ))}
             </Dropdown>
           </Field>
@@ -86,7 +88,7 @@ function FormContent({ state, open, products, suppliers, saving, onClose, onSubm
         </div>
         {supplier && (
           <p className="mt-2 text-xs text-slate-500">
-            {supplier.contact} · {supplier.phone} · {supplier.address}
+            {supplier.contact} · {formatPhone(supplier.phone)} · {supplier.address}
           </p>
         )}
       </FormSection>

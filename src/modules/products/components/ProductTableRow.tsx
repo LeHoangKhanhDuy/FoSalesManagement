@@ -8,6 +8,7 @@ import { calcMargin, getCategoryName, getStockLevel } from '@/modules/products/u
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
 import type { Category, Product, ProductStatus } from '@/modules/sales/types/sales.types'
 import { LOW_STOCK_THRESHOLD } from '@/modules/sales/utils/constants'
+import { ProductCode } from '@/components/common/ProductCode'
 
 export const Cell = ({ children, className }: { children: ReactNode; className?: string }) => (
   <td className={cn('px-4 py-3 align-middle', className)}>{children}</td>
@@ -75,9 +76,7 @@ export const ProductTableRow = memo(function ProductTableRow({
               <span className="truncate">{p.name}</span>
               {p.isBestSeller && <Flame className="size-3.5 shrink-0 text-orange-500" aria-label="Bán chạy" />}
             </p>
-            <p className="mt-0.5 text-xs text-slate-400">
-              {p.sku} · {p.barcode}
-            </p>
+            <ProductCode sku={p.sku} barcode={p.barcode} className="mt-0.5" />
           </div>
         </div>
       </Cell>

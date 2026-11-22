@@ -63,6 +63,7 @@ export const salesService = {
         productId: i.productId,
         name: product.name,
         sku: product.sku,
+        barcode: product.barcode,
         unit: product.unit,
         categoryId: product.categoryId,
         price: i.price,

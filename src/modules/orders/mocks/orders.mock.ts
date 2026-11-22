@@ -36,6 +36,7 @@ const generateOrders = (count: number): OrderRecord[] => {
         productId: p.id,
         name: p.name,
         sku: p.sku,
+        barcode: p.barcode,
         unit: p.unit,
         categoryId: p.categoryId,
         price: p.price,

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button'
 import { formatCurrency, formatDateTime } from '@/lib/format'
 import type { GoodsReceipt, PurchaseOrder } from '@/modules/purchasing/types/purchasing.types'
 import { PO_STATUS } from '@/modules/purchasing/utils/purchasing.utils'
+import { ProductCode } from '@/components/common/ProductCode'
 
 export function ReceivingDone({ receipt, order, onClose }: { receipt: GoodsReceipt; order: PurchaseOrder; onClose: () => void }) {
   const accepted = receipt.lines.reduce((s, l) => s + l.acceptedQty, 0)
@@ -36,7 +37,10 @@ export function ReceivingDone({ receipt, order, onClose }: { receipt: GoodsRecei
         <ul className="mt-5 max-h-60 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-100 text-left text-sm">
           {receipt.lines.map((l) => (
             <li key={l.productId} className="flex items-center justify-between gap-3 px-3 py-2">
-              <span className="truncate text-slate-700">{l.name}</span>
+              <span className="min-w-0 text-slate-700">
+                <span className="block truncate">{l.name}</span>
+                <ProductCode barcode={l.barcode} className="text-[11px]" />
+              </span>
               <span className="shrink-0 text-xs text-slate-500">
                 <span className="font-bold text-primary-700">+{l.acceptedQty}</span>
                 {l.damagedQty > 0 && <span className="ml-2 font-semibold text-rose-500">hỏng {l.damagedQty}</span>}

@@ -8,6 +8,7 @@ import type { useReceiving } from '@/modules/purchasing/hooks/useReceiving'
 import type { ExcessAction, ReceivingLine, ShortageAction } from '@/modules/purchasing/types/purchasing.types'
 import { APPROVAL_THRESHOLD } from '@/modules/purchasing/utils/purchasing.utils'
 import { acceptedQty, getLineState, hasDiscrepancy, LINE_STATE } from '@/modules/purchasing/utils/receiving.utils'
+import { ProductCode } from '@/components/common/ProductCode'
 
 type Receiving = ReturnType<typeof useReceiving>
 
@@ -94,6 +95,7 @@ export function ReceivingReview({ receiving }: { receiving: Receiving }) {
                   <tr key={l.productId}>
                     <td className="max-w-[260px] px-4 py-2.5">
                       <p className="truncate font-semibold text-slate-800">{l.name}</p>
+                      <ProductCode barcode={l.barcode} />
                       <p className={cn('text-xs font-semibold', LINE_STATE[state].text)}>{LINE_STATE[state].label}</p>
                     </td>
                     <td className="px-4 py-2.5 text-slate-600">{l.extra ? '—' : l.expectedQty}</td>

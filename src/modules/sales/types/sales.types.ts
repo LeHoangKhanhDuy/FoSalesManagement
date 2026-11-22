@@ -53,6 +53,7 @@ export interface CartItem {
   productId: string
   name: string
   sku: string
+  barcode: string
   unit: string
   categoryId: Product['categoryId']
   price: number

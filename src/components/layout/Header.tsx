@@ -102,7 +102,7 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
             </span>
             <span className="hidden text-left leading-tight sm:block">
               <span className="block text-[13px] font-bold text-slate-900">Khánh Duy</span>
-              <span className="block text-[11px] text-slate-400">Quản lý cửa hàng</span>
+              <span className="block text-[11px] text-slate-400">Quản trị viên</span>
             </span>
             <ChevronDown className="size-4 text-slate-400" />
           </button>

@@ -2,8 +2,9 @@ import { USE_MOCK } from '@/lib/constants'
 import { http, sleep } from '@/lib/http'
 import { recordStockMovement } from '@/modules/inventory/mocks/movements.mock'
 import { MOCK_PURCHASE_ORDERS } from '@/modules/purchasing/mocks/purchase-orders.mock'
-import { MOCK_SUPPLIERS } from '@/modules/purchasing/mocks/suppliers.mock'
-import type { GoodsReceipt, PurchaseOrder, PurchaseOrderFormValues, ReceivingDraft, Supplier } from '@/modules/purchasing/types/purchasing.types'
+import { MOCK_SUPPLIERS } from '@/modules/suppliers/mocks/suppliers.mock'
+import type { GoodsReceipt, PurchaseOrder, PurchaseOrderFormValues, ReceivingDraft} from '@/modules/purchasing/types/purchasing.types'
+import type { Supplier } from '@/modules/suppliers/types/suppliers.types'
 import { generateCode } from '@/modules/purchasing/utils/purchasing.utils'
 import { acceptedQty } from '@/modules/purchasing/utils/receiving.utils'
 import { MOCK_PRODUCTS } from '@/modules/sales/mocks/products.mock'
@@ -32,7 +33,7 @@ const applyForm = (order: PurchaseOrder, v: PurchaseOrderFormValues) => {
 export const purchasingService = {
   async getSuppliers(): Promise<Supplier[]> {
     if (!USE_MOCK) return http.get<Supplier[]>('/api/suppliers')
-    return sleep(150).then(() => structuredClone(MOCK_SUPPLIERS))
+    return sleep(150).then(() => structuredClone(MOCK_SUPPLIERS.filter((s) => s.status === 'active')))
   },
 
   async getPurchaseOrders(): Promise<PurchaseOrder[]> {
@@ -128,7 +129,7 @@ export const purchasingService = {
         recordStockMovement(product, 'import', qty, { refCode: receipt.code, reason: `Nhận hàng ${order.code}`, note: lot || undefined })
       }
       if (qty > 0 || line.damagedQty > 0) {
-        receipt.lines.push({ productId: line.productId, name: line.name, unit: line.unit, acceptedQty: qty, damagedQty: line.damagedQty, unitCost: line.unitCost, expiryDate: line.expiryDate, lotNo: line.lotNo })
+        receipt.lines.push({ productId: line.productId, name: line.name, sku: line.sku, barcode: line.barcode, unit: line.unit, acceptedQty: qty, damagedQty: line.damagedQty, unitCost: line.unitCost, expiryDate: line.expiryDate, lotNo: line.lotNo })
       }
       const item = order.items.find((i) => i.productId === line.productId)
       if (item) {

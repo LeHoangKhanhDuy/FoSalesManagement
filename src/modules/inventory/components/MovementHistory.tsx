@@ -10,6 +10,7 @@ import { formatDateTime, formatNumber } from '@/lib/format'
 import { MovementTypeBadge, QuantityChange } from '@/modules/inventory/components/MovementTypeBadge'
 import type { useMovementHistory } from '@/modules/inventory/hooks/useMovementHistory'
 import { MOVEMENT_RANGE_OPTIONS, MOVEMENT_TYPE_OPTIONS, PAGE_SIZE } from '@/modules/inventory/utils/inventory.utils'
+import { ProductCode } from '@/components/common/ProductCode'
 
 type History = ReturnType<typeof useMovementHistory>
 
@@ -30,7 +31,7 @@ export function MovementHistory({ history, loading }: { history: History; loadin
         <Input
           value={filters.keyword}
           onChange={(e) => updateFilter('keyword', e.target.value)}
-          placeholder="Tìm sản phẩm, SKU, mã chứng từ..."
+          placeholder="Tìm sản phẩm, SKU, mã vạch, mã chứng từ..."
           leftIcon={<Search />}
           wrapperClassName="min-w-[240px] flex-1"
           rightSlot={
@@ -106,7 +107,7 @@ export function MovementHistory({ history, loading }: { history: History; loadin
                     </Td>
                     <Td>
                       <p className="max-w-[260px] truncate font-semibold text-slate-900">{m.productName}</p>
-                      <p className="text-xs text-slate-400">{m.sku}</p>
+                      <ProductCode sku={m.sku} barcode={m.barcode} />
                     </Td>
                     <Td className="text-right whitespace-nowrap">
                       <QuantityChange value={m.quantity} /> <span className="text-xs text-slate-400">{m.unit.toLowerCase()}</span>

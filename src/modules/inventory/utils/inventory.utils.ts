@@ -159,7 +159,7 @@ export const filterMovements = (list: StockMovement[], f: MovementFilters, keywo
     if (f.type === 'in' && m.quantity <= 0) return false
     if (f.type === 'out' && m.quantity >= 0) return false
     if (f.type !== 'all' && f.type !== 'in' && f.type !== 'out' && m.type !== f.type) return false
-    return !k || removeAccents(m.productName).includes(k) || m.sku.toLowerCase().includes(k) || (m.refCode ?? '').toLowerCase().includes(k)
+    return !k || removeAccents(m.productName).includes(k) || m.sku.toLowerCase().includes(k) || m.barcode.includes(k) || (m.refCode ?? '').toLowerCase().includes(k)
   })
 }
 
@@ -181,11 +181,12 @@ export const buildStockSeries = (current: number, movements: StockMovement[], da
 }
 
 export const exportMovementsCsv = (list: StockMovement[]) => {
-  const header = ['Thời gian', 'Loại', 'SKU', 'Sản phẩm', 'Thay đổi', 'Tồn trước', 'Tồn sau', 'Đơn vị', 'Chứng từ', 'Lý do', 'Người thực hiện']
+  const header = ['Thời gian', 'Loại', 'SKU', 'Mã vạch', 'Sản phẩm', 'Thay đổi', 'Tồn trước', 'Tồn sau', 'Đơn vị', 'Chứng từ', 'Lý do', 'Người thực hiện']
   const rows = list.map((m) => [
     new Date(m.createdAt).toLocaleString('vi-VN'),
     MOVEMENT_TYPES[m.type].label,
     m.sku,
+    m.barcode,
     m.productName,
     m.quantity > 0 ? `+${m.quantity}` : m.quantity,
     m.before,

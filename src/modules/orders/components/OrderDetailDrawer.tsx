@@ -12,6 +12,7 @@ import { ORDER_STATUS } from '@/modules/orders/utils/orders.utils'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
 import { PAYMENT_METHOD_LABEL, TIER_LABEL } from '@/modules/sales/utils/constants'
 import { describeVoucher } from '@/modules/sales/utils/cart.utils'
+import { ProductCode } from '@/components/common/ProductCode'
 
 interface OrderDetailDrawerProps {
   order: OrderRecord | null
@@ -136,9 +137,7 @@ export function OrderDetailDrawer({ order: openOrder, onClose, onAction, onConfi
               <ProductThumb categoryId={i.categoryId} image={i.image} fit={i.imageFit} alt={i.name} size="sm" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-slate-800">{i.name}</p>
-                <p className="text-xs text-slate-400">
-                  {i.sku} | SL: {i.quantity} × {formatCurrency(i.price)}
-                </p>
+                <ProductCode sku={i.sku} barcode={i.barcode} extra={`SL: ${i.quantity} × ${formatCurrency(i.price)}`} />
               </div>
               <p className="text-sm font-bold text-slate-900">{formatCurrency(i.price * i.quantity)}</p>
             </li>

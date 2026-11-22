@@ -8,6 +8,7 @@ import { formatNumber, parseNumber } from '@/lib/format'
 import type { AdjustMode, AdjustStockPayload, InventoryItem } from '@/modules/inventory/types/inventory.types'
 import { ADJUST_REASONS } from '@/modules/inventory/utils/inventory.utils'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
+import { ProductCode } from '@/components/common/ProductCode'
 
 interface AdjustStockModalProps {
   item: InventoryItem | null
@@ -82,9 +83,7 @@ function AdjustContent({ item, saving, onClose, onSubmit }: AdjustStockModalProp
         <ProductThumb categoryId={item.categoryId} image={item.image} fit={item.imageFit} alt={item.name} size="sm" />
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-slate-900">{item.name}</p>
-          <p className="text-xs text-slate-400">
-            {item.sku} · Tối thiểu {item.minStockValue} {item.unit.toLowerCase()}
-          </p>
+          <ProductCode sku={item.sku} barcode={item.barcode} extra={`Tối thiểu ${item.minStockValue} ${item.unit.toLowerCase()}`} />
         </div>
         <div className="text-right">
           <p className="text-[11px] text-slate-400">Tồn hiện tại</p>

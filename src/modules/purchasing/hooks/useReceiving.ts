@@ -82,7 +82,7 @@ export function useReceiving({ order, products, onUpdate, onClose }: Options) {
       next.damagedQty = Math.min(next.damagedQty, next.scannedQty)
       const state = getLineState(next)
       const result: ReceivingScan['result'] = state === 'extra' ? 'extra' : state === 'over' ? 'over' : state === 'complete' ? 'complete' : 'ok'
-      const scan: ReceivingScan = { id: crypto.randomUUID(), productId, name: next.name, quantity, result, at: new Date().toISOString() }
+      const scan: ReceivingScan = { id: crypto.randomUUID(), productId, name: next.name, barcode: next.barcode, quantity, result, at: new Date().toISOString() }
       const nextDraft: ReceivingDraft = {
         ...d,
         lines: lines.map((l) => (l.productId === productId ? next : l)),
