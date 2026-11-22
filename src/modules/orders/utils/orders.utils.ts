@@ -1,4 +1,3 @@
-import { Banknote, CreditCard, QrCode, Smartphone, type LucideIcon } from 'lucide-react'
 import type { BadgeProps } from '@/components/ui/Badge'
 import type { PaymentMethod } from '@/modules/sales/types/sales.types'
 import type { DateRange, OrderAction, OrderRecord, OrderSort, OrderStats, OrderStatus } from '@/modules/orders/types/orders.types'
@@ -19,13 +18,6 @@ export const STATUS_TABS: { value: OrderStatus | 'all'; label: string }[] = [
   { value: 'cancelled', label: 'Đã hủy' },
   { value: 'refunded', label: 'Hoàn tiền' },
 ]
-
-export const PAYMENT_ICON: Record<PaymentMethod, LucideIcon> = {
-  cash: Banknote,
-  transfer: QrCode,
-  card: CreditCard,
-  ewallet: Smartphone,
-}
 
 export const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
   { value: 'today', label: 'Hôm nay' },

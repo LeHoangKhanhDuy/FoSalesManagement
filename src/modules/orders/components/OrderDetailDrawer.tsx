@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Ban, CircleAlert, CircleCheck, Clock, Globe, NotebookPen, Printer, Store, Undo2, UserRound } from 'lucide-react'
+import { Ban, CircleAlert, CircleCheck, Clock, NotebookPen, Printer, Undo2, UserRound } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -7,7 +7,7 @@ import { Drawer } from '@/components/ui/Drawer'
 import { cn } from '@/lib/cn'
 import { formatCurrency, formatDateTime } from '@/lib/format'
 import type { OrderAction, OrderRecord } from '@/modules/orders/types/orders.types'
-import { ORDER_STATUS, PAYMENT_ICON } from '@/modules/orders/utils/orders.utils'
+import { ORDER_STATUS } from '@/modules/orders/utils/orders.utils'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
 import { PAYMENT_METHOD_LABEL, TIER_LABEL } from '@/modules/sales/utils/constants'
 import { describeVoucher } from '@/modules/sales/utils/cart.utils'
@@ -37,7 +37,6 @@ const Row = ({ label, children, className }: { label: ReactNode; children: React
 export function OrderDetailDrawer({ order, onClose, onAction, onConfirmPayment, onPrint }: OrderDetailDrawerProps) {
   if (!order) return null
   const status = ORDER_STATUS[order.status]
-  const PaymentIcon = PAYMENT_ICON[order.paymentMethod]
   const inactive = order.status === 'cancelled' || order.status === 'refunded'
 
   const timeline = [
@@ -55,8 +54,8 @@ export function OrderDetailDrawer({ order, onClose, onAction, onConfirmPayment, 
       title={order.code}
       description={
         <span className="flex items-center gap-1.5">
-          {formatDateTime(new Date(order.createdAt))} ·{' '}
-          {order.channel === 'pos' ? <Store className="size-3.5" /> : <Globe className="size-3.5" />}
+          {formatDateTime(new Date(order.createdAt))} |{' '}
+          
           {order.channel === 'pos' ? 'Tại quầy' : 'Online'}
         </span>
       }
@@ -113,7 +112,7 @@ export function OrderDetailDrawer({ order, onClose, onAction, onConfirmPayment, 
             <div className="min-w-0 flex-1">
               <p className="truncate font-semibold text-slate-900">{order.customer.name}</p>
               <p className="text-xs text-slate-500">
-                {order.customer.phone} · {order.customer.points.toLocaleString('vi-VN')} điểm
+                {order.customer.phone} - {order.customer.points.toLocaleString('vi-VN')} điểm
               </p>
             </div>
             <Badge tone={TIER_LABEL[order.customer.tier].tone}>{TIER_LABEL[order.customer.tier].label}</Badge>
@@ -136,7 +135,7 @@ export function OrderDetailDrawer({ order, onClose, onAction, onConfirmPayment, 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-slate-800">{i.name}</p>
                 <p className="text-xs text-slate-400">
-                  {i.sku} · {i.quantity} × {formatCurrency(i.price)}
+                  {i.sku} | SL: {i.quantity} × {formatCurrency(i.price)}
                 </p>
               </div>
               <p className="text-sm font-bold text-slate-900">{formatCurrency(i.price * i.quantity)}</p>
@@ -175,7 +174,7 @@ export function OrderDetailDrawer({ order, onClose, onAction, onConfirmPayment, 
           <Row
             label={
               <span className="flex items-center gap-1.5">
-                <PaymentIcon className="size-4 text-slate-400" /> {PAYMENT_METHOD_LABEL[order.paymentMethod]}
+                {PAYMENT_METHOD_LABEL[order.paymentMethod]}
               </span>
             }
           >
@@ -204,7 +203,7 @@ export function OrderDetailDrawer({ order, onClose, onAction, onConfirmPayment, 
               <div className="pt-1 text-sm">
                 <p className="font-semibold text-slate-800">{t.label}</p>
                 <p className="text-xs text-slate-400">
-                  {formatDateTime(new Date(t.time))} · {order.cashier}
+                  {formatDateTime(new Date(t.time))} | Nhân viên: {order.cashier}
                 </p>
               </div>
             </li>
