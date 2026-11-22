@@ -1,4 +1,4 @@
-import { Eraser, NotebookPen, ShoppingBasket, Wallet } from 'lucide-react'
+import { NotebookPen, ShoppingBasket, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Kbd } from '@/components/ui/Kbd'
@@ -30,8 +30,7 @@ export function CartPanel(props: CartPanelProps) {
   const empty = active.items.length === 0
 
   return (
-    <aside className="flex min-h-[560px] flex-col rounded-2xl border border-slate-100 bg-white shadow-soft lg:h-full lg:min-h-0">
-      {/* Tabs hóa đơn */}
+    <aside className="flex min-h-[560px] flex-col rounded-lg bg-white lg:h-full lg:min-h-0">
       <div className="border-b border-slate-100 p-3">
         <InvoiceTabs
           invoices={props.invoices}
@@ -53,13 +52,12 @@ export function CartPanel(props: CartPanelProps) {
               onClick={props.onClear}
               className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-slate-400 hover:text-rose-500"
             >
-              <Eraser className="size-3.5" /> Xóa tất cả
+              Xóa tất cả
             </button>
           )}
         </div>
       </div>
 
-      {/* Danh sách sản phẩm */}
       <div className="min-h-0 flex-1 overflow-y-auto px-2">
         {empty ? (
           <EmptyState
@@ -83,7 +81,6 @@ export function CartPanel(props: CartPanelProps) {
         )}
       </div>
 
-      {/* Tổng kết */}
       <div className="space-y-3 border-t border-dashed border-slate-200 p-4">
         <label className="flex h-9 items-center gap-2 rounded-lg bg-slate-50 px-3 focus-within:ring-2 focus-within:ring-primary-100">
           <NotebookPen className="size-4 text-slate-400" />

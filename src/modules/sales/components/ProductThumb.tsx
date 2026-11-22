@@ -18,7 +18,6 @@ interface ProductThumbProps {
   className?: string
 }
 
-/** Ảnh đại diện sản phẩm (placeholder theo danh mục — thay bằng <img> khi có ảnh thật từ BE) */
 export function ProductThumb({ categoryId, size = 'lg', className }: ProductThumbProps) {
   const visual = VISUALS[categoryId] ?? { icon: Package, className: 'from-slate-50 to-slate-100 text-slate-500' }
   const Icon = visual.icon
@@ -27,7 +26,7 @@ export function ProductThumb({ categoryId, size = 'lg', className }: ProductThum
       className={cn(
         'grid place-items-center bg-gradient-to-br',
         visual.className,
-        size === 'lg' ? 'aspect-[4/3] w-full rounded-xl' : 'size-12 shrink-0 rounded-xl',
+        size === 'lg' ? 'aspect-[4/3] w-full rounded-lg' : 'size-12 shrink-0 rounded-lg',
         className,
       )}
     >

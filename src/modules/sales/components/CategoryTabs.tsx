@@ -18,7 +18,7 @@ export function CategoryTabs({ categories, value, counts, onChange }: CategoryTa
             key={c.id}
             onClick={() => onChange(c.id)}
             className={cn(
-              'flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-full border px-3.5 text-[13px] font-semibold transition-all',
+              'flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-lg border px-3.5 text-[13px] font-semibold transition-all',
               active
                 ? 'border-primary-600 bg-primary-600 text-white shadow-primary'
                 : 'border-slate-200 bg-white text-slate-600 hover:border-primary-300 hover:text-primary-700',
@@ -27,7 +27,7 @@ export function CategoryTabs({ categories, value, counts, onChange }: CategoryTa
             {c.name}
             <span
               className={cn(
-                'rounded-full px-1.5 text-[11px] leading-[18px]',
+                'rounded-lg px-1.5 text-[11px] leading-[18px]',
                 active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500',
               )}
             >

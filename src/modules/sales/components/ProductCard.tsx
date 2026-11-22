@@ -18,7 +18,7 @@ function StockBadge({ stock, unit }: { stock: number; unit: string }) {
   if (stock <= LOW_STOCK_THRESHOLD) return <Badge tone="warning">Còn {stock}</Badge>
   return (
     <span className="text-[11px] text-slate-400">
-      Tồn: <span className="font-semibold text-slate-600">{stock}</span> {unit.toLowerCase()}
+      Tồn kho: <span className="font-semibold text-slate-600">{stock}</span> {unit.toLowerCase()}
     </span>
   )
 }
@@ -33,7 +33,7 @@ export function ProductCard({ product, inCart, view, onAdd }: ProductCardProps) 
         onClick={() => onAdd(product)}
         disabled={outOfStock}
         className={cn(
-          'group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-slate-100 bg-white p-2.5 text-left transition hover:border-primary-200 hover:bg-primary-50/40 disabled:cursor-not-allowed disabled:opacity-55',
+          'group flex w-full cursor-pointer items-center gap-3 rounded-lg border border-slate-100 bg-white p-2.5 text-left transition hover:border-primary-200 hover:bg-primary-50/40 disabled:cursor-not-allowed disabled:opacity-55',
           inCart > 0 && 'border-primary-200 bg-primary-50/40',
         )}
       >
@@ -58,7 +58,7 @@ export function ProductCard({ product, inCart, view, onAdd }: ProductCardProps) 
       onClick={() => onAdd(product)}
       disabled={outOfStock}
       className={cn(
-        'group relative flex cursor-pointer flex-col rounded-2xl border border-slate-100 bg-white p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-card disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0 disabled:hover:shadow-none',
+        'group relative flex cursor-pointer flex-col rounded-lg border border-slate-100 bg-white p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-card disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0 disabled:hover:shadow-none',
         inCart > 0 && 'border-primary-300 ring-2 ring-primary-100',
       )}
     >

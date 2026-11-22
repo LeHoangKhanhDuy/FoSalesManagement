@@ -109,7 +109,7 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
           </p>
         </div>
 
-        <div className="mt-5 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm">
+        <div className="mt-5 rounded-lg border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm">
           <ul className="space-y-1.5">
             {order.items.map((i) => (
               <li key={i.productId} className="flex justify-between gap-3">
@@ -175,7 +175,7 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
         </>
       }
     >
-      <div className="rounded-2xl bg-gradient-to-br from-primary-600 to-primary-800 p-5 text-white">
+      <div className="rounded-lg bg-gradient-to-br from-primary-600 to-primary-800 p-5 text-white">
         <p className="text-sm text-primary-100">Khách cần trả</p>
         <p className="mt-1 text-3xl font-extrabold tracking-tight">{formatCurrency(total)}</p>
       </div>
@@ -187,7 +187,7 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
             key={value}
             onClick={() => setMethod(value)}
             className={cn(
-              'flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border p-3 text-xs font-semibold transition',
+              'flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border p-3 text-xs font-semibold transition',
               method === value
                 ? 'border-primary-500 bg-primary-50 text-primary-700 ring-4 ring-primary-100'
                 : 'border-slate-200 text-slate-600 hover:border-slate-300',
@@ -202,7 +202,7 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
       {isCash && (
         <div className="mt-5">
           <label className="mb-2 block text-sm font-semibold text-slate-800">Tiền khách đưa</label>
-          <div className="flex h-12 items-center rounded-xl border border-slate-200 px-4 focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-100">
+          <div className="flex h-12 items-center rounded-lg border border-slate-200 px-4 focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-100">
             <input
               autoFocus
               inputMode="numeric"
@@ -232,7 +232,7 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
           </div>
           <div
             className={cn(
-              'mt-4 flex items-center justify-between rounded-xl px-4 py-3',
+              'mt-4 flex items-center justify-between rounded-lg px-4 py-3',
               change >= 0 ? 'bg-primary-50 text-primary-800' : 'bg-rose-50 text-rose-600',
             )}
           >
@@ -243,8 +243,8 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
       )}
 
       {method === 'transfer' && (
-        <div className="mt-5 flex flex-col items-center gap-4 rounded-xl border border-slate-100 bg-slate-50/60 p-5 sm:flex-row">
-          <div className="rounded-xl bg-white p-2 shadow-soft">
+        <div className="mt-5 flex flex-col items-center gap-4 rounded-lg border border-slate-100 bg-slate-50/60 p-5 sm:flex-row">
+          <div className="rounded-lg bg-white p-2 shadow-soft">
             <FakeQr seed={total} />
           </div>
           <dl className="space-y-1.5 text-sm">
@@ -266,7 +266,7 @@ export function PaymentModal({ open, total, onClose, onConfirm }: PaymentModalPr
       )}
 
       {(method === 'card' || method === 'ewallet') && (
-        <p className="mt-5 rounded-xl bg-sky-50 px-4 py-3 text-sm text-sky-700">
+        <p className="mt-5 rounded-lg bg-sky-50 px-4 py-3 text-sm text-sky-700">
           Vui lòng thực hiện giao dịch trên {method === 'card' ? 'máy POS' : 'ứng dụng ví'} và xác nhận khi hoàn tất.
         </p>
       )}
