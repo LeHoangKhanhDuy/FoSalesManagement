@@ -31,7 +31,7 @@ export function CustomerPicker({ customer, onChange }: CustomerPickerProps) {
   if (customer) {
     const tier = TIER_LABEL[customer.tier]
     return (
-      <div className="flex items-center gap-3 rounded-xl border border-primary-100 bg-primary-50/50 p-2.5">
+      <div className="flex items-center gap-3 rounded-lg border border-primary-100 bg-primary-50/50 p-2.5">
         <Avatar name={customer.name} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -59,7 +59,7 @@ export function CustomerPicker({ customer, onChange }: CustomerPickerProps) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex h-11 w-full cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3 text-left text-sm transition hover:border-slate-300"
+        className="flex h-11 w-full cursor-pointer items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3 text-left text-sm transition hover:border-slate-300"
       >
         <span className="grid size-7 place-items-center rounded-lg bg-slate-100 text-slate-500">
           <UserRound className="size-4" />
@@ -71,7 +71,7 @@ export function CustomerPicker({ customer, onChange }: CustomerPickerProps) {
       </button>
 
       {open && (
-        <div className="absolute inset-x-0 top-12 z-20 animate-slide-up rounded-xl border border-slate-100 bg-white p-2 shadow-card">
+        <div className="absolute inset-x-0 top-12 z-20 animate-slide-up rounded-lg border border-slate-100 bg-white p-2 shadow-card">
           <div className="flex h-10 items-center gap-2 rounded-lg bg-slate-50 px-3">
             <Search className="size-4 text-slate-400" />
             <input

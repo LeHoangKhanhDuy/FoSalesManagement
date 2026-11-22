@@ -45,18 +45,23 @@ export interface CartItem {
   imageFit?: ImageFit
 }
 
-export type DiscountType = 'percent' | 'amount'
-
-export interface Discount {
-  type: DiscountType
+export type VoucherType = 'percent' | 'amount'
+export interface Voucher {
+  code: string
+  name: string
+  type: VoucherType
   value: number
+  maxDiscount?: number
+  minOrder?: number
+  expiresAt?: string
 }
+
 export interface Invoice {
   id: string
   name: string
   items: CartItem[]
   customer: Customer | null
-  discount: Discount
+  voucher: Voucher | null
   note: string
   createdAt: string
 }
@@ -73,7 +78,7 @@ export interface InvoiceTotals {
 export interface CreateOrderPayload {
   items: Pick<CartItem, 'productId' | 'price' | 'quantity'>[]
   customerId: string | null
-  discount: Discount
+  voucherCode: string | null
   note: string
   paymentMethod: PaymentMethod
   paidAmount: number
@@ -84,6 +89,7 @@ export interface Order {
   code: string
   createdAt: string
   customer: Customer | null
+  voucher: Voucher | null
   items: CartItem[]
   totals: InvoiceTotals
   paymentMethod: PaymentMethod

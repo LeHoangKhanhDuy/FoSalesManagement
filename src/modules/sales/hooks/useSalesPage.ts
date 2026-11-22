@@ -12,14 +12,10 @@ export function useSalesPage() {
   const [view, setView] = useState<ViewMode>('grid')
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null)
-
   const productState = useProducts()
   const invoice = useInvoices()
   const { active, totals } = invoice
-
   const focusSearch = useCallback(() => searchRef.current?.focus(), [])
-
-  // Giữ tham chiếu ổn định → ProductGrid/ProductCard (memo) không render lại khi mở modal
   const addItemRef = useRef(invoice.addItem)
   addItemRef.current = invoice.addItem
   const handleAdd = useCallback((product: Product) => addItemRef.current(product), [])
@@ -50,12 +46,12 @@ export function useSalesPage() {
       {
         items: active.items.map(({ productId, price, quantity }) => ({ productId, price, quantity })),
         customerId: active.customer?.id ?? null,
-        discount: active.discount,
+        voucherCode: active.voucher?.code ?? null,
         note: active.note,
         paymentMethod: method,
         paidAmount,
       },
-      { products: productState.products, customer: active.customer },
+      { products: productState.products, customer: active.customer, voucher: active.voucher ?? null },
     )
     productState.decreaseStock(order.items)
     setCompletedOrder(order)

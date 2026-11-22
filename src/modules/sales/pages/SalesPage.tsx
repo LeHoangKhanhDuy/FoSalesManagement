@@ -69,7 +69,7 @@ export default function SalesPage() {
           onQuantityChange={invoice.updateQuantity}
           onRemove={invoice.removeItem}
           onClear={invoice.clearItems}
-          onDiscountChange={invoice.setDiscount}
+          onVoucherChange={invoice.setVoucher}
           onNoteChange={invoice.setNote}
           onCheckout={openPayment}
         />

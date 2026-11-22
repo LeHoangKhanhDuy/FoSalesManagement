@@ -23,7 +23,6 @@ interface PaymentModalProps {
   onConfirm: (method: PaymentMethod, paidAmount: number) => Promise<Order>
 }
 
-/** QR minh họa (giả lập) — thay bằng VietQR từ BE khi tích hợp. Vẽ bằng 1 <path> để render nhẹ */
 const FakeQr = memo(function FakeQr({ seed }: { seed: number }) {
   const d = useMemo(() => {
     const inFinder = (r: number, c: number) => (r < 7 && c < 7) || (r < 7 && c >= 14) || (r >= 14 && c < 7)
@@ -50,7 +49,6 @@ const FakeQr = memo(function FakeQr({ seed }: { seed: number }) {
   )
 })
 
-/** Chỉ mount nội dung khi mở → state khởi tạo đúng ngay lần render đầu (không cần useEffect reset) */
 export const PaymentModal = memo(function PaymentModal(props: PaymentModalProps) {
   if (!props.open) return null
   return <PaymentModalContent {...props} />
@@ -87,7 +85,6 @@ function PaymentModalContent({ total, onClose, onConfirm }: PaymentModalProps) {
     }
   }
 
-  // Màn hình hóa đơn sau khi thanh toán
   if (order) {
     return (
       <Modal open onClose={onClose} hideClose className="max-w-md">
@@ -116,7 +113,7 @@ function PaymentModalContent({ total, onClose, onConfirm }: PaymentModalProps) {
           <dl className="space-y-1.5">
             {order.totals.discountAmount > 0 && (
               <div className="flex justify-between text-rose-500">
-                <dt>Giảm giá</dt>
+                <dt>Giảm giá{order.voucher ? ` (${order.voucher.code})` : ''}</dt>
                 <dd>-{formatCurrency(order.totals.discountAmount)}</dd>
               </div>
             )}

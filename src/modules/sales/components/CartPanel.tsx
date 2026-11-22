@@ -1,14 +1,14 @@
-import { memo } from 'react'
+import { memo, useCallback } from 'react'
 import { NotebookPen, ShoppingBasket, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Kbd } from '@/components/ui/Kbd'
 import { formatCurrency } from '@/lib/format'
-import type { Customer, Discount, Invoice, InvoiceTotals } from '@/modules/sales/types/sales.types'
+import type { Customer, Invoice, InvoiceTotals, Voucher } from '@/modules/sales/types/sales.types'
 import { CartItemRow } from '@/modules/sales/components/CartItemRow'
 import { CustomerPicker } from '@/modules/sales/components/CustomerPicker'
-import { DiscountInput } from '@/modules/sales/components/DiscountInput'
 import { InvoiceTabs } from '@/modules/sales/components/InvoiceTabs'
+import { VoucherInput } from '@/modules/sales/components/VoucherInput'
 
 interface CartPanelProps {
   invoices: Invoice[]
@@ -21,13 +21,15 @@ interface CartPanelProps {
   onQuantityChange: (productId: string, quantity: number) => void
   onRemove: (productId: string) => void
   onClear: () => void
-  onDiscountChange: (d: Discount) => void
+  onVoucherChange: (voucher: Voucher | null) => void
   onNoteChange: (note: string) => void
   onCheckout: () => void
 }
 
 export const CartPanel = memo(function CartPanel(props: CartPanelProps) {
-  const { active, totals } = props
+  const { active, totals, onVoucherChange } = props
+  const voucher = active.voucher ?? null
+  const removeVoucher = useCallback(() => onVoucherChange(null), [onVoucherChange])
   const empty = active.items.length === 0
 
   return (
@@ -93,18 +95,24 @@ export const CartPanel = memo(function CartPanel(props: CartPanelProps) {
           />
         </label>
 
+        <VoucherInput voucher={voucher} subtotal={totals.subtotal} onApply={onVoucherChange} onRemove={removeVoucher} />
+
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between">
             <dt className="text-slate-500">Tạm tính</dt>
             <dd className="font-semibold text-slate-800">{formatCurrency(totals.subtotal)}</dd>
           </div>
-          <div className="flex items-center justify-between">
-            <dt className="text-slate-500">Giảm giá</dt>
-            <dd className="flex items-center gap-2">
-              {totals.discountAmount > 0 && (
-                <span className="text-xs font-semibold text-rose-500">-{formatCurrency(totals.discountAmount)}</span>
+          <div className="flex justify-between">
+            <dt className="text-slate-500">
+              Giảm giá
+              {voucher && totals.discountAmount > 0 && (
+                <span className="ml-1.5 rounded bg-primary-50 px-1.5 py-0.5 text-[10px] font-bold text-primary-700">
+                  {voucher.code}
+                </span>
               )}
-              <DiscountInput value={active.discount} onChange={props.onDiscountChange} />
+            </dt>
+            <dd className={totals.discountAmount > 0 ? 'font-semibold text-rose-500' : 'font-semibold text-slate-400'}>
+              {totals.discountAmount > 0 ? `-${formatCurrency(totals.discountAmount)}` : formatCurrency(0)}
             </dd>
           </div>
           <div className="flex items-end justify-between border-t border-slate-100 pt-3">
