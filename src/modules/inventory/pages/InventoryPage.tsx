@@ -1,4 +1,4 @@
-import { Boxes, History, RefreshCw, type LucideIcon } from 'lucide-react'
+import { Boxes, History, RefreshCw, Truck, type LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { cn } from '@/lib/cn'
@@ -9,9 +9,11 @@ import { StockDetailDrawer } from '@/modules/inventory/components/StockDetailDra
 import { StockFilters } from '@/modules/inventory/components/StockFilters'
 import { StockTable } from '@/modules/inventory/components/StockTable'
 import { useInventoryPage, type InventoryTab } from '@/modules/inventory/hooks/useInventoryPage'
+import { PurchaseOrdersPanel } from '@/modules/purchasing/components/PurchaseOrdersPanel'
 
 const TABS: { value: InventoryTab; label: string; icon: LucideIcon }[] = [
   { value: 'stock', label: 'Tồn kho hiện tại', icon: Boxes },
+  { value: 'purchasing', label: 'Nhập hàng', icon: Truck },
   { value: 'history', label: 'Lịch sử xuất nhập', icon: History },
 ]
 
@@ -22,6 +24,7 @@ export default function InventoryPage() {
     data,
     stock,
     history,
+    purchasing,
     detail,
     detailMovements,
     openDetail,
@@ -71,6 +74,9 @@ export default function InventoryPage() {
                 )}
               >
                 <Icon className="size-4" /> {label}
+                {value === 'purchasing' && purchasing.counts.open > 0 && (
+                  <span className="rounded-full bg-amber-100 px-2 text-[11px] leading-5 text-amber-700">{purchasing.counts.open}</span>
+                )}
                 {active && <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-primary-600" />}
               </button>
             )
@@ -98,6 +104,8 @@ export default function InventoryPage() {
               onAdjust={openAdjust}
             />
           </>
+        ) : tab === 'purchasing' ? (
+          <PurchaseOrdersPanel po={purchasing} />
         ) : (
           <MovementHistory history={history} loading={data.loading} />
         )}

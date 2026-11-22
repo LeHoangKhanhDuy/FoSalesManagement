@@ -3,9 +3,10 @@ import { toast } from 'sonner'
 import { useInventoryData } from '@/modules/inventory/hooks/useInventoryData'
 import { useMovementHistory } from '@/modules/inventory/hooks/useMovementHistory'
 import { useStockList } from '@/modules/inventory/hooks/useStockList'
+import { usePurchaseOrders } from '@/modules/purchasing/hooks/usePurchaseOrders'
 import type { AdjustStockPayload, InventoryItem } from '@/modules/inventory/types/inventory.types'
 
-export type InventoryTab = 'stock' | 'history'
+export type InventoryTab = 'stock' | 'purchasing' | 'history'
 
 export function useInventoryPage() {
   const [tab, setTab] = useState<InventoryTab>('stock')
@@ -15,6 +16,7 @@ export function useInventoryPage() {
   const data = useInventoryData()
   const stock = useStockList(data.items, tab === 'stock' && !adjustTarget && !detailId)
   const history = useMovementHistory(data.movements)
+  const purchasing = usePurchaseOrders(data.reload)
 
   const detail = useMemo(() => data.items.find((i) => i.id === detailId) ?? null, [data.items, detailId])
   const detailMovements = useMemo(() => (detailId ? data.movements.filter((m) => m.productId === detailId) : []), [data.movements, detailId])
@@ -58,6 +60,7 @@ export function useInventoryPage() {
     data,
     stock,
     history,
+    purchasing,
     detail,
     detailMovements,
     openDetail,

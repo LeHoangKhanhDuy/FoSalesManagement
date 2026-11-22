@@ -49,7 +49,7 @@ export function NumberInput({ value, onChange, error, placeholder = '0', suffix,
         value={value ? formatNumber(value) : ''}
         onChange={(e) => onChange(parseNumber(e.target.value))}
         placeholder={placeholder}
-        className={cn(inputClass(error), 'text-right font-semibold', suffix && 'pr-8', className)}
+        className={cn(inputClass(error), 'text-right font-semibold', suffix && (suffix.length > 2 ? 'pr-14' : 'pr-8'), className)}
       />
       {suffix && <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-slate-400">{suffix}</span>}
     </div>
