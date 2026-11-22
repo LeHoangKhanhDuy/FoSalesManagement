@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { useBarcodeScanner } from '@/hooks/useBarcodeScanner'
 import { useDebounce } from '@/hooks/useDebounce'
 import { productsService } from '@/modules/products/services/products.service'
 import type { ProductFilters, ProductFormValues } from '@/modules/products/types/products.types'
@@ -167,6 +168,18 @@ export function useProductsPage() {
       setDeleting(false)
     }
   }
+
+  useBarcodeScanner(
+    (code) => {
+      setFilters((f) => ({ ...f, keyword: code, status: 'all', categoryId: 'all', stock: 'all' }))
+      setPage(1)
+      setSelectedIds(new Set())
+      const found = products.find((p) => p.barcode === code || p.sku.toLowerCase() === code.toLowerCase())
+      if (found) toast.success(`Đã tìm thấy: ${found.name}`, { duration: 1500 })
+      else toast.error(`Không có sản phẩm mã "${code}"`, { description: 'Bạn có thể thêm sản phẩm mới với mã vạch này' })
+    },
+    { enabled: !form && !deleteTarget },
+  )
 
   const selectedProducts = useMemo(() => products.filter((p) => selectedIds.has(p.id)), [products, selectedIds])
 
