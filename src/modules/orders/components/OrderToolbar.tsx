@@ -5,7 +5,7 @@ import { Dropdown, DropdownItem, DropdownLabel } from '@/components/ui/Dropdown'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
 import type { OrderFilters, OrderStatus } from '@/modules/orders/types/orders.types'
-import { DATE_RANGE_OPTIONS, PAYMENT_ICON, SORT_OPTIONS, STATUS_TABS } from '@/modules/orders/utils/orders.utils'
+import { DATE_RANGE_OPTIONS, SORT_OPTIONS, STATUS_TABS } from '@/modules/orders/utils/orders.utils'
 import type { PaymentMethod } from '@/modules/sales/types/sales.types'
 import { PAYMENT_METHOD_LABEL } from '@/modules/sales/utils/constants'
 
@@ -14,7 +14,6 @@ const PAYMENT_OPTIONS: { value: PaymentMethod | 'all'; label: string; icon?: Luc
   ...(Object.keys(PAYMENT_METHOD_LABEL) as PaymentMethod[]).map((m) => ({
     value: m,
     label: PAYMENT_METHOD_LABEL[m],
-    icon: PAYMENT_ICON[m],
   })),
 ]
 
