@@ -3,7 +3,7 @@ import type { MovementType, StockMovement } from '@/modules/inventory/types/inve
 import { MOCK_PRODUCTS } from '@/modules/sales/mocks/products.mock'
 import type { Product } from '@/modules/sales/types/sales.types'
 
-type Draft = Omit<StockMovement, 'id' | 'before' | 'after' | 'productName' | 'sku' | 'unit'>
+type Draft = Omit<StockMovement, 'id' | 'before' | 'after' | 'productName' | 'sku' | 'barcode' | 'unit'>
 
 const DAY = 86_400_000
 const STAFF = ['Khánh Duy', 'Minh Thư', 'Quốc Huy']
@@ -107,7 +107,7 @@ const buildHistory = (): StockMovement[] => {
       .forEach((d, i) => {
         const before = stock
         stock += d.quantity
-        result.push({ ...d, id: `${product.id}-m${i}`, productName: product.name, sku: product.sku, unit: product.unit, before, after: stock })
+        result.push({ ...d, id: `${product.id}-m${i}`, productName: product.name, sku: product.sku, barcode: product.barcode, unit: product.unit, before, after: stock })
       })
   }
   return result.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -128,6 +128,7 @@ export const recordStockMovement = (
     productId: product.id,
     productName: product.name,
     sku: product.sku,
+    barcode: product.barcode,
     unit: product.unit,
     type,
     quantity: product.stock - before,

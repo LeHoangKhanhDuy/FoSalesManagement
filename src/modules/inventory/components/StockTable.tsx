@@ -10,6 +10,7 @@ import { getCategoryName } from '@/modules/products/utils/products.utils'
 import { PAGE_SIZE, timeAgo } from '@/modules/inventory/utils/inventory.utils'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
 import type { Category } from '@/modules/sales/types/sales.types'
+import { ProductCode } from '@/components/common/ProductCode'
 
 interface StockTableProps {
   items: InventoryItem[]
@@ -99,7 +100,7 @@ export const StockTable = memo(function StockTable({ items, categories, total, p
                         <ProductThumb categoryId={item.categoryId} image={item.image} fit={item.imageFit} alt={item.name} size="sm" />
                         <div className="min-w-0">
                           <p className="truncate font-semibold text-slate-900 group-hover:text-primary-700">{item.name}</p>
-                          <p className="text-xs text-slate-400">{item.sku}</p>
+                          <ProductCode sku={item.sku} barcode={item.barcode} />
                         </div>
                       </div>
                     </Td>

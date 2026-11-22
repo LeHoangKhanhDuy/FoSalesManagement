@@ -129,7 +129,7 @@ export const purchasingService = {
         recordStockMovement(product, 'import', qty, { refCode: receipt.code, reason: `Nhận hàng ${order.code}`, note: lot || undefined })
       }
       if (qty > 0 || line.damagedQty > 0) {
-        receipt.lines.push({ productId: line.productId, name: line.name, unit: line.unit, acceptedQty: qty, damagedQty: line.damagedQty, unitCost: line.unitCost, expiryDate: line.expiryDate, lotNo: line.lotNo })
+        receipt.lines.push({ productId: line.productId, name: line.name, sku: line.sku, barcode: line.barcode, unit: line.unit, acceptedQty: qty, damagedQty: line.damagedQty, unitCost: line.unitCost, expiryDate: line.expiryDate, lotNo: line.lotNo })
       }
       const item = order.items.find((i) => i.productId === line.productId)
       if (item) {

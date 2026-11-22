@@ -2,6 +2,7 @@ import { Minus, Plus, Trash2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/format'
 import type { CartItem } from '@/modules/sales/types/sales.types'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
+import { ProductCode } from '@/components/common/ProductCode'
 
 interface CartItemRowProps {
   item: CartItem
@@ -30,9 +31,7 @@ export function CartItemRow({ item, index, onQuantityChange, onRemove }: CartIte
             <Trash2 className="size-4" />
           </button>
         </div>
-        <p className="text-[11px] text-slate-400">
-          {formatCurrency(item.price)} / {item.unit.toLowerCase()}
-        </p>
+        <ProductCode barcode={item.barcode} extra={item.unit} className="text-[11px]" />
         <div className="mt-1.5 flex items-center justify-between">
           <div className="flex h-8 items-center rounded-lg border border-slate-200 bg-white">
             <button

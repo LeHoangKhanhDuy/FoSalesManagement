@@ -83,6 +83,8 @@ export interface LedgerEntry {
 export interface TopProduct {
   productId: string
   name: string
+  sku: string
+  barcode: string
   unit: string
   categoryId: string
   image?: string

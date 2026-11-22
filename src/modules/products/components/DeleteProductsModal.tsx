@@ -2,6 +2,7 @@ import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import type { Product } from '@/modules/sales/types/sales.types'
+import { ProductCode } from '@/components/common/ProductCode'
 
 interface DeleteProductsModalProps {
   products: Product[] | null
@@ -44,6 +45,7 @@ export function DeleteProductsModal({ products, deleting, onClose, onConfirm }: 
           {single ? (
             <>
               <span className="font-semibold text-slate-800">{products[0].name}</span> sẽ bị xóa vĩnh viễn.
+              <ProductCode sku={products[0].sku} barcode={products[0].barcode} className="mt-1 justify-center" />
             </>
           ) : (
             'Các sản phẩm đã chọn sẽ bị xóa vĩnh viễn.'

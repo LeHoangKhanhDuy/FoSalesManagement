@@ -26,6 +26,7 @@ import type {
 } from "@/modules/orders/types/orders.types";
 import { ORDER_STATUS, PAGE_SIZE } from "@/modules/orders/utils/orders.utils";
 import { PAYMENT_METHOD_LABEL } from "@/modules/sales/utils/constants";
+import { ProductCode } from "@/components/common/ProductCode";
 
 interface OrdersTableProps {
   orders: OrderRecord[];
@@ -228,9 +229,10 @@ export const OrdersTable = memo(function OrdersTable(props: OrdersTableProps) {
                         {o.items[0]?.name}
                         {/* {o.items.length > 1 && ` +${o.items.length - 1}`} */}
                       </p>
-                      <p className="truncate text-xs text-slate-400">
-                        SL: {o.totals.itemCount}
-                      </p>
+                      <ProductCode
+                        barcode={o.items[0]?.barcode}
+                        extra={`SL: ${o.totals.itemCount}`}
+                      />
                     </Cell>
                     <Cell>
                       <span className="flex items-center gap-2 whitespace-nowrap text-slate-600">

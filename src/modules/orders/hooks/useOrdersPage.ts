@@ -67,6 +67,7 @@ export function useOrdersPage() {
       if (!k) return true
       return (
         o.code.toLowerCase().includes(k) ||
+        o.items.some((i) => i.barcode === k || i.sku.toLowerCase() === k) ||
         (o.customer && (removeAccents(o.customer.name).includes(k) || o.customer.phone.includes(k)))
       )
     })

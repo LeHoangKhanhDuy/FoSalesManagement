@@ -4,6 +4,7 @@ import { formatCurrency } from '@/lib/format'
 import type { PurchaseOrderItem } from '@/modules/purchasing/types/purchasing.types'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
 import type { Product } from '@/modules/sales/types/sales.types'
+import { ProductCode } from '@/components/common/ProductCode'
 
 interface PoItemsEditorProps {
   items: PurchaseOrderItem[]
@@ -42,9 +43,7 @@ export function PoItemsEditor({ items, products, onUpdate, onRemove }: PoItemsEd
                 <ProductThumb categoryId={i.categoryId} image={i.image} fit={i.imageFit} alt={i.name} size="sm" className="size-9" />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-slate-800">{i.name}</p>
-                  <p className="text-[11px] text-slate-400">
-                    {i.sku} · Tồn {stock ?? '—'} {i.unit.toLowerCase()}
-                  </p>
+                  <ProductCode sku={i.sku} barcode={i.barcode} extra={`Tồn ${stock ?? '—'} ${i.unit.toLowerCase()}`} className="text-[11px]" />
                 </div>
               </div>
               <div>

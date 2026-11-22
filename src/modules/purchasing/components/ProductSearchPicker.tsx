@@ -5,6 +5,7 @@ import { cn } from '@/lib/cn'
 import { formatCurrency, removeAccents } from '@/lib/format'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
 import type { Product } from '@/modules/sales/types/sales.types'
+import { ProductCode } from '@/components/common/ProductCode'
 
 interface ProductSearchPickerProps {
   products: Product[]
@@ -78,9 +79,7 @@ export function ProductSearchPicker({ products, selectedIds, onSelect }: Product
                   <ProductThumb categoryId={p.categoryId} image={p.image} fit={p.imageFit} alt={p.name} size="sm" className="size-9" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-semibold text-slate-800">{p.name}</span>
-                    <span className="block text-xs text-slate-400">
-                      {p.sku} · Tồn {p.stock} · Giá vốn {formatCurrency(p.costPrice ?? 0)}
-                    </span>
+                    <ProductCode sku={p.sku} barcode={p.barcode} extra={`Tồn ${p.stock} · Giá vốn ${formatCurrency(p.costPrice ?? 0)}`} />
                   </span>
                   <span className={cn('flex items-center gap-1 text-xs font-semibold', added ? 'text-slate-400' : 'text-primary-600')}>
                     <Plus className="size-3.5" /> {added ? 'Thêm SL' : 'Thêm'}

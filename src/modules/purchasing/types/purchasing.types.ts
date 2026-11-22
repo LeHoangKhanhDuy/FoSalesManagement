@@ -53,6 +53,7 @@ export interface ReceivingScan {
   id: string
   productId: string
   name: string
+  barcode?: string
   quantity: number
   result: 'ok' | 'complete' | 'over' | 'extra'
   at: string
@@ -74,7 +75,7 @@ export interface GoodsReceipt {
   receivedAt: string
   receivedBy: string
   supplierDocNo: string
-  lines: { productId: string; name: string; unit: string; acceptedQty: number; damagedQty: number; unitCost: number; expiryDate?: string; lotNo?: string }[]
+  lines: { productId: string; name: string; sku: string; barcode: string; unit: string; acceptedQty: number; damagedQty: number; unitCost: number; expiryDate?: string; lotNo?: string }[]
   value: number
   note: string
   approvedBy?: string

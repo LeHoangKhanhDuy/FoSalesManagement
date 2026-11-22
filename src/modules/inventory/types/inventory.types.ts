@@ -7,6 +7,7 @@ export interface StockMovement {
   productId: string
   productName: string
   sku: string
+  barcode: string
   unit: string
   type: MovementType
   quantity: number

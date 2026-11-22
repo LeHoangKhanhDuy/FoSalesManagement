@@ -6,6 +6,7 @@ import { formatCurrency } from '@/lib/format'
 import type { Product } from '@/modules/sales/types/sales.types'
 import { LOW_STOCK_THRESHOLD } from '@/modules/sales/utils/constants'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
+import { ProductCode } from '@/components/common/ProductCode'
 
 interface ProductCardProps {
   product: Product
@@ -41,9 +42,7 @@ export const ProductCard = memo(function ProductCard({ product, inCart, view, on
         <ProductThumb categoryId={product.categoryId} image={product.image} fit={product.imageFit} alt={product.name} size="sm" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-800">{product.name}</p>
-          <p className="text-[11px] text-slate-400">
-            {product.sku} · {product.unit}
-          </p>
+          <ProductCode barcode={product.barcode} className="text-[11px]" />
         </div>
         <StockBadge stock={product.stock} unit={product.unit} />
         <p className="w-24 text-right text-sm font-bold text-primary-700">{formatCurrency(product.price)}</p>
@@ -84,9 +83,7 @@ export const ProductCard = memo(function ProductCard({ product, inCart, view, on
 
       <div className="flex flex-1 flex-col px-1 pt-2.5">
         <p className="line-clamp-2 min-h-10 text-[13px] leading-5 font-semibold text-slate-800">{product.name}</p>
-        <p className="mt-0.5 text-[11px] text-slate-400">
-          {product.sku} · {product.unit}
-        </p>
+        <ProductCode barcode={product.barcode} className="mt-0.5 text-[11px]" />
         <div className="mt-2 flex items-end justify-between gap-2">
           <div>
             {product.originalPrice && (

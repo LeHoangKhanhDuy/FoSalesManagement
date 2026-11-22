@@ -7,6 +7,7 @@ import { cn } from '@/lib/cn'
 import { formatCurrency, formatDateTime, formatNumber, parseNumber } from '@/lib/format'
 import type { Order, PaymentMethod } from '@/modules/sales/types/sales.types'
 import { PAYMENT_METHOD_LABEL } from '@/modules/sales/utils/constants'
+import { ProductCode } from '@/components/common/ProductCode'
 
 const CASH_DENOMINATIONS = [1_000, 2_000, 5_000, 10_000, 20_000, 50_000, 100_000, 200_000, 500_000]
 
@@ -115,8 +116,11 @@ function PaymentModalContent({ total, onClose, onConfirm }: PaymentModalProps) {
           <ul className="space-y-1.5">
             {order.items.map((i) => (
               <li key={i.productId} className="flex justify-between gap-3">
-                <span className="truncate text-slate-600">
-                  {i.quantity} × {i.name}
+                <span className="min-w-0 text-slate-600">
+                  <span className="block truncate">
+                    {i.quantity} × {i.name}
+                  </span>
+                  <ProductCode barcode={i.barcode} className="text-[11px]" />
                 </span>
                 <span className="shrink-0 font-medium text-slate-800">{formatCurrency(i.price * i.quantity)}</span>
               </li>

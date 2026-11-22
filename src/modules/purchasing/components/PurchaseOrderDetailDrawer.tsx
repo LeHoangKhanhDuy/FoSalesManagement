@@ -9,6 +9,7 @@ import { formatCurrency, formatDateTime } from '@/lib/format'
 import type { PurchaseOrder } from '@/modules/purchasing/types/purchasing.types'
 import { calcPoTotals, isOverdue, PO_STATUS, receivedValue } from '@/modules/purchasing/utils/purchasing.utils'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
+import { ProductCode } from '@/components/common/ProductCode'
 
 interface Props {
   order: PurchaseOrder | null
@@ -101,9 +102,7 @@ export function PurchaseOrderDetailDrawer({ order: openOrder, onClose, onEdit, o
                 <ProductThumb categoryId={i.categoryId} image={i.image} fit={i.imageFit} alt={i.name} size="sm" className="size-10" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-800">{i.name}</p>
-                  <p className="text-xs text-slate-400">
-                    {i.sku} · {formatCurrency(i.unitCost)}/{i.unit.toLowerCase()}
-                  </p>
+                  <ProductCode sku={i.sku} barcode={i.barcode} extra={`${formatCurrency(i.unitCost)}/${i.unit.toLowerCase()}`} />
                 </div>
                 <div className="text-right text-xs">
                   <p>

@@ -103,7 +103,7 @@ export const topProducts = (supplierId: string, orders: PurchaseOrder[], limit =
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
     .forEach((o) =>
       o.items.forEach((i) => {
-        const cur = map.get(i.productId) ?? { productId: i.productId, name: i.name, unit: i.unit, categoryId: i.categoryId, image: i.image, qty: 0, value: 0, lastCost: i.unitCost }
+        const cur = map.get(i.productId) ?? { productId: i.productId, name: i.name, sku: i.sku, barcode: i.barcode, unit: i.unit, categoryId: i.categoryId, image: i.image, qty: 0, value: 0, lastCost: i.unitCost }
         if (i.receivedQty > 0) {
           cur.qty += i.receivedQty
           cur.value += i.receivedQty * i.unitCost

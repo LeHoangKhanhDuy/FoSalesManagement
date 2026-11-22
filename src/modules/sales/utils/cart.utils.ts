@@ -15,6 +15,7 @@ export const productToCartItem = (product: Product): CartItem => ({
   productId: product.id,
   name: product.name,
   sku: product.sku,
+  barcode: product.barcode,
   unit: product.unit,
   categoryId: product.categoryId,
   price: product.price,

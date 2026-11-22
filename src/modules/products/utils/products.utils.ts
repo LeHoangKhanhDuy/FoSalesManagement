@@ -1,3 +1,4 @@
+import { generateEan13, isValidEan13 } from '@/lib/barcode'
 import { removeAccents } from '@/lib/format'
 import type {
   ProductFilters,
@@ -109,7 +110,7 @@ export const generateSku = (products: Product[]) => {
   return `SP${String(max + 1).padStart(4, '0')}`
 }
 
-export const generateBarcode = () => `893${String(Math.floor(Math.random() * 1e10)).padStart(10, '0')}`
+export const generateBarcode = () => generateEan13()
 
 export const productToForm = (p: Product): ProductFormValues => ({
   name: p.name,
@@ -157,6 +158,7 @@ export const validateProductForm = (v: ProductFormValues, products: Product[], e
   if (!v.sku.trim()) errors.sku = 'Vui lòng nhập mã SKU'
   else if (others.some((p) => p.sku.toLowerCase() === v.sku.trim().toLowerCase())) errors.sku = 'Mã SKU đã tồn tại'
   if (v.barcode.trim() && !/^\d{8,14}$/.test(v.barcode.trim())) errors.barcode = 'Mã vạch gồm 8–14 chữ số'
+  else if (v.barcode.trim().length === 13 && !isValidEan13(v.barcode.trim())) errors.barcode = 'Mã EAN-13 sai số kiểm tra (chữ số cuối)'
   else if (v.barcode.trim() && others.some((p) => p.barcode === v.barcode.trim())) errors.barcode = 'Mã vạch đã tồn tại'
   if (v.image.trim() && !/^(https?:\/\/|\/|data:image\/)/.test(v.image.trim())) errors.image = 'Đường dẫn ảnh phải bắt đầu bằng http(s):// hoặc /'
   return errors

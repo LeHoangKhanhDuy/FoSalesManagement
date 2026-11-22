@@ -59,7 +59,7 @@ const buildOrder = (seed: Seed, index: number): PurchaseOrder => {
     })
     const lines = items
       .filter((i) => i.receivedQty > 0)
-      .map((i) => ({ productId: i.productId, name: i.name, unit: i.unit, acceptedQty: i.receivedQty, damagedQty: 0, unitCost: i.unitCost }))
+      .map((i) => ({ productId: i.productId, name: i.name, sku: i.sku, barcode: i.barcode, unit: i.unit, acceptedQty: i.receivedQty, damagedQty: 0, unitCost: i.unitCost }))
     receipts.push({
       id: `gr-${index}`,
       code: `PN${ymd(receivedDay)}-${String(2100 + index * 37).slice(-4)}`,

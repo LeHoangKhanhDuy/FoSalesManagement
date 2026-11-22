@@ -7,6 +7,7 @@ import type { PurchaseOrder } from '@/modules/purchasing/types/purchasing.types'
 import { calcPoTotals, PO_STATUS } from '@/modules/purchasing/utils/purchasing.utils'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
 import type { LedgerEntry, TopProduct } from '@/modules/suppliers/types/suppliers.types'
+import { ProductCode } from '@/components/common/ProductCode'
 
 export function SupplierLedger({ entries }: { entries: LedgerEntry[] }) {
   if (!entries.length) return <EmptyState icon={<Wallet />} title="Chưa phát sinh công nợ" description="Công nợ tăng khi nhập kho và giảm khi thanh toán." className="py-10" />
@@ -75,6 +76,7 @@ export function SupplierProducts({ products }: { products: TopProduct[] }) {
           <ProductThumb categoryId={p.categoryId} image={p.image} alt={p.name} size="sm" className="size-10" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-slate-800">{p.name}</p>
+            <ProductCode sku={p.sku} barcode={p.barcode} />
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
               <div className="h-full rounded-full bg-primary-500" style={{ width: `${(p.qty / max) * 100}%` }} />
             </div>
