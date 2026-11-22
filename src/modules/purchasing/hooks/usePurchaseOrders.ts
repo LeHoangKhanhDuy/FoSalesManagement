@@ -4,12 +4,13 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { removeAccents } from '@/lib/format'
 import { productsService } from '@/modules/products/services/products.service'
 import { purchasingService } from '@/modules/purchasing/services/purchasing.service'
-import type { PurchaseOrder, PurchaseOrderFormValues, PurchaseOrderStatus, Supplier } from '@/modules/purchasing/types/purchasing.types'
+import type { PurchaseOrder, PurchaseOrderFormValues, PurchaseOrderStatus} from '@/modules/purchasing/types/purchasing.types'
+import type { Supplier } from '@/modules/suppliers/types/suppliers.types'
 import { OPEN_STATUSES, PO_PAGE_SIZE, PO_STATUS_TABS } from '@/modules/purchasing/utils/purchasing.utils'
 import type { Product } from '@/modules/sales/types/sales.types'
 
 export type PoTab = PurchaseOrderStatus | 'all' | 'open'
-export type PoFormState = { mode: 'create'; preset?: 'low-stock' } | { mode: 'edit'; order: PurchaseOrder } | null
+export type PoFormState = { mode: 'create'; preset?: 'low-stock'; supplierId?: string } | { mode: 'edit'; order: PurchaseOrder } | null
 
 const matchTab = (o: PurchaseOrder, tab: PoTab) =>
   tab === 'all' || (tab === 'open' ? OPEN_STATUSES.includes(o.status) : tab === 'ordered' ? o.status === 'ordered' || o.status === 'receiving' : o.status === tab)
@@ -135,7 +136,7 @@ export function usePurchaseOrders(onStockChanged: () => void) {
     page: currentPage,
     setPage,
     form,
-    openCreate: useCallback((preset?: 'low-stock') => setForm({ mode: 'create', preset }), []),
+    openCreate: useCallback((preset?: 'low-stock', supplierId?: string) => setForm({ mode: 'create', preset, supplierId }), []),
     openEdit: useCallback((order: PurchaseOrder) => setForm({ mode: 'edit', order }), []),
     closeForm: useCallback(() => !saving && setForm(null), [saving]),
     submitForm,

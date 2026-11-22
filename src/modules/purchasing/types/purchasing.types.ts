@@ -1,13 +1,5 @@
 import type { ImageFit } from '@/modules/sales/types/sales.types'
 
-export interface Supplier {
-  id: string
-  name: string
-  contact: string
-  phone: string
-  address: string
-}
-
 export type PurchaseOrderStatus = 'draft' | 'ordered' | 'receiving' | 'partial' | 'completed' | 'cancelled'
 
 export interface PurchaseOrderItem {

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import type { PurchaseOrderFormValues, PurchaseOrderItem, Supplier } from '@/modules/purchasing/types/purchasing.types'
+import type { PurchaseOrderFormValues, PurchaseOrderItem} from '@/modules/purchasing/types/purchasing.types'
+import type { Supplier } from '@/modules/suppliers/types/suppliers.types'
 import type { PoFormState } from '@/modules/purchasing/hooks/usePurchaseOrders'
 import { calcPoTotals, productToPoItem } from '@/modules/purchasing/utils/purchasing.utils'
 import type { Product } from '@/modules/sales/types/sales.types'
@@ -18,7 +19,7 @@ export function usePurchaseOrderForm(state: NonNullable<PoFormState>, products: 
       return { supplierId: o.supplierId, expectedDate: new Date(o.expectedDate), items: structuredClone(o.items), discount: o.discount, note: o.note }
     }
     const tomorrow = new Date(Date.now() + 86_400_000)
-    return { supplierId: '', expectedDate: tomorrow, items: state.preset === 'low-stock' ? lowStockItems(products) : [], discount: 0, note: '' }
+    return { supplierId: state.supplierId ?? '', expectedDate: tomorrow, items: state.preset === 'low-stock' ? lowStockItems(products) : [], discount: 0, note: '' }
   })
   const [submitted, setSubmitted] = useState(false)
 
