@@ -28,17 +28,16 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
     <header className="sticky top-0 z-30 flex h-[76px] shrink-0 items-center gap-3 border-b border-slate-100 bg-white/85 px-4 backdrop-blur-md lg:px-6">
       <button
         onClick={onOpenMenu}
-        className="grid size-10 cursor-pointer place-items-center rounded-xl border border-slate-200 text-slate-600 lg:hidden"
+        className="grid size-10 cursor-pointer place-items-center rounded-lg border border-slate-200 text-slate-600 lg:hidden"
         aria-label="Mở menu"
       >
         <Menu className="size-5" />
       </button>
 
-      {/* Chọn chi nhánh */}
       <div ref={storeRef} className="relative">
         <button
           onClick={() => setStoreOpen((v) => !v)}
-          className="flex h-12 cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white pr-3 pl-2 shadow-soft transition hover:border-slate-300"
+          className="flex h-12 cursor-pointer items-center gap-3 rounded-lg border border-slate-200 bg-white pr-3 pl-2 shadow-soft transition hover:border-slate-300"
         >
           <span className="grid size-8 place-items-center rounded-lg bg-primary-50 text-primary-600">
             <Store className="size-[18px]" />
@@ -50,7 +49,7 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
           <ChevronDown className={cn('size-4 text-slate-400 transition', storeOpen && 'rotate-180')} />
         </button>
         {storeOpen && (
-          <div className="absolute top-14 left-0 w-64 animate-slide-up rounded-xl border border-slate-100 bg-white p-1.5 shadow-card">
+          <div className="absolute top-14 left-0 w-64 animate-slide-up rounded-lg border border-slate-100 bg-white p-1.5 shadow-card">
             <p className="px-2.5 py-1.5 text-[11px] font-bold tracking-wider text-slate-400 uppercase">Chi nhánh</p>
             {STORES.map((s) => (
               <button
@@ -72,9 +71,8 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
         )}
       </div>
 
-      {/* Tìm kiếm toàn cục */}
       <div className="mx-auto hidden w-full max-w-md md:block">
-        <label className="flex h-11 items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3.5 transition focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-100">
+        <label className="flex h-11 items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3.5 transition focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-100">
           <Search className="size-[18px] text-slate-400" />
           <input
             ref={searchRef}
@@ -87,7 +85,7 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
 
       <div className="ml-auto flex items-center gap-2 md:ml-0">
         <button
-          className="relative grid size-11 cursor-pointer place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+          className="relative grid size-11 cursor-pointer place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
           aria-label="Thông báo"
         >
           <Bell className="size-5" />
@@ -97,7 +95,7 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
         <div ref={userRef} className="relative">
           <button
             onClick={() => setUserOpen((v) => !v)}
-            className="flex h-12 cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200 bg-white pr-3 pl-1.5 shadow-soft transition hover:border-slate-300"
+            className="flex h-12 cursor-pointer items-center gap-2.5 rounded-lg border border-slate-200 bg-white pr-3 pl-1.5 shadow-soft transition hover:border-slate-300"
           >
             <span className="grid size-9 place-items-center rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 text-xs font-bold text-white">
               KD
@@ -109,7 +107,7 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
             <ChevronDown className="size-4 text-slate-400" />
           </button>
           {userOpen && (
-            <div className="absolute top-14 right-0 w-56 animate-slide-up rounded-xl border border-slate-100 bg-white p-1.5 shadow-card">
+            <div className="absolute top-14 right-0 w-56 animate-slide-up rounded-lg border border-slate-100 bg-white p-1.5 shadow-card">
               {[
                 { icon: UserRound, label: 'Hồ sơ của tôi' },
                 { icon: Settings, label: 'Cài đặt' },
