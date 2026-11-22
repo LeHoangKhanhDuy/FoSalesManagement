@@ -1,15 +1,11 @@
 const currencyFormatter = new Intl.NumberFormat('vi-VN')
 
-/** 125000 -> "125.000đ" */
 export const formatCurrency = (value: number) => `${currencyFormatter.format(Math.round(value))}đ`
 
-/** 125000 -> "125.000" */
 export const formatNumber = (value: number) => currencyFormatter.format(value)
 
-/** "125.000" -> 125000 */
 export const parseNumber = (value: string) => Number(value.replace(/[^\d]/g, '')) || 0
 
-/** 1250000 -> "1,25tr" */
 export const formatCompact = (value: number) => {
   if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2).replace(/\.?0+$/, '')}tỷ`
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2).replace(/\.?0+$/, '')}tr`
@@ -33,7 +29,6 @@ export const formatDateTime = (date: Date) =>
     hour12: false,
   }).format(date)
 
-/** Bỏ dấu tiếng Việt để tìm kiếm */
 export const removeAccents = (value: string) =>
   value
     .normalize('NFD')

@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
-import type { Customer, Discount, Invoice, Product } from '@/modules/sales/types/sales.types'
+import type { Customer, Invoice, Product, Voucher } from '@/modules/sales/types/sales.types'
 import { calcTotals, createInvoice, productToCartItem } from '@/modules/sales/utils/cart.utils'
 import { MAX_INVOICES } from '@/modules/sales/utils/constants'
 
@@ -15,7 +15,6 @@ const initState = (): InvoiceState => {
   return { invoices: [first], activeId: first.id }
 }
 
-/** Quản lý nhiều hóa đơn (tab) song song trên màn hình POS — lưu nháp vào localStorage */
 export function useInvoices() {
   const [state, setState] = useLocalStorage<InvoiceState>('fosales_pos_invoices', initState)
   const active = state.invoices.find((i) => i.id === state.activeId) ?? state.invoices[0] ?? createInvoice(1)
@@ -77,7 +76,7 @@ export function useInvoices() {
   )
 
   const clearItems = useCallback(
-    () => updateActive((inv) => ({ ...inv, items: [], discount: { type: 'amount', value: 0 }, note: '' })),
+    () => updateActive((inv) => ({ ...inv, items: [], voucher: null, note: '' })),
     [updateActive],
   )
 
@@ -85,7 +84,7 @@ export function useInvoices() {
     (customer: Customer | null) => updateActive((inv) => ({ ...inv, customer })),
     [updateActive],
   )
-  const setDiscount = useCallback((discount: Discount) => updateActive((inv) => ({ ...inv, discount })), [updateActive])
+  const setVoucher = useCallback((voucher: Voucher | null) => updateActive((inv) => ({ ...inv, voucher })), [updateActive])
   const setNote = useCallback((note: string) => updateActive((inv) => ({ ...inv, note })), [updateActive])
 
   const addInvoice = useCallback(() => {
@@ -126,7 +125,7 @@ export function useInvoices() {
     removeItem,
     clearItems,
     setCustomer,
-    setDiscount,
+    setVoucher,
     setNote,
     addInvoice,
     closeInvoice,

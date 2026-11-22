@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Flame, Plus } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { cn } from '@/lib/cn'
@@ -18,12 +19,12 @@ function StockBadge({ stock, unit }: { stock: number; unit: string }) {
   if (stock <= LOW_STOCK_THRESHOLD) return <Badge tone="warning">Còn {stock}</Badge>
   return (
     <span className="text-[11px] text-slate-400">
-      Tồn: <span className="font-semibold text-slate-600">{stock}</span> {unit.toLowerCase()}
+      Tồn kho: <span className="font-semibold text-slate-600">{stock}</span> {unit.toLowerCase()}
     </span>
   )
 }
 
-export function ProductCard({ product, inCart, view, onAdd }: ProductCardProps) {
+export const ProductCard = memo(function ProductCard({ product, inCart, view, onAdd }: ProductCardProps) {
   const outOfStock = product.stock <= 0
   const discountPct = product.originalPrice ? Math.round((1 - product.price / product.originalPrice) * 100) : 0
 
@@ -33,11 +34,11 @@ export function ProductCard({ product, inCart, view, onAdd }: ProductCardProps) 
         onClick={() => onAdd(product)}
         disabled={outOfStock}
         className={cn(
-          'group flex w-full cursor-pointer items-center gap-3 rounded-xl border border-slate-100 bg-white p-2.5 text-left transition hover:border-primary-200 hover:bg-primary-50/40 disabled:cursor-not-allowed disabled:opacity-55',
+          'group flex w-full cursor-pointer items-center gap-3 rounded-lg border border-slate-100 bg-white p-2.5 text-left transition hover:border-primary-200 hover:bg-primary-50/40 disabled:cursor-not-allowed disabled:opacity-55',
           inCart > 0 && 'border-primary-200 bg-primary-50/40',
         )}
       >
-        <ProductThumb categoryId={product.categoryId} size="sm" />
+        <ProductThumb categoryId={product.categoryId} image={product.image} fit={product.imageFit} alt={product.name} size="sm" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-800">{product.name}</p>
           <p className="text-[11px] text-slate-400">
@@ -58,12 +59,12 @@ export function ProductCard({ product, inCart, view, onAdd }: ProductCardProps) 
       onClick={() => onAdd(product)}
       disabled={outOfStock}
       className={cn(
-        'group relative flex cursor-pointer flex-col rounded-2xl border border-slate-100 bg-white p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-card disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0 disabled:hover:shadow-none',
+        'group relative flex cursor-pointer flex-col rounded-lg border border-slate-100 bg-white p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-card disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0 disabled:hover:shadow-none',
         inCart > 0 && 'border-primary-300 ring-2 ring-primary-100',
       )}
     >
       <div className="relative">
-        <ProductThumb categoryId={product.categoryId} />
+        <ProductThumb categoryId={product.categoryId} image={product.image} fit={product.imageFit} alt={product.name} />
         <div className="absolute top-2 left-2 flex flex-col gap-1">
           {product.isBestSeller && (
             <span className="flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-bold text-orange-600 shadow-sm">
@@ -103,4 +104,4 @@ export function ProductCard({ product, inCart, view, onAdd }: ProductCardProps) 
       </div>
     </button>
   )
-}
+})

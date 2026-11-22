@@ -50,7 +50,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                       onClick={onCloseMobile}
                       className={({ isActive }) =>
                         cn(
-                          'group flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-all',
+                          'group flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-all',
                           isActive
                             ? 'bg-primary-600 font-semibold text-white shadow-primary'
                             : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',

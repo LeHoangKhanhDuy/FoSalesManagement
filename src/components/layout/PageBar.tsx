@@ -5,7 +5,6 @@ import { findNavItem } from '@/config/navigation'
 import { useClock } from '@/hooks/useClock'
 import { formatDate, formatTime } from '@/lib/format'
 
-/** Thanh breadcrumb + ngày giờ — giống HRM */
 export function PageBar() {
   const { pathname } = useLocation()
   const now = useClock(30_000)

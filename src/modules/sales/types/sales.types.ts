@@ -5,6 +5,8 @@ export interface Category {
   name: string
 }
 
+export type ImageFit = 'cover' | 'contain' | 'auto'
+
 export interface Product {
   id: string
   sku: string
@@ -12,11 +14,12 @@ export interface Product {
   name: string
   categoryId: Exclude<CategoryId, 'all'>
   price: number
-  /** Giá gốc trước khuyến mãi (nếu có) */
   originalPrice?: number
   unit: string
   stock: number
   isBestSeller?: boolean
+  image?: string
+  imageFit?: ImageFit
 }
 
 export type CustomerTier = 'retail' | 'silver' | 'gold' | 'diamond'
@@ -38,22 +41,27 @@ export interface CartItem {
   price: number
   quantity: number
   stock: number
+  image?: string
+  imageFit?: ImageFit
 }
 
-export type DiscountType = 'percent' | 'amount'
-
-export interface Discount {
-  type: DiscountType
+export type VoucherType = 'percent' | 'amount'
+export interface Voucher {
+  code: string
+  name: string
+  type: VoucherType
   value: number
+  maxDiscount?: number
+  minOrder?: number
+  expiresAt?: string
 }
 
-/** Một hóa đơn nháp (tab) trên màn hình POS */
 export interface Invoice {
   id: string
   name: string
   items: CartItem[]
   customer: Customer | null
-  discount: Discount
+  voucher: Voucher | null
   note: string
   createdAt: string
 }
@@ -70,7 +78,7 @@ export interface InvoiceTotals {
 export interface CreateOrderPayload {
   items: Pick<CartItem, 'productId' | 'price' | 'quantity'>[]
   customerId: string | null
-  discount: Discount
+  voucherCode: string | null
   note: string
   paymentMethod: PaymentMethod
   paidAmount: number
@@ -81,6 +89,7 @@ export interface Order {
   code: string
   createdAt: string
   customer: Customer | null
+  voucher: Voucher | null
   items: CartItem[]
   totals: InvoiceTotals
   paymentMethod: PaymentMethod
