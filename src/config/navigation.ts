@@ -3,7 +3,6 @@ import {
   Boxes,
   ChartColumn,
   ChartPie,
-  House,
   LayoutDashboard,
   Package,
   ReceiptText,
@@ -24,7 +23,6 @@ export const NAVIGATION: NavGroup[] = [
   {
     title: 'Trang chủ',
     items: [
-      { label: 'Trang chủ', path: PATHS.home, icon: House },
       { label: 'Tổng quan kinh doanh', path: PATHS.dashboard, icon: LayoutDashboard },
       { label: 'Trợ lý AI', path: PATHS.ai, icon: Bot, badge: 'AI' },
     ],
@@ -68,7 +66,6 @@ export const NAVIGATION: NavGroup[] = [
   },
 ]
 
-/** Tra cứu label theo path — dùng cho breadcrumb */
 export const findNavItem = (pathname: string) => {
   for (const group of NAVIGATION) {
     const item = group.items.find((i) => i.path === pathname)
