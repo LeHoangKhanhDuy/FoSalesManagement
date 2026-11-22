@@ -5,16 +5,18 @@ import { cn } from '@/lib/cn'
 import type { CartItem, Product } from '@/modules/sales/types/sales.types'
 import { ProductCard } from '@/modules/sales/components/ProductCard'
 import type { ViewMode } from '@/modules/sales/components/ProductToolbar'
+import type { ProductPromoBadge } from '@/modules/sales/hooks/useActivePromotions'
 
 interface ProductGridProps {
   products: Product[]
   cartItems: CartItem[]
   loading: boolean
   view: ViewMode
+  promoBadges?: Map<string, ProductPromoBadge>
   onAdd: (product: Product) => void
 }
 
-export const ProductGrid = memo(function ProductGrid({ products, cartItems, loading, view, onAdd }: ProductGridProps) {
+export const ProductGrid = memo(function ProductGrid({ products, cartItems, loading, view, promoBadges, onAdd }: ProductGridProps) {
   const qtyMap = useMemo(() => new Map(cartItems.map((i) => [i.productId, i.quantity])), [cartItems])
 
   const gridClass =
@@ -61,6 +63,7 @@ export const ProductGrid = memo(function ProductGrid({ products, cartItems, load
           product={p}
           view={view}
           inCart={qtyMap.get(p.id) ?? 0}
+          promo={promoBadges?.get(p.id)}
           onAdd={onAdd}
         />
       ))}

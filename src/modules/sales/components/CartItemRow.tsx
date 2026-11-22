@@ -1,17 +1,21 @@
-import { Minus, Plus, Trash2 } from 'lucide-react'
+import { Gift, Minus, Plus, Tag, Trash2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/format'
 import type { CartItem } from '@/modules/sales/types/sales.types'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
 import { ProductCode } from '@/components/common/ProductCode'
+import type { GiftLine, PricedLine } from '@/modules/promotions/utils/promotion-engine'
 
 interface CartItemRowProps {
   item: CartItem
   index: number
+  line?: PricedLine
   onQuantityChange: (productId: string, quantity: number) => void
   onRemove: (productId: string) => void
 }
 
-export function CartItemRow({ item, index, onQuantityChange, onRemove }: CartItemRowProps) {
+export function CartItemRow({ item, index, line, onQuantityChange, onRemove }: CartItemRowProps) {
+  const gross = item.price * item.quantity
+  const discount = line?.discount ?? 0
   return (
     <li className="group flex animate-slide-up gap-3 rounded-xl p-2 transition hover:bg-slate-50">
       <div className="relative">
@@ -32,6 +36,11 @@ export function CartItemRow({ item, index, onQuantityChange, onRemove }: CartIte
           </button>
         </div>
         <ProductCode barcode={item.barcode} extra={item.unit} className="text-[11px]" />
+        {discount > 0 && line?.promoName && (
+          <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] font-semibold text-rose-500" title={line.promoName}>
+            <Tag className="size-3 shrink-0" /> {line.promoName}
+          </p>
+        )}
         <div className="mt-1.5 flex items-center justify-between">
           <div className="flex h-8 items-center rounded-lg border border-slate-200 bg-white">
             <button
@@ -57,9 +66,33 @@ export function CartItemRow({ item, index, onQuantityChange, onRemove }: CartIte
               <Plus className="size-3.5" />
             </button>
           </div>
-          <p className="text-sm font-bold text-slate-900">{formatCurrency(item.price * item.quantity)}</p>
+          <div className="text-right">
+            {discount > 0 && <p className="text-[11px] text-slate-400 line-through">{formatCurrency(gross)}</p>}
+            <p className={discount > 0 ? 'text-sm font-bold text-rose-600' : 'text-sm font-bold text-slate-900'}>{formatCurrency(gross - discount)}</p>
+          </div>
         </div>
       </div>
+    </li>
+  )
+}
+
+export function GiftItemRow({ gift }: { gift: GiftLine }) {
+  return (
+    <li className="flex animate-slide-up items-center gap-3 rounded-xl bg-violet-50/60 p-2">
+      <div className="relative">
+        <ProductThumb categoryId={gift.categoryId} image={gift.image} fit={gift.imageFit} alt={gift.name} size="sm" />
+        <span className="absolute -top-1.5 -left-1.5 grid size-5 place-items-center rounded-full bg-violet-500 text-white ring-2 ring-white">
+          <Gift className="size-3" />
+        </span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="line-clamp-1 text-[13px] font-semibold text-slate-800">{gift.name}</p>
+        <ProductCode barcode={gift.barcode} extra={`Tặng ${gift.quantity} ${gift.unit.toLowerCase()}`} className="text-[11px]" />
+        <p className="mt-0.5 truncate text-[11px] font-semibold text-violet-600" title={gift.promoName}>
+          {gift.promoName}
+        </p>
+      </div>
+      <p className="text-sm font-bold text-violet-600">0đ</p>
     </li>
   )
 }

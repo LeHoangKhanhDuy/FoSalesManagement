@@ -1,3 +1,5 @@
+import type { PromotionKind, PromotionScope } from '@/modules/promotions/types/promotions.types'
+
 export type CategoryId = string
 
 export type CategoryStatus = 'active' | 'inactive'
@@ -61,10 +63,14 @@ export interface CartItem {
   stock: number
   image?: string
   imageFit?: ImageFit
+  discount?: number
+  promotionId?: string
+  isGift?: boolean
 }
 
 export type VoucherType = 'percent' | 'amount'
 export interface Voucher {
+  id?: string
   code: string
   name: string
   type: VoucherType
@@ -72,6 +78,16 @@ export interface Voucher {
   maxDiscount?: number
   minOrder?: number
   expiresAt?: string
+  scope?: PromotionScope
+  stackable?: boolean
+}
+
+export interface AppliedPromotion {
+  id: string
+  code: string
+  name: string
+  kind: PromotionKind
+  amount: number
 }
 
 export interface Invoice {
@@ -91,6 +107,8 @@ export interface InvoiceTotals {
   subtotal: number
   discountAmount: number
   total: number
+  promoDiscount?: number
+  voucherDiscount?: number
 }
 
 export interface CreateOrderPayload {
@@ -108,6 +126,7 @@ export interface Order {
   createdAt: string
   customer: Customer | null
   voucher: Voucher | null
+  promotions?: AppliedPromotion[]
   items: CartItem[]
   totals: InvoiceTotals
   paymentMethod: PaymentMethod

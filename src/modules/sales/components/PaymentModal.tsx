@@ -115,25 +115,28 @@ function PaymentModalContent({ total, onClose, onConfirm }: PaymentModalProps) {
         <div className="mt-5 rounded-lg border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm">
           <ul className="space-y-1.5">
             {order.items.map((i) => (
-              <li key={i.productId} className="flex justify-between gap-3">
+              <li key={`${i.productId}-${i.isGift ? 'gift' : 'item'}`} className="flex justify-between gap-3">
                 <span className="min-w-0 text-slate-600">
                   <span className="block truncate">
                     {i.quantity} × {i.name}
+                    {i.isGift && <span className="ml-1.5 rounded bg-violet-100 px-1.5 text-[10px] font-bold text-violet-700">Quà tặng</span>}
                   </span>
                   <ProductCode barcode={i.barcode} className="text-[11px]" />
                 </span>
-                <span className="shrink-0 font-medium text-slate-800">{formatCurrency(i.price * i.quantity)}</span>
+                <span className="shrink-0 font-medium text-slate-800">{formatCurrency(i.price * i.quantity - (i.discount ?? 0))}</span>
               </li>
             ))}
           </ul>
           <div className="my-3 border-t border-dashed border-slate-200" />
           <dl className="space-y-1.5">
-            {order.totals.discountAmount > 0 && (
-              <div className="flex justify-between text-rose-500">
-                <dt>Giảm giá{order.voucher ? ` (${order.voucher.code})` : ''}</dt>
-                <dd>-{formatCurrency(order.totals.discountAmount)}</dd>
-              </div>
-            )}
+            {(order.promotions ?? [])
+              .filter((p) => p.kind !== 'gift' && p.kind !== 'product')
+              .map((p) => (
+                <div key={p.id} className="flex justify-between gap-3 text-rose-500">
+                  <dt className="truncate">{p.kind === 'voucher' ? `Mã ${p.code}` : p.name}</dt>
+                  <dd className="shrink-0">-{formatCurrency(p.amount)}</dd>
+                </div>
+              ))}
             <div className="flex justify-between text-base font-bold text-slate-900">
               <dt>Tổng cộng</dt>
               <dd className="text-primary-600">{formatCurrency(order.totals.total)}</dd>

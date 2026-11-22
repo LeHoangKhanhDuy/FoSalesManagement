@@ -1,5 +1,5 @@
 import { formatCurrency } from '@/lib/format'
-import type { CartItem, Invoice, InvoiceTotals, Product, Voucher } from '@/modules/sales/types/sales.types'
+import type { CartItem, Invoice, Product, Voucher } from '@/modules/sales/types/sales.types'
 
 export const createInvoice = (index: number): Invoice => ({
   id: crypto.randomUUID(),
@@ -25,25 +25,12 @@ export const productToCartItem = (product: Product): CartItem => ({
   imageFit: product.imageFit,
 })
 
-export const calcVoucherDiscount = (subtotal: number, voucher: Voucher | null | undefined) => {
-  if (!voucher || subtotal <= 0 || subtotal < (voucher.minOrder ?? 0)) return 0
-  let raw = voucher.type === 'percent' ? (subtotal * Math.min(voucher.value, 100)) / 100 : voucher.value
-  if (voucher.maxDiscount) raw = Math.min(raw, voucher.maxDiscount)
-  return Math.max(0, Math.min(Math.round(raw), subtotal))
-}
-
 export const describeVoucher = (voucher: Voucher) => {
   const parts = [voucher.type === 'percent' ? `Giảm ${voucher.value}%` : `Giảm ${formatCurrency(voucher.value)}`]
   if (voucher.type === 'percent' && voucher.maxDiscount) parts[0] += `, tối đa ${formatCurrency(voucher.maxDiscount)}`
   if (voucher.minOrder) parts.push(`Đơn từ ${formatCurrency(voucher.minOrder)}`)
+  if (voucher.scope && voucher.scope.type !== 'all') parts.push('Áp dụng một số sản phẩm')
   return parts.join(' · ')
-}
-
-export const calcTotals = (invoice: Invoice): InvoiceTotals => {
-  const subtotal = invoice.items.reduce((sum, i) => sum + i.price * i.quantity, 0)
-  const itemCount = invoice.items.reduce((sum, i) => sum + i.quantity, 0)
-  const discountAmount = calcVoucherDiscount(subtotal, invoice.voucher)
-  return { itemCount, subtotal, discountAmount, total: subtotal - discountAmount }
 }
 
 export const suggestCashAmounts = (total: number, limit = 6) => {
