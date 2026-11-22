@@ -53,8 +53,8 @@ export const EMPTY_FORM: ProductFormValues = {
   description: '',
 }
 
-export const getStockLevel = (stock: number): StockLevel =>
-  stock <= 0 ? 'out' : stock <= LOW_STOCK_THRESHOLD ? 'low' : 'ok'
+export const getStockLevel = (stock: number, minStock = LOW_STOCK_THRESHOLD): StockLevel =>
+  stock <= 0 ? 'out' : stock <= minStock ? 'low' : 'ok'
 
 export const calcMargin = (price: number, cost?: number) => (price > 0 && cost ? Math.round(((price - cost) / price) * 100) : null)
 
@@ -64,7 +64,7 @@ export const filterProducts = (products: Product[], f: ProductFilters, keyword: 
   const k = removeAccents(keyword.trim())
   return products.filter((p) => {
     if (f.categoryId !== 'all' && p.categoryId !== f.categoryId) return false
-    const level = getStockLevel(p.stock)
+    const level = getStockLevel(p.stock, p.minStock)
     if (f.stock === 'in-stock' && level === 'out') return false
     if (f.stock === 'low' && level !== 'low') return false
     if (f.stock === 'out' && level !== 'out') return false
@@ -92,7 +92,7 @@ export const sortProducts = (products: Product[], sort: ProductSortKey) => {
 export const calcProductStats = (products: Product[]): ProductStats =>
   products.reduce<ProductStats>(
     (s, p) => {
-      const level = getStockLevel(p.stock)
+      const level = getStockLevel(p.stock, p.minStock)
       s.total += 1
       if (p.status !== 'inactive') s.active += 1
       s.inventoryValue += p.stock * (p.costPrice ?? p.price)

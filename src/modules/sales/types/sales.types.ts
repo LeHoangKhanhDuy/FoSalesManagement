@@ -30,6 +30,7 @@ export interface Product {
   image?: string
   imageFit?: ImageFit
   costPrice?: number
+  minStock?: number
   status?: ProductStatus
   description?: string
   createdAt?: string

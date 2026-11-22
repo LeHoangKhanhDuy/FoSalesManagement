@@ -13,9 +13,9 @@ export const Cell = ({ children, className }: { children: ReactNode; className?:
   <td className={cn('px-4 py-3 align-middle', className)}>{children}</td>
 )
 
-function StockCell({ stock, unit }: { stock: number; unit: string }) {
-  const level = getStockLevel(stock)
-  const percent = Math.min(100, (stock / (LOW_STOCK_THRESHOLD * 10)) * 100)
+function StockCell({ stock, unit, minStock = LOW_STOCK_THRESHOLD }: { stock: number; unit: string; minStock?: number }) {
+  const level = getStockLevel(stock, minStock)
+  const percent = Math.min(100, (stock / (minStock * 10)) * 100)
   return (
     <div className="w-32">
       <p
@@ -95,7 +95,7 @@ export const ProductTableRow = memo(function ProductTableRow({
         )}
       </Cell>
       <Cell>
-        <StockCell stock={p.stock} unit={p.unit} />
+        <StockCell stock={p.stock} unit={p.unit} minStock={p.minStock} />
       </Cell>
       <Cell className="text-center">
         <Switch

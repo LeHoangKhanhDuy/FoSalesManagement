@@ -8,6 +8,7 @@ import type { Category, CreateOrderPayload, Customer, Order, Product, SalesStats
 import { calcVoucherDiscount, generateOrderCode } from '@/modules/sales/utils/cart.utils'
 import { MOCK_VOUCHERS } from '@/modules/sales/mocks/vouchers.mock'
 import { MOCK_ORDERS } from '@/modules/orders/mocks/orders.mock'
+import { recordStockMovement } from '@/modules/inventory/mocks/movements.mock'
 import { sortCategories } from '@/modules/categories/utils/categories.utils'
 import { registerCategoryVisuals } from '@/modules/categories/utils/category-visuals'
 
@@ -89,6 +90,10 @@ export const salesService = {
       cashier: 'Khánh Duy',
     }
     MOCK_ORDERS.unshift({ ...order, status: 'completed', channel: 'pos' })
+    order.items.forEach((item) => {
+      const product = MOCK_PRODUCTS.find((p) => p.id === item.productId)
+      if (product) recordStockMovement(product, 'sale', -item.quantity, { refCode: order.code, createdBy: order.cashier })
+    })
     return order
   },
 }

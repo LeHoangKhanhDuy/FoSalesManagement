@@ -1,6 +1,8 @@
 import { USE_MOCK } from '@/lib/constants'
 import { http, sleep } from '@/lib/http'
+import { recordStockMovement } from '@/modules/inventory/mocks/movements.mock'
 import { MOCK_ORDERS } from '@/modules/orders/mocks/orders.mock'
+import { MOCK_PRODUCTS } from '@/modules/sales/mocks/products.mock'
 import type { OrderRecord, OrderStatus } from '@/modules/orders/types/orders.types'
 
 const updateMock = (id: string, status: OrderStatus, patch: Partial<OrderRecord> = {}) => {
@@ -22,7 +24,15 @@ export const ordersService = {
   },
 
   async refundOrder(id: string, reason: string): Promise<OrderRecord> {
-    if (USE_MOCK) return sleep(500).then(() => updateMock(id, 'refunded', { reason }))
+    if (USE_MOCK) {
+      await sleep(500)
+      const updated = updateMock(id, 'refunded', { reason })
+      updated.items.forEach((item) => {
+        const product = MOCK_PRODUCTS.find((p) => p.id === item.productId)
+        if (product) recordStockMovement(product, 'return', item.quantity, { refCode: updated.code, reason })
+      })
+      return updated
+    }
     return http.post<OrderRecord>(`/api/orders/${id}/refund`, { reason })
   },
 
