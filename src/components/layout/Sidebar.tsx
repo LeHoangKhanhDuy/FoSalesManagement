@@ -12,7 +12,6 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
   return (
     <>
-      {/* Overlay mobile */}
       <div
         onClick={onCloseMobile}
         className={cn(
@@ -37,7 +36,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-5 overflow-y-auto px-3 pt-2 pb-4">
+        <nav className="scrollbar-none flex-1 space-y-5 overflow-y-auto px-3 pt-2 pb-4">
           {NAVIGATION.map((group) => (
             <div key={group.title}>
               <p className="mb-1.5 px-3 text-[11px] font-bold tracking-wider text-slate-400 uppercase">{group.title}</p>

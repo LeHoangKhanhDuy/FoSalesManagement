@@ -6,6 +6,7 @@ import { MainLayout } from '@/components/layout/MainLayout'
 import { PATHS } from '@/routes/paths'
 
 const SalesPage = lazy(() => import('@/modules/sales/pages/SalesPage'))
+const OrdersPage = lazy(() => import('@/modules/orders/pages/OrdersPage'))
 
 const Loadable = ({ children }: { children: ReactNode }) => (
   <Suspense
@@ -29,6 +30,14 @@ export const router = createBrowserRouter([
         element: (
           <Loadable>
             <SalesPage />
+          </Loadable>
+        ),
+      },
+      {
+        path: PATHS.orders,
+        element: (
+          <Loadable>
+            <OrdersPage />
           </Loadable>
         ),
       },

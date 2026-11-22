@@ -31,7 +31,7 @@ export const NAVIGATION: NavGroup[] = [
     title: 'Bán hàng',
     items: [
       { label: 'Bán hàng (POS)', path: PATHS.pos, icon: ShoppingCart },
-      { label: 'Đơn hàng', path: PATHS.orders, icon: ReceiptText },
+      { label: 'Quản lý đơn hàng', path: PATHS.orders, icon: ReceiptText },
       { label: 'Trả hàng', path: PATHS.returns, icon: Undo2 },
     ],
   },

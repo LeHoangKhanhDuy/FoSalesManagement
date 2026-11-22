@@ -5,12 +5,6 @@ import type { ImageFit, Product } from '@/modules/sales/types/sales.types'
 
 type CategoryKey = Product['categoryId']
 
-/**
- * Cấu hình hiển thị theo danh mục:
- * - `cover`  : ảnh chụp thực tế (trái cây, đồ tươi) → lấp đầy khung, crop nhẹ
- * - `contain`: ảnh bao bì đứng/dọc (chai, lon, hộp sữa) → hiện trọn vẹn, có khoảng đệm
- * - `auto`   : tự chọn theo tỉ lệ ảnh — gần tỉ lệ khung thì `cover`, lệch nhiều thì `contain`
- */
 const VISUALS: Record<CategoryKey, { icon: LucideIcon; tone: string; fit: ImageFit }> = {
   drinks: { icon: CupSoda, tone: 'from-sky-50 to-sky-100 text-sky-600', fit: 'contain' },
   snacks: { icon: Cookie, tone: 'from-amber-50 to-orange-100 text-amber-600', fit: 'auto' },
@@ -23,9 +17,7 @@ const VISUALS: Record<CategoryKey, { icon: LucideIcon; tone: string; fit: ImageF
 
 const FALLBACK = { icon: Package, tone: 'from-slate-50 to-slate-100 text-slate-500', fit: 'auto' as ImageFit }
 
-/** Tỉ lệ khung cố định (rộng / cao) — mọi card có cùng kích thước ảnh */
 const FRAME_RATIO = { lg: 4 / 3, sm: 1 } as const
-/** Ảnh lệch tỉ lệ khung quá ngưỡng này sẽ chuyển sang `contain` để không bị cắt mất sản phẩm */
 const AUTO_COVER_TOLERANCE = 0.15
 
 type Orientation = 'portrait' | 'landscape' | 'square'
@@ -42,7 +34,6 @@ interface ProductThumbProps {
   categoryId: CategoryKey
   image?: string
   alt?: string
-  /** Ghi đè cách hiển thị của danh mục cho từng sản phẩm */
   fit?: ImageFit
   size?: 'sm' | 'lg'
   className?: string
@@ -83,7 +74,6 @@ export const ProductThumb = memo(function ProductThumb({
         className,
       )}
     >
-      {/* Icon danh mục: placeholder khi chưa có ảnh / đang tải / lỗi ảnh */}
       {!loaded && (
         <Icon
           className={cn(size === 'lg' ? 'size-10 drop-shadow-sm' : 'size-5', hasImage && 'animate-pulse opacity-60')}
@@ -93,7 +83,6 @@ export const ProductThumb = memo(function ProductThumb({
 
       {hasImage && (
         <>
-          {/* Nền xám nhạt + multiply → ảnh bao bì nền trắng hòa vào khung, mọi ô ảnh đồng màu */}
           {loaded && mode === 'contain' && <span className="absolute inset-0 -z-10 bg-slate-50" />}
           <img
             key={image}
@@ -111,7 +100,6 @@ export const ProductThumb = memo(function ProductThumb({
                 ? 'object-cover group-hover:scale-105'
                 : cn(
                     'object-contain mix-blend-multiply',
-                    // Đệm theo hướng ảnh: ảnh dọc chừa ít trên/dưới, ảnh ngang chừa ít trái/phải
                     size === 'lg'
                       ? orientation === 'portrait'
                         ? 'px-4 py-2'

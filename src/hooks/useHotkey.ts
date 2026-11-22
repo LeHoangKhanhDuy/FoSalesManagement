@@ -1,9 +1,5 @@
 import { useEffect, useRef } from 'react'
 
-/**
- * Đăng ký phím tắt toàn cục. Ví dụ: useHotkey('F2', focusSearch)
- * Hỗ trợ tổ hợp: 'ctrl+k', 'shift+F9'
- */
 export function useHotkey(combo: string, handler: (e: KeyboardEvent) => void, enabled = true) {
   const handlerRef = useRef(handler)
   handlerRef.current = handler
