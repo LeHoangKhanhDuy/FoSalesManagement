@@ -2,7 +2,6 @@ import { ChevronDown, Wand2 } from 'lucide-react'
 import { Dropdown, DropdownItem } from '@/components/ui/Dropdown'
 import { Field, inputClass } from '@/components/ui/FormField'
 import { cn } from '@/lib/cn'
-import { MOCK_UNITS } from '@/modules/products/mocks/units.mock'
 import type { SetProductField } from '@/modules/products/hooks/useProductForm'
 import type { ProductFormErrors, ProductFormValues } from '@/modules/products/types/products.types'
 import { generateBarcode, generateSku } from '@/modules/products/utils/products.utils'
@@ -14,6 +13,7 @@ interface ProductBasicFieldsProps {
   set: SetProductField
   products: Product[]
   categories: Category[]
+  units: string[]
 }
 
 function GenerateButton({ onClick }: { onClick: () => void }) {
@@ -24,7 +24,7 @@ function GenerateButton({ onClick }: { onClick: () => void }) {
   )
 }
 
-export function ProductBasicFields({ values, errors, set, products, categories }: ProductBasicFieldsProps) {
+export function ProductBasicFields({ values, errors, set, products, categories, units }: ProductBasicFieldsProps) {
   const formCategories = categories.filter((c) => c.id !== 'all')
   const categoryName = formCategories.find((c) => c.id === values.categoryId)?.name
 
@@ -80,7 +80,7 @@ export function ProductBasicFields({ values, errors, set, products, categories }
           className={inputClass(errors.unit)}
         />
         <datalist id="product-units">
-          {MOCK_UNITS.map((u) => (
+          {units.map((u) => (
             <option key={u} value={u} />
           ))}
         </datalist>

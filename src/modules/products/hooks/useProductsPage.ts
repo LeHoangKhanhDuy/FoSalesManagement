@@ -14,13 +14,14 @@ import {
   PAGE_SIZE,
   sortProducts,
 } from '@/modules/products/utils/products.utils'
-import { salesService } from '@/modules/sales/services/sales.service'
+import { catalogService } from '@/modules/categories/services/catalog.service'
 import type { Category, Product, ProductStatus } from '@/modules/sales/types/sales.types'
 
 
 export function useProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [units, setUnits] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<ProductFilters>(DEFAULT_FILTERS)
   const [page, setPage] = useState(1)
@@ -33,10 +34,11 @@ export function useProductsPage() {
 
   const load = useCallback(() => {
     setLoading(true)
-    Promise.all([productsService.getProducts(), salesService.getCategories()])
-      .then(([p, c]) => {
+    Promise.all([productsService.getProducts(), catalogService.getCategories(), catalogService.getUnits()])
+      .then(([p, c, u]) => {
         setProducts(p)
-        setCategories(c)
+        setCategories([{ id: 'all', name: 'Tất cả' }, ...c])
+        setUnits(u.map((x) => x.name))
       })
       .catch(() => toast.error('Không tải được danh sách sản phẩm'))
       .finally(() => setLoading(false))
@@ -192,6 +194,7 @@ export function useProductsPage() {
   return {
     products,
     categories,
+    units,
     loading,
     filters,
     updateFilter,

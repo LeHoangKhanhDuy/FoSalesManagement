@@ -8,15 +8,23 @@ import type { Category, CreateOrderPayload, Customer, Order, Product, SalesStats
 import { calcVoucherDiscount, generateOrderCode } from '@/modules/sales/utils/cart.utils'
 import { MOCK_VOUCHERS } from '@/modules/sales/mocks/vouchers.mock'
 import { MOCK_ORDERS } from '@/modules/orders/mocks/orders.mock'
+import { sortCategories } from '@/modules/categories/utils/categories.utils'
+import { registerCategoryVisuals } from '@/modules/categories/utils/category-visuals'
 
 export const salesService = {
   async getCategories(): Promise<Category[]> {
-    if (USE_MOCK) return sleep(150).then(() => MOCK_CATEGORIES)
-    return http.get<Category[]>('/api/categories')
+    const list = USE_MOCK
+      ? await sleep(150).then(() => sortCategories(MOCK_CATEGORIES.filter((c) => c.status !== 'inactive')))
+      : await http.get<Category[]>('/api/categories', { params: { status: 'active' } })
+    registerCategoryVisuals(list)
+    return [{ id: 'all', name: 'Tất cả' }, ...list]
   },
 
   async getProducts(): Promise<Product[]> {
-    if (USE_MOCK) return sleep(500).then(() => structuredClone(MOCK_PRODUCTS.filter((p) => p.status !== 'inactive')))
+    if (USE_MOCK) {
+      const hidden = new Set(MOCK_CATEGORIES.filter((c) => c.status === 'inactive').map((c) => c.id))
+      return sleep(500).then(() => structuredClone(MOCK_PRODUCTS.filter((p) => p.status !== 'inactive' && !hidden.has(p.categoryId))))
+    }
     return http.get<Product[]>('/api/products', { params: { status: 'active' } })
   },
 

@@ -12,6 +12,7 @@ export default function ProductsPage() {
   const {
     products,
     categories,
+    units,
     loading,
     filters,
     updateFilter,
@@ -101,6 +102,7 @@ export default function ProductsPage() {
         state={form}
         products={products}
         categories={categories}
+        units={units}
         saving={saving}
         onClose={closeForm}
         onSubmit={submitForm}

@@ -1,8 +1,17 @@
-export type CategoryId = 'all' | 'drinks' | 'snacks' | 'dairy' | 'instant' | 'fruit' | 'personal' | 'household'
+export type CategoryId = string
+
+export type CategoryStatus = 'active' | 'inactive'
 
 export interface Category {
   id: CategoryId
   name: string
+  description?: string
+  icon?: string
+  color?: string
+  status?: CategoryStatus
+  sortOrder?: number
+  createdAt?: string
+  updatedAt?: string
 }
 
 export type ImageFit = 'cover' | 'contain' | 'auto'
@@ -12,7 +21,7 @@ export interface Product {
   sku: string
   barcode: string
   name: string
-  categoryId: Exclude<CategoryId, 'all'>
+  categoryId: CategoryId
   price: number
   originalPrice?: number
   unit: string

@@ -8,6 +8,7 @@ import { PATHS } from '@/routes/paths'
 const SalesPage = lazy(() => import('@/modules/sales/pages/SalesPage'))
 const OrdersPage = lazy(() => import('@/modules/orders/pages/OrdersPage'))
 const ProductsPage = lazy(() => import('@/modules/products/pages/ProductsPage'))
+const CategoriesPage = lazy(() => import('@/modules/categories/pages/CategoriesPage'))
 
 const Loadable = ({ children }: { children: ReactNode }) => (
   <Suspense
@@ -47,6 +48,14 @@ export const router = createBrowserRouter([
         element: (
           <Loadable>
             <ProductsPage />
+          </Loadable>
+        ),
+      },
+      {
+        path: PATHS.categories,
+        element: (
+          <Loadable>
+            <CategoriesPage />
           </Loadable>
         ),
       },

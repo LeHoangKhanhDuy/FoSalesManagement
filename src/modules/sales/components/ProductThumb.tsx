@@ -1,21 +1,7 @@
 import { memo, useState, type SyntheticEvent } from 'react'
-import { Apple, Cookie, CupSoda, Milk, Package, Soup, SprayCan, WashingMachine, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/cn'
-import type { ImageFit, Product } from '@/modules/sales/types/sales.types'
-
-type CategoryKey = Product['categoryId']
-
-const VISUALS: Record<CategoryKey, { icon: LucideIcon; tone: string; fit: ImageFit }> = {
-  drinks: { icon: CupSoda, tone: 'from-sky-50 to-sky-100 text-sky-600', fit: 'contain' },
-  snacks: { icon: Cookie, tone: 'from-amber-50 to-orange-100 text-amber-600', fit: 'auto' },
-  dairy: { icon: Milk, tone: 'from-indigo-50 to-blue-100 text-indigo-500', fit: 'contain' },
-  instant: { icon: Soup, tone: 'from-orange-50 to-red-100 text-orange-600', fit: 'auto' },
-  fruit: { icon: Apple, tone: 'from-lime-50 to-green-100 text-green-600', fit: 'cover' },
-  personal: { icon: SprayCan, tone: 'from-pink-50 to-fuchsia-100 text-pink-600', fit: 'contain' },
-  household: { icon: WashingMachine, tone: 'from-teal-50 to-cyan-100 text-teal-600', fit: 'contain' },
-}
-
-const FALLBACK = { icon: Package, tone: 'from-slate-50 to-slate-100 text-slate-500', fit: 'auto' as ImageFit }
+import { getCategoryVisual } from '@/modules/categories/utils/category-visuals'
+import type { ImageFit } from '@/modules/sales/types/sales.types'
 
 const FRAME_RATIO = { lg: 4 / 3, sm: 1 } as const
 const AUTO_COVER_TOLERANCE = 0.15
@@ -31,7 +17,9 @@ const resolveFit = (fit: ImageFit, ratio: number | null, frameRatio: number): Ex
 }
 
 interface ProductThumbProps {
-  categoryId: CategoryKey
+  categoryId: string
+  icon?: string
+  color?: string
   image?: string
   alt?: string
   fit?: ImageFit
@@ -41,13 +29,15 @@ interface ProductThumbProps {
 
 export const ProductThumb = memo(function ProductThumb({
   categoryId,
+  icon,
+  color,
   image,
   alt = '',
   fit,
   size = 'lg',
   className,
 }: ProductThumbProps) {
-  const visual = VISUALS[categoryId] ?? FALLBACK
+  const visual = getCategoryVisual(categoryId, { icon, color })
   const Icon = visual.icon
   const [meta, setMeta] = useState<{ src: string; ratio: number } | null>(null)
   const [failedSrc, setFailedSrc] = useState<string | null>(null)
@@ -69,7 +59,7 @@ export const ProductThumb = memo(function ProductThumb({
       data-fit={hasImage ? mode : undefined}
       className={cn(
         'relative isolate grid shrink-0 place-items-center overflow-hidden bg-gradient-to-br',
-        visual.tone,
+        visual.color.tone,
         size === 'lg' ? 'aspect-[4/3] w-full rounded-lg' : 'size-12 rounded-lg',
         className,
       )}

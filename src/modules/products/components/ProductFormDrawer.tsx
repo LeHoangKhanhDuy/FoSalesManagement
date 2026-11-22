@@ -13,6 +13,7 @@ interface ProductFormDrawerProps {
   state: ProductFormMode | null
   products: Product[]
   categories: Category[]
+  units: string[]
   saving: boolean
   onClose: () => void
   onSubmit: (values: ProductFormValues) => void
@@ -24,7 +25,7 @@ export function ProductFormDrawer({ state, ...props }: ProductFormDrawerProps) {
   return <ProductFormContent key={key} state={state} {...props} />
 }
 
-function ProductFormContent({ state, products, categories, saving, onClose, onSubmit }: ProductFormDrawerProps & { state: ProductFormMode }) {
+function ProductFormContent({ state, products, categories, units, saving, onClose, onSubmit }: ProductFormDrawerProps & { state: ProductFormMode }) {
   const { values, errors, set, submit, title, description, submitLabel } = useProductForm(state, products, onSubmit)
 
   return (
@@ -55,7 +56,7 @@ function ProductFormContent({ state, products, categories, saving, onClose, onSu
           <ProductImageField values={values} errors={errors} set={set} />
         </FormSection>
         <FormSection title="Thông tin cơ bản">
-          <ProductBasicFields values={values} errors={errors} set={set} products={products} categories={categories} />
+          <ProductBasicFields values={values} errors={errors} set={set} products={products} categories={categories} units={units} />
         </FormSection>
         <FormSection title="Giá & tồn kho">
           <ProductPricingFields values={values} errors={errors} set={set} />
