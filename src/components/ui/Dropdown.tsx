@@ -19,6 +19,7 @@ import {
   type Ref,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { Check, ChevronDown, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
 export type DropdownAlign = 'start' | 'center' | 'end'
@@ -332,4 +333,46 @@ export function DropdownLabel({ children, className }: { children: ReactNode; cl
 
 export function DropdownSeparator({ className }: { className?: string }) {
   return <div role="separator" className={cn('my-1 border-t border-slate-100', className)} />
+}
+
+export interface FilterDropdownProps<T extends string> {
+  icon: LucideIcon
+  label: string
+  title: string
+  value: T
+  options: { value: T; label: string; icon?: LucideIcon }[]
+  onChange: (value: T) => void
+  active?: boolean
+}
+
+export function FilterDropdown<T extends string>({ icon: Icon, label, title, value, options, onChange, active }: FilterDropdownProps<T>) {
+  return (
+    <Dropdown
+      align="start"
+      trigger={
+        <button
+          className={cn(
+            'group flex h-11 cursor-pointer items-center gap-2 rounded-lg border bg-white px-3 text-sm transition hover:border-slate-300 focus-visible:outline-none data-[state=open]:border-primary-500 data-[state=open]:ring-4 data-[state=open]:ring-primary-100',
+            active ? 'border-primary-300 text-primary-700' : 'border-slate-200 text-slate-600',
+          )}
+        >
+          <Icon className={cn('size-4', active ? 'text-primary-600' : 'text-slate-400')} />
+          <span className="font-medium whitespace-nowrap">{label}</span>
+          <ChevronDown className="size-4 text-slate-400 transition group-data-[state=open]:rotate-180" />
+        </button>
+      }
+    >
+      <DropdownLabel>{title}</DropdownLabel>
+      {options.map((o) => (
+        <DropdownItem
+          key={o.value}
+          icon={o.icon}
+          label={o.label}
+          active={o.value === value}
+          shortcut={o.value === value ? <Check className="size-4" /> : undefined}
+          onClick={() => onChange(o.value)}
+        />
+      ))}
+    </Dropdown>
+  )
 }

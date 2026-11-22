@@ -38,7 +38,7 @@ export const NAVIGATION: NavGroup[] = [
   {
     title: 'Hàng hóa & Kho',
     items: [
-      { label: 'Sản phẩm', path: PATHS.products, icon: Package },
+      { label: 'Quản lý sản phẩm', path: PATHS.products, icon: Package },
       { label: 'Danh mục', path: PATHS.categories, icon: Tags },
       { label: 'Tồn kho', path: PATHS.inventory, icon: Boxes },
       { label: 'Nhà cung cấp', path: PATHS.suppliers, icon: Truck },
