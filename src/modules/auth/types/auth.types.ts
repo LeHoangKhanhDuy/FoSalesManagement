@@ -10,13 +10,24 @@ export interface AuthUser {
 }
 
 export interface AuthSession {
-  token: string
+  user: AuthUser
+  expiresAt?: string
+}
+
+export interface AuthResponse {
   user: AuthUser
   expiresAt: string
+  csrfToken: string
 }
 
 export interface LoginPayload {
   username: string
   password: string
   remember: boolean
+}
+
+export interface ResetPasswordPayload {
+  account: string
+  otp: string
+  newPassword: string
 }

@@ -1,3 +1,4 @@
+import { clearCsrf, setUnauthorizedHandler } from '@/lib/http'
 import type { AuthSession, UserRole } from '@/modules/auth/types/auth.types'
 
 export const ROLE_LABEL: Record<UserRole, string> = {
@@ -6,16 +7,8 @@ export const ROLE_LABEL: Record<UserRole, string> = {
   cashier: 'Thu ngân',
 }
 
-export const DEMO_ACCOUNTS: { username: string; password: string; role: UserRole }[] = [
-  { username: 'admin', password: '123456', role: 'admin' },
-  { username: 'thungan', password: '123456', role: 'cashier' },
-]
-
-export const MAX_ATTEMPTS = 5
-export const LOCK_SECONDS = 30
-
 const SESSION_KEY = 'fosales_session'
-const TOKEN_KEY = 'fosales_token'
+const LEGACY_TOKEN_KEY = 'fosales_token'
 const LAST_USER_KEY = 'fosales_last_username'
 
 type Listener = () => void
@@ -23,38 +16,55 @@ const listeners = new Set<Listener>()
 
 const read = (): AuthSession | null => {
   try {
+    localStorage.removeItem(LEGACY_TOKEN_KEY)
     const raw = localStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(SESSION_KEY)
-    if (!raw) return null
-    const session = JSON.parse(raw) as AuthSession
-    return new Date(session.expiresAt).getTime() > Date.now() ? session : null
+    const session = raw ? (JSON.parse(raw) as AuthSession) : null
+    return session?.user ? session : null
   } catch {
     return null
   }
 }
 
+const isPersistent = () => {
+  try {
+    return !!localStorage.getItem(SESSION_KEY)
+  } catch {
+    return false
+  }
+}
+
 let current: AuthSession | null = read()
+let restored = false
+
+const notify = () => listeners.forEach((fn) => fn())
 
 export const authStore = {
   get: () => current,
+  isRestored: () => restored,
   subscribe: (fn: Listener) => {
     listeners.add(fn)
     return () => listeners.delete(fn)
   },
-  set: (session: AuthSession | null, remember = true) => {
+  set: (session: AuthSession | null, remember = isPersistent()) => {
     current = session
     try {
       localStorage.removeItem(SESSION_KEY)
       sessionStorage.removeItem(SESSION_KEY)
-      localStorage.removeItem(TOKEN_KEY)
       if (session) {
         ;(remember ? localStorage : sessionStorage).setItem(SESSION_KEY, JSON.stringify(session))
-        localStorage.setItem(TOKEN_KEY, session.token)
         localStorage.setItem(LAST_USER_KEY, session.user.username)
+      } else {
+        clearCsrf()
       }
     } catch {
       current = session
     }
-    listeners.forEach((fn) => fn())
+    notify()
+  },
+  markRestored: () => {
+    if (restored) return
+    restored = true
+    notify()
   },
   lastUsername: () => {
     try {
@@ -64,6 +74,10 @@ export const authStore = {
     }
   },
 }
+
+setUnauthorizedHandler(() => {
+  if (current) authStore.set(null)
+})
 
 export const initialsOf = (name: string) =>
   name

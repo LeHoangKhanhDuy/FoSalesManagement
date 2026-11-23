@@ -1,9 +1,8 @@
-import { ArrowRight, CircleAlert, Eye, EyeOff, KeyRound, LockKeyhole, ShieldCheck, TriangleAlert, UserRound } from 'lucide-react'
+import { ArrowRight, CircleAlert, Eye, EyeOff, LockKeyhole, TriangleAlert, UserRound } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Switch'
 import { cn } from '@/lib/cn'
 import { useLoginForm } from '@/modules/auth/hooks/useLoginForm'
-import { DEMO_ACCOUNTS, ROLE_LABEL } from '@/modules/auth/utils/auth.utils'
 
 const fieldClass = (error?: string) =>
   cn(
@@ -30,7 +29,7 @@ export function LoginForm({ onSuccess, onForgot }: { onSuccess: () => void; onFo
       {f.errors.form && (
         <p className={cn('mt-6 flex items-start gap-2 rounded-lg p-3 text-sm', locked ? 'bg-amber-50 text-amber-800' : 'bg-rose-50 text-rose-700')}>
           <CircleAlert className="mt-0.5 size-4 shrink-0" />
-          <span>{locked ? `Tạm khóa đăng nhập. Thử lại sau ${f.lockLeft} giây.` : f.errors.form}</span>
+          <span>{locked ? `${f.errors.form} Thử lại sau ${f.lockLeft} giây.` : f.errors.form}</span>
         </p>
       )}
 
@@ -94,32 +93,6 @@ export function LoginForm({ onSuccess, onForgot }: { onSuccess: () => void; onFo
       <Button type="submit" size="lg" className="mt-6 w-full rounded-lg" loading={f.loading} disabled={locked} rightIcon={!f.loading && <ArrowRight className="size-5" />}>
         {locked ? `Thử lại sau ${f.lockLeft}s` : f.loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
       </Button>
-
-      <div className="mt-8">
-        <div className="flex items-center gap-3 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
-          <span className="h-px flex-1 bg-slate-200" /> Tài khoản dùng thử <span className="h-px flex-1 bg-slate-200" />
-        </div>
-        <div className="mt-3 grid grid-cols-2 gap-2.5">
-          {DEMO_ACCOUNTS.map((a) => (
-            <button
-              key={a.username}
-              type="button"
-              onClick={() => f.fill(a.username, a.password)}
-              className={cn('group flex cursor-pointer items-center gap-2.5 rounded-lg border p-3 text-left transition hover:border-primary-300 hover:bg-primary-50/50', f.username === a.username ? 'border-primary-300 bg-primary-50/50' : 'border-slate-200')}
-            >
-              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-500 transition group-hover:bg-primary-100 group-hover:text-primary-700">
-                {a.role === 'admin' ? <ShieldCheck className="size-[18px]" /> : <KeyRound className="size-[18px]" />}
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold text-slate-800">{ROLE_LABEL[a.role]}</span>
-                <span className="block truncate font-mono text-[11px] text-slate-400">
-                  {a.username} / {a.password}
-                </span>
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
     </form>
   )
 }

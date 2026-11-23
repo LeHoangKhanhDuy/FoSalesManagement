@@ -1,30 +1,13 @@
-import { ArrowLeft, MailCheck, Send, UserRound } from 'lucide-react'
+import { ArrowLeft, Send, UserRound } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/cn'
+import { ResetPasswordForm } from '@/modules/auth/components/ResetPasswordForm'
 import { useForgotPassword } from '@/modules/auth/hooks/useForgotPassword'
 
 export function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
-  const f = useForgotPassword()
+  const f = useForgotPassword(onBack)
 
-  if (f.sentTo) {
-    return (
-      <div className="animate-fade-in text-center">
-        <div className="mx-auto grid size-16 place-items-center rounded-2xl bg-primary-50 text-primary-600 ring-8 ring-primary-50/50">
-          <MailCheck className="size-8" />
-        </div>
-        <h1 className="mt-6 text-2xl font-extrabold tracking-tight text-slate-900">Đã gửi yêu cầu</h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Mã đặt lại mật khẩu đã được gửi tới số <span className="font-semibold text-slate-800">{f.sentTo}</span>. Vui lòng kiểm tra tin nhắn hoặc liên hệ quản lý cửa hàng.
-        </p>
-        <Button size="lg" className="mt-8 w-full rounded-xl" leftIcon={<ArrowLeft className="size-5" />} onClick={onBack}>
-          Quay lại đăng nhập
-        </Button>
-        <button type="button" onClick={f.reset} className="mt-4 cursor-pointer text-sm font-semibold text-slate-500 hover:text-slate-800">
-          Gửi lại mã
-        </button>
-      </div>
-    )
-  }
+  if (f.sentTo) return <ResetPasswordForm f={f} onBack={onBack} />
 
   return (
     <form
