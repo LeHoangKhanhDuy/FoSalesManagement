@@ -1,5 +1,6 @@
 export const PATHS = {
   home: '/',
+  login: '/login',
   dashboard: '/dashboard',
   ai: '/ai-assistant',
   pos: '/sales/pos',
