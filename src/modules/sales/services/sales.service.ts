@@ -1,5 +1,6 @@
 import { http, sleep } from '@/lib/http'
 import { USE_MOCK } from '@/lib/constants'
+import { authStore } from '@/modules/auth/utils/auth.utils'
 import { categoryService } from '@/modules/categories/services/category.service'
 import { productsService } from '@/modules/products/services/products.service'
 import { customersService } from '@/modules/customers/services/customers.service'
@@ -7,14 +8,12 @@ import { MOCK_CUSTOMERS } from '@/modules/customers/mocks/customers.mock'
 import { MOCK_MEMBERSHIP } from '@/modules/customers/mocks/membership.mock'
 import { earnOrderPoints } from '@/modules/customers/mocks/points.mock'
 import { tierConfig } from '@/modules/customers/utils/customers.utils'
-import { MOCK_PRODUCTS } from '@/modules/sales/mocks/products.mock'
 import { MOCK_TODAY_STATS } from '@/modules/sales/mocks/stats.mock'
 import type { Category, CreateOrderPayload, Customer, Order, Product, SalesStats, Voucher } from '@/modules/sales/types/sales.types'
 import { generateOrderCode } from '@/modules/sales/utils/cart.utils'
 import { getRunningAutoSync, promotionsService } from '@/modules/promotions/services/promotions.service'
 import { priceCart } from '@/modules/promotions/utils/promotion-engine'
 import { MOCK_ORDERS } from '@/modules/orders/mocks/orders.mock'
-import { recordStockMovement } from '@/modules/inventory/mocks/movements.mock'
 
 export const salesService = {
   async getCategories(): Promise<Category[]> {
@@ -64,7 +63,7 @@ export const salesService = {
     const live = MOCK_CUSTOMERS.find((c) => c.id === context.customer?.id)
     const tier = live ? tierConfig(MOCK_MEMBERSHIP, live.tier) : null
     const member = tier && tier.discountPercent > 0 ? { tier: tier.tier, label: tier.label, discountPercent: tier.discountPercent } : null
-    const pricing = priceCart({ items, promotions: getRunningAutoSync(), voucher: context.voucher, member, products: MOCK_PRODUCTS })
+    const pricing = priceCart({ items, promotions: getRunningAutoSync(), voucher: context.voucher, member, products: context.products })
     const { subtotal, discountAmount, total } = pricing
     const lines = [
       ...items.map((i) => ({ ...i, discount: pricing.lines[i.productId].discount || undefined, promotionId: pricing.lines[i.productId].promotionId })),
@@ -83,16 +82,12 @@ export const salesService = {
       paidAmount: payload.paidAmount,
       changeAmount: Math.max(0, payload.paidAmount - total),
       note: payload.note,
-      cashier: 'Khánh Duy',
+      cashier: authStore.get()?.user.name ?? '',
     }
     MOCK_ORDERS.unshift({ ...order, status: 'completed', channel: 'pos' })
     order.pointsEarned = earnOrderPoints(order)
     MOCK_ORDERS[0].pointsEarned = order.pointsEarned
     if (live) order.customer = { ...live }
-    order.items.forEach((item) => {
-      const product = MOCK_PRODUCTS.find((p) => p.id === item.productId)
-      if (product) recordStockMovement(product, 'sale', -item.quantity, { refCode: order.code, createdBy: order.cashier })
-    })
     return order
   },
 }

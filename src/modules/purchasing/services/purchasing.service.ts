@@ -1,6 +1,5 @@
 import { USE_MOCK } from '@/lib/constants'
 import { http, sleep } from '@/lib/http'
-import { recordStockMovement } from '@/modules/inventory/mocks/movements.mock'
 import { MOCK_PURCHASE_ORDERS } from '@/modules/purchasing/mocks/purchase-orders.mock'
 import { MOCK_SUPPLIERS } from '@/modules/suppliers/mocks/suppliers.mock'
 import type { GoodsReceipt, PurchaseOrder, PurchaseOrderFormValues, ReceivingDraft} from '@/modules/purchasing/types/purchasing.types'
@@ -125,8 +124,7 @@ export const purchasingService = {
       if (qty > 0 && product) {
         const oldCost = product.costPrice ?? line.unitCost
         product.costPrice = Math.round((product.stock * oldCost + qty * line.unitCost) / Math.max(1, product.stock + qty) / 100) * 100
-        const lot = [line.lotNo && `Lô ${line.lotNo}`, line.expiryDate && `HSD ${new Date(line.expiryDate).toLocaleDateString('vi-VN')}`].filter(Boolean).join(' · ')
-        recordStockMovement(product, 'import', qty, { refCode: receipt.code, reason: `Nhận hàng ${order.code}`, note: lot || undefined })
+        product.stock += qty
       }
       if (qty > 0 || line.damagedQty > 0) {
         receipt.lines.push({ productId: line.productId, name: line.name, sku: line.sku, barcode: line.barcode, unit: line.unit, acceptedQty: qty, damagedQty: line.damagedQty, unitCost: line.unitCost, expiryDate: line.expiryDate, lotNo: line.lotNo })

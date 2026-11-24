@@ -1,19 +1,16 @@
 import { ArrowDownLeft, ArrowUpRight, Boxes, Hourglass, PackageCheck, PackageOpen, PackageX, RotateCcw, ShoppingCart, TriangleAlert, Truck, type LucideIcon } from 'lucide-react'
 import type { BadgeProps } from '@/components/ui/Badge'
-import { removeAccents } from '@/lib/format'
+import { HttpError } from '@/lib/http'
 import type {
   InventoryFilters,
-  InventoryItem,
+  InventoryListParams,
   InventorySort,
-  InventoryStats,
   MovementFilters,
+  MovementListParams,
   MovementType,
   StockLevelFilter,
   StockMovement,
-  StockPoint,
 } from '@/modules/inventory/types/inventory.types'
-import type { Product } from '@/modules/sales/types/sales.types'
-import { LOW_STOCK_THRESHOLD } from '@/modules/sales/utils/constants'
 
 export const PAGE_SIZE = 10
 export const SLOW_DAYS = 30
@@ -67,62 +64,43 @@ export const ADJUST_REASONS = {
 export const DEFAULT_INVENTORY_FILTERS: InventoryFilters = { keyword: '', categoryId: 'all', level: 'all', sort: 'value-desc' }
 export const DEFAULT_MOVEMENT_FILTERS: MovementFilters = { keyword: '', type: 'all', range: '30d' }
 
-export const toInventoryItem = (p: Product, movements: StockMovement[], now = Date.now()): InventoryItem => {
-  const own = movements.filter((m) => m.productId === p.id)
-  const soldLast30 = own
-    .filter((m) => m.type === 'sale' && now - new Date(m.createdAt).getTime() <= SLOW_DAYS * DAY)
-    .reduce((s, m) => s - m.quantity, 0)
-  const minStockValue = p.minStock ?? LOW_STOCK_THRESHOLD
+export const EMPTY_LEVEL_COUNTS: Record<StockLevelFilter, number> = { all: 0, ok: 0, low: 0, out: 0, slow: 0 }
+
+export const hasInventoryFilters = (f: InventoryFilters) => f.keyword.trim() !== '' || f.categoryId !== 'all' || f.level !== 'all'
+
+export const hasMovementFilters = (f: MovementFilters) => f.keyword.trim() !== '' || f.type !== 'all' || f.range !== DEFAULT_MOVEMENT_FILTERS.range
+
+export const toInventoryParams = (f: InventoryFilters, keyword: string, page: number): InventoryListParams => ({
+  keyword: keyword.trim() || undefined,
+  categoryId: f.categoryId === 'all' ? undefined : f.categoryId,
+  level: f.level === 'all' ? undefined : f.level,
+  sort: f.sort,
+  page,
+  pageSize: PAGE_SIZE,
+})
+
+export const toMovementParams = (f: MovementFilters, keyword: string, page: number, now = new Date()): MovementListParams => {
+  const range = getMovementRange(f, now)
   return {
-    ...p,
-    minStockValue,
-    stockValue: p.stock * (p.costPrice ?? p.price),
-    level: p.stock <= 0 ? 'out' : p.stock <= minStockValue ? 'low' : 'ok',
-    soldLast30,
-    lastMovementAt: own[0]?.createdAt,
-    slow: p.stock > 0 && soldLast30 === 0,
+    keyword: keyword.trim() || undefined,
+    type: f.type === 'all' ? undefined : f.type,
+    from: range?.from.toISOString(),
+    to: range?.to.toISOString(),
+    page,
+    pageSize: PAGE_SIZE,
   }
 }
 
-export const calcInventoryStats = (items: InventoryItem[]): InventoryStats =>
-  items.reduce<InventoryStats>(
-    (s, i) => ({
-      stockValue: s.stockValue + i.stockValue,
-      skuCount: s.skuCount + 1,
-      units: s.units + i.stock,
-      low: s.low + (i.level === 'low' ? 1 : 0),
-      out: s.out + (i.level === 'out' ? 1 : 0),
-      slow: s.slow + (i.slow ? 1 : 0),
-    }),
-    { stockValue: 0, skuCount: 0, units: 0, low: 0, out: 0, slow: 0 },
-  )
+export const INVENTORY_ERROR = {
+  insufficient: 'INVENTORY_INSUFFICIENT_STOCK',
+  changed: 'INVENTORY_STOCK_CHANGED',
+  noChange: 'INVENTORY_NO_CHANGE',
+  notFound: 'INVENTORY_PRODUCT_NOT_FOUND',
+} as const
 
-export const matchLevel = (i: InventoryItem, level: StockLevelFilter) =>
-  level === 'all' || (level === 'slow' ? i.slow : i.level === level)
-
-export const filterInventory = (items: InventoryItem[], f: InventoryFilters, keyword: string) => {
-  const k = removeAccents(keyword.trim())
-  return items.filter(
-    (i) =>
-      (f.categoryId === 'all' || i.categoryId === f.categoryId) &&
-      (!k || removeAccents(i.name).includes(k) || i.sku.toLowerCase().includes(k) || i.barcode.includes(k)),
-  )
-}
-
-export const sortInventory = (items: InventoryItem[], sort: InventorySort) => {
-  const list = [...items]
-  switch (sort) {
-    case 'stock-asc':
-      return list.sort((a, b) => a.stock - b.stock)
-    case 'stock-desc':
-      return list.sort((a, b) => b.stock - a.stock)
-    case 'name':
-      return list.sort((a, b) => a.name.localeCompare(b.name, 'vi'))
-    case 'recent':
-      return list.sort((a, b) => (b.lastMovementAt ?? '').localeCompare(a.lastMovementAt ?? ''))
-    default:
-      return list.sort((a, b) => b.stockValue - a.stockValue)
-  }
+export const errorCurrentStock = (error: unknown) => {
+  const current = (error instanceof HttpError ? (error.data as { details?: { current?: unknown } } | null) : null)?.details?.current
+  return typeof current === 'number' ? current : undefined
 }
 
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
@@ -146,38 +124,6 @@ export const getMovementRange = (f: MovementFilters, now = new Date()) => {
     default:
       return null
   }
-}
-
-export const filterMovements = (list: StockMovement[], f: MovementFilters, keyword: string) => {
-  const range = getMovementRange(f)
-  const k = removeAccents(keyword.trim())
-  return list.filter((m) => {
-    if (range) {
-      const t = new Date(m.createdAt)
-      if (t < range.from || t >= range.to) return false
-    }
-    if (f.type === 'in' && m.quantity <= 0) return false
-    if (f.type === 'out' && m.quantity >= 0) return false
-    if (f.type !== 'all' && f.type !== 'in' && f.type !== 'out' && m.type !== f.type) return false
-    return !k || removeAccents(m.productName).includes(k) || m.sku.toLowerCase().includes(k) || m.barcode.includes(k) || (m.refCode ?? '').toLowerCase().includes(k)
-  })
-}
-
-export const buildStockSeries = (current: number, movements: StockMovement[], days = 30, now = new Date()): StockPoint[] => {
-  const today = startOfDay(now)
-  const points: StockPoint[] = []
-  let stock = current
-  const sorted = [...movements].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-  let idx = 0
-  for (let d = 0; d < days; d++) {
-    const dayStart = new Date(today.getTime() - d * DAY)
-    points.push({ date: dayStart, stock })
-    while (idx < sorted.length && new Date(sorted[idx].createdAt) >= dayStart) {
-      stock -= sorted[idx].quantity
-      idx++
-    }
-  }
-  return points.reverse()
 }
 
 export const exportMovementsCsv = (list: StockMovement[]) => {
@@ -205,14 +151,3 @@ export const exportMovementsCsv = (list: StockMovement[]) => {
   URL.revokeObjectURL(url)
 }
 
-export const timeAgo = (iso?: string, now = Date.now()) => {
-  if (!iso) return '—'
-  const diff = Math.max(0, now - new Date(iso).getTime())
-  const minutes = Math.floor(diff / 60_000)
-  if (minutes < 1) return 'Vừa xong'
-  if (minutes < 60) return `${minutes} phút trước`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours} giờ trước`
-  const days = Math.floor(hours / 24)
-  return days < 30 ? `${days} ngày trước` : new Date(iso).toLocaleDateString('vi-VN')
-}

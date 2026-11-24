@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Check, History, Pencil, SlidersHorizontal, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Drawer } from '@/components/ui/Drawer'
@@ -8,14 +8,15 @@ import { cn } from '@/lib/cn'
 import { formatCurrency, formatDateTime, formatNumber, parseNumber } from '@/lib/format'
 import { MovementTypeBadge, QuantityChange } from '@/modules/inventory/components/MovementTypeBadge'
 import { StockChart } from '@/modules/inventory/components/StockChart'
-import type { InventoryItem, StockMovement } from '@/modules/inventory/types/inventory.types'
-import { buildStockSeries } from '@/modules/inventory/utils/inventory.utils'
+import type { InventoryItem, StockMovement, StockPoint } from '@/modules/inventory/types/inventory.types'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
 import { ProductCode } from '@/components/common/ProductCode'
 
 interface StockDetailDrawerProps {
   item: InventoryItem | null
+  series: StockPoint[]
   movements: StockMovement[]
+  loading: boolean
   onClose: () => void
   onAdjust: (item: InventoryItem) => void
   onSaveMinStock: (productId: string, minStock: number) => void
@@ -70,10 +71,10 @@ function MinStockEditor({ value, onSave }: { value: number; onSave: (v: number) 
   )
 }
 
-export function StockDetailDrawer({ item: openItem, movements: openMovements, onClose, onAdjust, onSaveMinStock, onViewHistory }: StockDetailDrawerProps) {
+export function StockDetailDrawer({ item: openItem, series, movements: openMovements, loading, onClose, onAdjust, onSaveMinStock, onViewHistory }: StockDetailDrawerProps) {
   const item = useLastValue(openItem)
   const movements = useLastValue(openItem ? openMovements : null) ?? []
-  const points = useMemo(() => (item ? buildStockSeries(item.stock, movements) : []), [item, movements])
+  const points = useLastValue(openItem ? series : null) ?? []
   if (!item) return null
   const recent = movements.slice(0, 8)
 
@@ -125,12 +126,18 @@ export function StockDetailDrawer({ item: openItem, movements: openMovements, on
 
       <FormSection title="Tồn kho 30 ngày">
         <div className="rounded-lg border border-slate-100 p-3">
-          <StockChart points={points} minStock={item.minStockValue} unit={item.unit} />
+          {loading && points.length === 0 ? (
+            <div className="h-[168px] animate-pulse rounded-md bg-slate-50" />
+          ) : (
+            <StockChart points={points} minStock={item.minStockValue} unit={item.unit} />
+          )}
         </div>
       </FormSection>
 
       <FormSection title="Biến động gần đây">
-        {recent.length === 0 ? (
+        {loading && recent.length === 0 ? (
+          <div className="h-24 animate-pulse rounded-lg bg-slate-50" />
+        ) : recent.length === 0 ? (
           <p className="rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-400">Chưa có biến động</p>
         ) : (
           <ul className="divide-y divide-slate-100 rounded-lg border border-slate-100">

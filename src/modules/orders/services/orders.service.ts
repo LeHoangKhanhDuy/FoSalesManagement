@@ -1,9 +1,7 @@
 import { USE_MOCK } from '@/lib/constants'
 import { http, sleep } from '@/lib/http'
 import { earnOrderPoints, revokeOrderPoints } from '@/modules/customers/mocks/points.mock'
-import { recordStockMovement } from '@/modules/inventory/mocks/movements.mock'
 import { MOCK_ORDERS } from '@/modules/orders/mocks/orders.mock'
-import { MOCK_PRODUCTS } from '@/modules/sales/mocks/products.mock'
 import type { OrderRecord, OrderStatus } from '@/modules/orders/types/orders.types'
 
 const updateMock = (id: string, status: OrderStatus, patch: Partial<OrderRecord> = {}) => {
@@ -28,10 +26,6 @@ export const ordersService = {
     if (USE_MOCK) {
       await sleep(500)
       const updated = updateMock(id, 'refunded', { reason })
-      updated.items.forEach((item) => {
-        const product = MOCK_PRODUCTS.find((p) => p.id === item.productId)
-        if (product) recordStockMovement(product, 'return', item.quantity, { refCode: updated.code, reason })
-      })
       revokeOrderPoints(updated)
       return updated
     }

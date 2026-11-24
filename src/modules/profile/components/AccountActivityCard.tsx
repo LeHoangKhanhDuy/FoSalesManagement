@@ -1,6 +1,6 @@
 import { History, KeyRound, LogIn, TriangleAlert } from 'lucide-react'
 import { Card, CardHeader } from '@/components/ui/Card'
-import { timeAgo } from '@/modules/inventory/utils/inventory.utils'
+import { timeAgo } from '@/lib/format'
 import type { Profile } from '@/modules/profile/types/profile.types'
 import { formatDateTimeVi } from '@/modules/profile/utils/profile.utils'
 

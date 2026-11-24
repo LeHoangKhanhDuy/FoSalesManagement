@@ -2,21 +2,20 @@ import { useCallback, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useBarcodeScanner } from '@/hooks/useBarcodeScanner'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useQuery } from '@/hooks/useQuery'
+import { errorMessage, HttpError } from '@/lib/http'
+import { inventoryService } from '@/modules/inventory/services/inventory.service'
 import type { InventoryFilters, InventoryItem } from '@/modules/inventory/types/inventory.types'
-import {
-  calcInventoryStats,
-  DEFAULT_INVENTORY_FILTERS,
-  filterInventory,
-  LEVEL_TABS,
-  matchLevel,
-  PAGE_SIZE,
-  sortInventory,
-} from '@/modules/inventory/utils/inventory.utils'
+import { DEFAULT_INVENTORY_FILTERS, EMPTY_LEVEL_COUNTS, hasInventoryFilters, PAGE_SIZE, toInventoryParams } from '@/modules/inventory/utils/inventory.utils'
+import { productsService } from '@/modules/products/services/products.service'
 
-export function useStockList(items: InventoryItem[], scannerEnabled: boolean) {
+export function useStockList(scannerEnabled: boolean) {
   const [filters, setFilters] = useState<InventoryFilters>(DEFAULT_INVENTORY_FILTERS)
   const [page, setPage] = useState(1)
-  const keyword = useDebounce(filters.keyword, 250)
+  const keyword = useDebounce(filters.keyword, 300)
+  const params = useMemo(() => toInventoryParams(filters, keyword, page), [filters, keyword, page])
+  const query = useQuery(inventoryService.list, params, { errorText: 'Không tải được danh sách tồn kho' })
+  const { setData } = query
 
   const updateFilter = useCallback(<K extends keyof InventoryFilters>(key: K, value: InventoryFilters[K]) => {
     setFilters((f) => ({ ...f, [key]: value }))
@@ -28,32 +27,42 @@ export function useStockList(items: InventoryItem[], scannerEnabled: boolean) {
     setPage(1)
   }, [])
 
+  const replaceItem = useCallback(
+    (item: InventoryItem) => setData((d) => (d ? { ...d, items: d.items.map((i) => (i.id === item.id ? item : i)) } : d)),
+    [setData],
+  )
+
   useBarcodeScanner(
     (code) => {
       setFilters((f) => ({ ...f, keyword: code, level: 'all', categoryId: 'all' }))
       setPage(1)
-      const found = items.find((i) => i.barcode === code || i.sku.toLowerCase() === code.toLowerCase())
-      if (found) toast.success(`${found.name}: tồn ${found.stock} ${found.unit.toLowerCase()}`, { duration: 1800 })
-      else toast.error(`Không có sản phẩm mã "${code}"`)
+      productsService
+        .lookup(code)
+        .then((p) => toast.success(`${p.name}: tồn ${p.stock} ${p.unit.toLowerCase()}`, { duration: 1800 }))
+        .catch((e: unknown) =>
+          toast.error(e instanceof HttpError && e.status === 404 ? `Không có sản phẩm mã "${code}"` : errorMessage(e, 'Không tra cứu được mã vạch')),
+        )
     },
     { enabled: scannerEnabled },
   )
 
-  const stats = useMemo(() => calcInventoryStats(items), [items])
-  const base = useMemo(() => filterInventory(items, filters, keyword), [items, filters, keyword])
-  const levelCounts = useMemo(
-    () => Object.fromEntries(LEVEL_TABS.map((t) => [t.value, base.filter((i) => matchLevel(i, t.value)).length])) as Record<
-      InventoryFilters['level'],
-      number
-    >,
-    [base],
-  )
-  const filtered = useMemo(() => sortInventory(base.filter((i) => matchLevel(i, filters.level)), filters.sort), [base, filters.level, filters.sort])
+  const total = query.data?.total ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages)
-  const paged = useMemo(() => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [filtered, currentPage])
-  const hasActiveFilters = filters.keyword !== '' || filters.categoryId !== 'all' || filters.level !== 'all'
-
-  return { filters, updateFilter, resetFilters, hasActiveFilters, stats, levelCounts, filtered, paged, page: currentPage, setPage }
+  return {
+    filters,
+    updateFilter,
+    resetFilters,
+    hasActiveFilters: hasInventoryFilters(filters),
+    items: query.data?.items ?? [],
+    total,
+    levelCounts: query.data?.levelCounts ?? EMPTY_LEVEL_COUNTS,
+    page: Math.min(page, totalPages),
+    setPage,
+    loading: query.initialLoading,
+    refreshing: query.loading && !query.initialLoading,
+    error: query.error,
+    reload: query.reload,
+    replaceItem,
+  }
 }

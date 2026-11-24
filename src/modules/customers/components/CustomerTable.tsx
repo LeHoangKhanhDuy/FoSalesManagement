@@ -4,11 +4,10 @@ import { Avatar } from '@/components/ui/Avatar'
 import { Dropdown, DropdownItem, DropdownSeparator } from '@/components/ui/Dropdown'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
-import { formatCurrency, formatNumber } from '@/lib/format'
+import { formatCurrency, formatNumber, timeAgo } from '@/lib/format'
 import { TierBadge } from '@/modules/customers/components/TierBadge'
 import type { CustomerWithStats, MembershipSettings } from '@/modules/customers/types/customers.types'
 import { isBirthdayMonth, nextTierInfo, TIER_STYLE, totalSpent } from '@/modules/customers/utils/customers.utils'
-import { timeAgo } from '@/modules/inventory/utils/inventory.utils'
 import { formatPhone } from '@/modules/suppliers/utils/suppliers.utils'
 
 interface Props {

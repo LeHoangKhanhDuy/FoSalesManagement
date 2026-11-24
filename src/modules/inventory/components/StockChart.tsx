@@ -23,7 +23,7 @@ export function StockChart({ points, minStock, unit }: StockChartProps) {
     const xs = points.map((_, i) => PAD.left + (points.length === 1 ? innerW / 2 : (i / (points.length - 1)) * innerW))
     const y = (v: number) => PAD.top + innerH - (v / niceMax) * innerH
     const line = points.map((p, i) => `${i ? 'L' : 'M'}${xs[i].toFixed(1)},${y(p.stock).toFixed(1)}`).join('')
-    const area = `${line}L${xs[xs.length - 1].toFixed(1)},${y(0)}L${xs[0].toFixed(1)},${y(0)}Z`
+    const area = xs.length ? `${line}L${xs[xs.length - 1].toFixed(1)},${y(0)}L${xs[0].toFixed(1)},${y(0)}Z` : ''
     return { path: line, area, xs, y, ticks: [0, niceMax / 2, niceMax] }
   }, [points, minStock])
 

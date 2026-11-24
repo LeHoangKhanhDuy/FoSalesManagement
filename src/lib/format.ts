@@ -45,3 +45,15 @@ export const getInitials = (name: string) =>
     .map((w) => w[0])
     .join('')
     .toUpperCase()
+
+export const timeAgo = (iso?: string, now = Date.now()) => {
+  if (!iso) return '—'
+  const diff = Math.max(0, now - new Date(iso).getTime())
+  const minutes = Math.floor(diff / 60_000)
+  if (minutes < 1) return 'Vừa xong'
+  if (minutes < 60) return `${minutes} phút trước`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} giờ trước`
+  const days = Math.floor(hours / 24)
+  return days < 30 ? `${days} ngày trước` : new Date(iso).toLocaleDateString('vi-VN')
+}
