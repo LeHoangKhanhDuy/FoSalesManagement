@@ -31,6 +31,14 @@ export interface UnitFormValues {
   description: string
 }
 
+export interface CategoryListParams {
+  status?: CategoryStatus
+}
+
+export type CategoryFormState = { mode: 'create' } | { mode: 'edit'; item: CategoryRecord } | null
+
+export type UnitFormState = { mode: 'create' } | { mode: 'edit'; item: UnitRecord } | null
+
 export type FormErrors<T> = Partial<Record<keyof T, string>>
 
 export type DeleteTarget =

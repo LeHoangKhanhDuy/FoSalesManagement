@@ -1,140 +1,143 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { catalogService } from '@/modules/categories/services/catalog.service'
-import type { CategoryFormValues, CategoryRecord } from '@/modules/categories/types/categories.types'
-import { matchKeyword, sortCategories } from '@/modules/categories/utils/categories.utils'
+import { errorMessage } from '@/lib/http'
+import { useCategoryList } from '@/modules/categories/hooks/useCategoryList'
+import { categoryService } from '@/modules/categories/services/category.service'
+import type { CategoryFormState, CategoryFormValues, CategoryRecord } from '@/modules/categories/types/categories.types'
+import { CATEGORY_ERROR, errorCode, errorProductCount } from '@/modules/categories/utils/categories.utils'
 import type { CategoryStatus } from '@/modules/sales/types/sales.types'
 
-export type CategoryFormState = { mode: 'create' } | { mode: 'edit'; item: CategoryRecord } | null
-
 export function useCategoryManager() {
-  const [items, setItems] = useState<CategoryRecord[]>([])
-  const [loading, setLoading] = useState(true)
-  const [keyword, setKeyword] = useState('')
-  const [status, setStatus] = useState<CategoryStatus | 'all'>('all')
+  const list = useCategoryList()
+  const { items, setItems, upsert, patch, reload } = list
   const [form, setForm] = useState<CategoryFormState>(null)
   const [saving, setSaving] = useState(false)
+  const [nameConflict, setNameConflict] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<CategoryRecord | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const pendingOrder = useRef<string[] | null>(null)
+  const savingOrder = useRef(false)
 
-  const load = useCallback(() => {
-    setLoading(true)
-    catalogService
-      .getCategories()
-      .then(setItems)
-      .catch(() => toast.error('Không tải được danh mục'))
-      .finally(() => setLoading(false))
+  const openForm = useCallback((state: CategoryFormState) => {
+    setNameConflict(null)
+    setForm(state)
   }, [])
 
-  useEffect(load, [load])
-
-  const sorted = useMemo(() => sortCategories(items), [items])
-  const filtered = useMemo(
-    () => sorted.filter((c) => (status === 'all' || (c.status ?? 'active') === status) && matchKeyword(keyword, c.name, c.description)),
-    [sorted, keyword, status],
+  const handleMissing = useCallback(
+    (e: unknown) => {
+      if (errorCode(e) !== CATEGORY_ERROR.notFound) return false
+      toast.error('Danh mục không còn tồn tại, danh sách đã được tải lại')
+      setForm(null)
+      setDeleteTarget(null)
+      reload()
+      return true
+    },
+    [reload],
   )
-  const canReorder = !keyword.trim() && status === 'all'
-
-  const openCreate = useCallback(() => setForm({ mode: 'create' }), [])
-  const openEdit = useCallback((item: CategoryRecord) => setForm({ mode: 'edit', item }), [])
-  const closeForm = useCallback(() => !saving && setForm(null), [saving])
 
   const submit = async (values: CategoryFormValues) => {
-    if (!form) return
+    if (!form || saving) return
     setSaving(true)
     try {
-      if (form.mode === 'edit') {
-        const updated = await catalogService.updateCategory(form.item.id, values)
-        setItems((list) => list.map((c) => (c.id === updated.id ? updated : c)))
-        toast.success(`Đã cập nhật danh mục "${updated.name}"`)
-      } else {
-        const created = await catalogService.createCategory(values)
-        setItems((list) => [...list, created])
-        toast.success(`Đã thêm danh mục "${created.name}"`)
-      }
+      const saved = form.mode === 'edit' ? await categoryService.update(form.item.id, values) : await categoryService.create(values)
+      upsert(saved)
+      toast.success(form.mode === 'edit' ? `Đã cập nhật danh mục "${saved.name}"` : `Đã thêm danh mục "${saved.name}"`)
       setForm(null)
-    } catch {
-      toast.error('Lưu danh mục thất bại')
+    } catch (e) {
+      if (errorCode(e) === CATEGORY_ERROR.nameTaken) setNameConflict(values.name)
+      else if (!handleMissing(e)) toast.error(errorMessage(e, 'Lưu danh mục thất bại'))
     } finally {
       setSaving(false)
     }
   }
 
-  const toggleStatus = useCallback(async (item: CategoryRecord) => {
-    const next: CategoryStatus = item.status === 'inactive' ? 'active' : 'inactive'
-    setItems((list) => list.map((c) => (c.id === item.id ? { ...c, status: next } : c)))
-    try {
-      await catalogService.updateCategory(item.id, { status: next })
-      toast.success(next === 'active' ? `Đã hiển thị "${item.name}" trên POS` : `Đã ẩn "${item.name}" khỏi POS`)
-    } catch {
-      toast.error('Cập nhật trạng thái thất bại')
-      load()
-    }
-  }, [load])
-
-  const move = useCallback(
-    async (id: string, direction: -1 | 1) => {
-      const index = sorted.findIndex((c) => c.id === id)
-      const target = index + direction
-      if (index < 0 || target < 0 || target >= sorted.length) return
-      const next = [...sorted]
-      ;[next[index], next[target]] = [next[target], next[index]]
-      const reordered = next.map((c, i) => ({ ...c, sortOrder: i + 1 }))
-      setItems(reordered)
+  const toggleStatus = useCallback(
+    async (item: CategoryRecord) => {
+      const next: CategoryStatus = item.status === 'inactive' ? 'active' : 'inactive'
+      patch(item.id, { status: next })
       try {
-        await catalogService.reorderCategories(reordered.map((c) => c.id))
-      } catch {
-        toast.error('Sắp xếp thất bại')
-        load()
+        upsert(await categoryService.update(item.id, { status: next }))
+        toast.success(next === 'active' ? `Đã hiển thị "${item.name}" trên POS` : `Đã ẩn "${item.name}" khỏi POS`)
+      } catch (e) {
+        patch(item.id, { status: item.status })
+        if (!handleMissing(e)) toast.error(errorMessage(e, 'Cập nhật trạng thái thất bại'))
       }
     },
-    [sorted, load],
+    [patch, upsert, handleMissing],
   )
 
-  const requestDelete = useCallback((item: CategoryRecord) => setDeleteTarget(item), [])
-  const closeDelete = useCallback(() => !deleting && setDeleteTarget(null), [deleting])
+  const flushOrder = useCallback(async () => {
+    if (savingOrder.current) return
+    savingOrder.current = true
+    while (pendingOrder.current) {
+      const ids = pendingOrder.current
+      pendingOrder.current = null
+      try {
+        await categoryService.reorder(ids)
+      } catch (e) {
+        pendingOrder.current = null
+        toast.error(errorMessage(e, 'Sắp xếp thất bại'))
+        reload()
+      }
+    }
+    savingOrder.current = false
+  }, [reload])
+
+  const move = useCallback(
+    (id: string, direction: -1 | 1) => {
+      const index = items.findIndex((c) => c.id === id)
+      const target = index + direction
+      if (index < 0 || target < 0 || target >= items.length) return
+      const next = [...items]
+      ;[next[index], next[target]] = [next[target], next[index]]
+      setItems(next.map((c, i) => ({ ...c, sortOrder: i + 1 })))
+      pendingOrder.current = next.map((c) => c.id)
+      void flushOrder()
+    },
+    [items, setItems, flushOrder],
+  )
 
   const confirmDelete = async (moveToId?: string) => {
-    if (!deleteTarget) return
+    if (!deleteTarget || deleting) return
     setDeleting(true)
     try {
-      await catalogService.deleteCategory(deleteTarget.id, moveToId)
+      await categoryService.remove(deleteTarget.id, moveToId)
       setItems((list) =>
-        list
-          .filter((c) => c.id !== deleteTarget.id)
-          .map((c) => (c.id === moveToId ? { ...c, productCount: c.productCount + deleteTarget.productCount } : c)),
+        list.filter((c) => c.id !== deleteTarget.id).map((c) => (c.id === moveToId ? { ...c, productCount: c.productCount + deleteTarget.productCount } : c)),
       )
       toast.success(`Đã xóa danh mục "${deleteTarget.name}"`)
       setDeleteTarget(null)
-    } catch {
-      toast.error('Xóa danh mục thất bại')
+    } catch (e) {
+      const code = errorCode(e)
+      if (code === CATEGORY_ERROR.inUse) {
+        const productCount = errorProductCount(e) ?? Math.max(1, deleteTarget.productCount)
+        setDeleteTarget({ ...deleteTarget, productCount })
+        patch(deleteTarget.id, { productCount })
+        toast.warning('Danh mục đang có sản phẩm, hãy chọn danh mục nhận lại sản phẩm')
+      } else if (!handleMissing(e)) {
+        toast.error(errorMessage(e, 'Xóa danh mục thất bại'))
+        if (code === CATEGORY_ERROR.moveTargetInvalid) reload()
+      }
     } finally {
       setDeleting(false)
     }
   }
 
   return {
-    items: sorted,
-    filtered,
-    loading,
-    keyword,
-    setKeyword,
-    status,
-    setStatus,
-    canReorder,
+    ...list,
     form,
-    openCreate,
-    openEdit,
-    closeForm,
-    submit,
     saving,
+    nameConflict,
+    openCreate: useCallback(() => openForm({ mode: 'create' }), [openForm]),
+    openEdit: useCallback((item: CategoryRecord) => openForm({ mode: 'edit', item }), [openForm]),
+    closeForm: useCallback(() => !saving && setForm(null), [saving]),
+    submit,
     toggleStatus,
     move,
     deleteTarget,
-    requestDelete,
-    closeDelete,
-    confirmDelete,
     deleting,
-    reload: load,
+    requestDelete: useCallback((item: CategoryRecord) => setDeleteTarget(item), []),
+    closeDelete: useCallback(() => !deleting && setDeleteTarget(null), [deleting]),
+    confirmDelete,
   }
 }

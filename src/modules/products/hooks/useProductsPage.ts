@@ -34,7 +34,7 @@ export function useProductsPage() {
 
   const load = useCallback(() => {
     setLoading(true)
-    Promise.all([productsService.getProducts(), catalogService.getCategories(), catalogService.getUnits()])
+    Promise.all([productsService.getProducts(), catalogService.getCategories(), catalogService.getUnits().catch(() => [])])
       .then(([p, c, u]) => {
         setProducts(p)
         setCategories([{ id: 'all', name: 'Tất cả' }, ...c])
