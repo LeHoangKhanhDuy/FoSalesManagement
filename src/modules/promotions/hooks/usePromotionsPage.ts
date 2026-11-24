@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/useDebounce'
 import { catalogService } from '@/modules/categories/services/catalog.service'
-import { productsService } from '@/modules/products/services/products.service'
 import { promotionsService } from '@/modules/promotions/services/promotions.service'
 import type { PromotionFilters, PromotionFormValues, PromotionKind, PromotionTab, PromotionWithUsage } from '@/modules/promotions/types/promotions.types'
 import {
@@ -34,7 +33,7 @@ export function usePromotionsPage() {
 
   const reload = useCallback(() => {
     setLoading(true)
-    Promise.all([promotionsService.getPromotions(), catalogService.getCategories(), productsService.getProducts()])
+    Promise.all([promotionsService.getPromotions(), catalogService.getCategories(), catalogService.getProducts()])
       .then(([p, c, pr]) => {
         setPromotions(p)
         setCategories(c)

@@ -1,40 +1,48 @@
 import { useMemo, useState } from 'react'
-import type { ProductFormErrors, ProductFormValues } from '@/modules/products/types/products.types'
-import { EMPTY_FORM, generateBarcode, generateSku, productToForm, validateProductForm } from '@/modules/products/utils/products.utils'
-import type { Product } from '@/modules/sales/types/sales.types'
-
-export type ProductFormMode = { mode: 'create' } | { mode: 'edit'; product: Product } | { mode: 'duplicate'; product: Product }
+import type { ProductFormErrors, ProductFormMode, ProductFormValues } from '@/modules/products/types/products.types'
+import { initialFormValues, validateProductForm } from '@/modules/products/utils/products.utils'
 
 export type SetProductField = <K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) => void
 
-const getInitialValues = (state: ProductFormMode, products: Product[]): ProductFormValues => {
-  if (state.mode === 'create') return { ...EMPTY_FORM, sku: generateSku(products), barcode: generateBarcode() }
-  const base = productToForm(state.product)
-  if (state.mode === 'duplicate') return { ...base, name: `${base.name} (bản sao)`, sku: generateSku(products), barcode: '' }
-  return base
+export interface ProductServerError {
+  errors: ProductFormErrors
+  values: ProductFormValues
 }
 
-export function useProductForm(state: ProductFormMode, products: Product[], onSubmit: (values: ProductFormValues) => void) {
-  const editingId = state.mode === 'edit' ? state.product.id : undefined
-  const [values, setValues] = useState(() => getInitialValues(state, products))
+export function useProductForm(
+  state: ProductFormMode,
+  unitIdByName: (name: string) => string | undefined,
+  serverError: ProductServerError | null,
+  onSubmit: (values: ProductFormValues, initial: ProductFormValues) => void,
+) {
+  const [initial] = useState(() => initialFormValues(state, unitIdByName))
+  const [values, setValues] = useState(initial)
   const [submitted, setSubmitted] = useState(false)
 
-  const errors: ProductFormErrors = useMemo(
-    () => (submitted ? validateProductForm(values, products, editingId) : {}),
-    [submitted, values, products, editingId],
-  )
+  const errors = useMemo<ProductFormErrors>(() => {
+    const server = serverError
+      ? Object.fromEntries(Object.entries(serverError.errors).filter(([k]) => values[k as keyof ProductFormValues] === serverError.values[k as keyof ProductFormValues]))
+      : {}
+    return { ...server, ...(submitted ? validateProductForm(values) : {}) }
+  }, [submitted, values, serverError])
 
   const set: SetProductField = (key, value) => setValues((v) => ({ ...v, [key]: value }))
 
   const submit = () => {
     setSubmitted(true)
-    if (Object.keys(validateProductForm(values, products, editingId)).length > 0) return
-    onSubmit(values)
+    if (Object.keys(validateProductForm(values)).length > 0) return
+    onSubmit(values, initial)
   }
 
-  const title = state.mode === 'edit' ? 'Chỉnh sửa sản phẩm' : state.mode === 'duplicate' ? 'Nhân bản sản phẩm' : 'Thêm sản phẩm mới'
-  const description = state.mode === 'edit' ? `${state.product.sku} · ${state.product.name}` : 'Điền thông tin để bắt đầu bán sản phẩm'
-  const submitLabel = state.mode === 'edit' ? 'Lưu thay đổi' : 'Thêm sản phẩm'
-
-  return { values, errors, set, submit, title, description, submitLabel }
+  const isEdit = state.mode === 'edit'
+  return {
+    values,
+    errors,
+    set,
+    submit,
+    isEdit,
+    title: isEdit ? 'Chỉnh sửa sản phẩm' : state.mode === 'duplicate' ? 'Nhân bản sản phẩm' : 'Thêm sản phẩm mới',
+    description: state.mode === 'create' ? 'Điền thông tin để bắt đầu bán sản phẩm' : `${state.product.sku} · ${state.product.name}`,
+    submitLabel: isEdit ? 'Lưu thay đổi' : 'Thêm sản phẩm',
+  }
 }

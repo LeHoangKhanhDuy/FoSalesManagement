@@ -3,17 +3,56 @@ import { Dropdown, DropdownItem } from '@/components/ui/Dropdown'
 import { Field, inputClass } from '@/components/ui/FormField'
 import { cn } from '@/lib/cn'
 import type { SetProductField } from '@/modules/products/hooks/useProductForm'
-import type { ProductFormErrors, ProductFormValues } from '@/modules/products/types/products.types'
-import { generateBarcode, generateSku } from '@/modules/products/utils/products.utils'
-import type { Category, Product } from '@/modules/sales/types/sales.types'
+import type { ProductFormErrors, ProductFormValues, UnitOption } from '@/modules/products/types/products.types'
+import { generateBarcode } from '@/modules/products/utils/products.utils'
+import type { Category } from '@/modules/sales/types/sales.types'
 
 interface ProductBasicFieldsProps {
   values: ProductFormValues
   errors: ProductFormErrors
   set: SetProductField
-  products: Product[]
   categories: Category[]
-  units: string[]
+  units: UnitOption[]
+}
+
+function SelectField({
+  value,
+  placeholder,
+  error,
+  options,
+  onSelect,
+}: {
+  value?: string
+  placeholder: string
+  error?: string
+  options: { id: string; name: string }[]
+  onSelect: (id: string) => void
+}) {
+  const label = options.find((o) => o.id === value)?.name
+  return (
+    <Dropdown
+      align="start"
+      width={260}
+      trigger={
+        <button
+          type="button"
+          className={cn(
+            inputClass(error),
+            'flex cursor-pointer items-center justify-between text-left data-[state=open]:border-primary-500 data-[state=open]:ring-4 data-[state=open]:ring-primary-100',
+            !label && 'text-slate-400',
+          )}
+        >
+          <span className="truncate">{label ?? placeholder}</span>
+          <ChevronDown className="size-4 shrink-0 text-slate-400" />
+        </button>
+      }
+    >
+      {options.length === 0 && <p className="px-3 py-2 text-sm text-slate-400">Chưa có dữ liệu</p>}
+      {options.map((o) => (
+        <DropdownItem key={o.id} label={o.name} active={o.id === value} onClick={() => onSelect(o.id)} />
+      ))}
+    </Dropdown>
+  )
 }
 
 function GenerateButton({ onClick }: { onClick: () => void }) {
@@ -24,9 +63,8 @@ function GenerateButton({ onClick }: { onClick: () => void }) {
   )
 }
 
-export function ProductBasicFields({ values, errors, set, products, categories, units }: ProductBasicFieldsProps) {
+export function ProductBasicFields({ values, errors, set, categories, units }: ProductBasicFieldsProps) {
   const formCategories = categories.filter((c) => c.id !== 'all')
-  const categoryName = formCategories.find((c) => c.id === values.categoryId)?.name
 
   return (
     <div className="grid grid-cols-2 gap-4">
@@ -36,61 +74,26 @@ export function ProductBasicFields({ values, errors, set, products, categories, 
           value={values.name}
           onChange={(e) => set('name', e.target.value)}
           placeholder="VD: Coca-Cola lon 330ml"
-          maxLength={120}
+          maxLength={150}
           className={inputClass(errors.name)}
         />
       </Field>
 
       <Field label="Danh mục" required error={errors.categoryId}>
-        <Dropdown
-          align="start"
-          width={260}
-          trigger={
-            <button
-              type="button"
-              className={cn(
-                inputClass(errors.categoryId),
-                'flex cursor-pointer items-center justify-between text-left data-[state=open]:border-primary-500 data-[state=open]:ring-4 data-[state=open]:ring-primary-100',
-                !categoryName && 'text-slate-400',
-              )}
-            >
-              {categoryName ?? 'Chọn danh mục'}
-              <ChevronDown className="size-4 text-slate-400" />
-            </button>
-          }
-        >
-          {formCategories.map((c) => (
-            <DropdownItem
-              key={c.id}
-              label={c.name}
-              active={c.id === values.categoryId}
-              onClick={() => set('categoryId', c.id as ProductFormValues['categoryId'])}
-            />
-          ))}
-        </Dropdown>
+        <SelectField value={values.categoryId} placeholder="Chọn danh mục" error={errors.categoryId} options={formCategories} onSelect={(id) => set('categoryId', id)} />
       </Field>
 
-      <Field label="Đơn vị tính" required error={errors.unit}>
-        <input
-          list="product-units"
-          value={values.unit}
-          onChange={(e) => set('unit', e.target.value)}
-          placeholder="Chai, lon, gói..."
-          maxLength={20}
-          className={inputClass(errors.unit)}
-        />
-        <datalist id="product-units">
-          {units.map((u) => (
-            <option key={u} value={u} />
-          ))}
-        </datalist>
+      <Field label="Đơn vị tính" required error={errors.unitId}>
+        <SelectField value={values.unitId} placeholder="Chọn đơn vị" error={errors.unitId} options={units} onSelect={(id) => set('unitId', id)} />
       </Field>
 
-      <Field label="Mã SKU" required error={errors.sku} hint={<GenerateButton onClick={() => set('sku', generateSku(products))} />}>
+      <Field label="Mã SKU" error={errors.sku}>
         <input
           value={values.sku}
           onChange={(e) => set('sku', e.target.value.toUpperCase().replace(/\s/g, ''))}
-          className={cn(inputClass(errors.sku), 'font-semibold tracking-wide uppercase')}
+          placeholder="Để trống để tự sinh"
+          maxLength={32}
+          className={cn(inputClass(errors.sku), 'font-semibold tracking-wide uppercase placeholder:font-normal placeholder:tracking-normal placeholder:normal-case')}
         />
       </Field>
 
@@ -98,9 +101,8 @@ export function ProductBasicFields({ values, errors, set, products, categories, 
         <input
           inputMode="numeric"
           value={values.barcode}
-          onChange={(e) => set('barcode', e.target.value.replace(/\D/g, ''))}
+          onChange={(e) => set('barcode', e.target.value.replace(/\D/g, '').slice(0, 14))}
           placeholder="Quét hoặc nhập mã vạch"
-          maxLength={14}
           className={cn(inputClass(errors.barcode), 'tracking-wide')}
         />
       </Field>

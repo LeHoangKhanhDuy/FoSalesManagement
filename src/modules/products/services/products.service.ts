@@ -1,67 +1,69 @@
-import { USE_MOCK } from '@/lib/constants'
-import { http, sleep } from '@/lib/http'
-import { compressImage } from '@/lib/image'
-import { recordStockMovement } from '@/modules/inventory/mocks/movements.mock'
-import { MOCK_PRODUCTS } from '@/modules/sales/mocks/products.mock'
+import { http } from '@/lib/http'
+import type { BulkDeleteResult, ProductListParams, ProductOption, ProductPayload, ProductStats, ProductStatsParams } from '@/modules/products/types/products.types'
 import type { Product, ProductStatus } from '@/modules/sales/types/sales.types'
+import type { Paginated } from '@/types/common'
 
-const findIndex = (id: string) => {
-  const index = MOCK_PRODUCTS.findIndex((p) => p.id === id)
-  if (index < 0) throw new Error('Không tìm thấy sản phẩm')
-  return index
-}
+const BASE = '/api/products'
+const EXPORT_PAGE_SIZE = 100
+const EXPORT_MAX_PAGES = 50
+
+type Nullable<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: T[P] | null }
+type ProductResponse = Nullable<Product, 'barcode' | 'image' | 'originalPrice' | 'costPrice' | 'description'>
+type OptionResponse = Nullable<ProductOption, 'barcode' | 'image' | 'costPrice'>
+
+const normalize = <T extends { barcode: string | null; image: string | null; costPrice?: number | null }>(p: T) => ({
+  ...p,
+  barcode: p.barcode ?? '',
+  image: p.image ?? undefined,
+  costPrice: p.costPrice ?? undefined,
+})
+
+const toProduct = (p: ProductResponse): Product => ({
+  ...normalize(p),
+  originalPrice: p.originalPrice ?? undefined,
+  description: p.description ?? undefined,
+})
+
+const byId = (id: string) => `${BASE}/${encodeURIComponent(id)}`
 
 export const productsService = {
-  async uploadImage(file: File): Promise<string> {
-    if (USE_MOCK) {
-      const [url] = await Promise.all([compressImage(file), sleep(500)])
-      return url
+  list: (params: ProductListParams) =>
+    http.get<Paginated<ProductResponse>>(BASE, { params: { ...params } }).then((res) => ({ ...res, items: res.items.map(toProduct) })),
+
+  async listAll(params: Omit<ProductListParams, 'page' | 'pageSize'> = {}): Promise<Product[]> {
+    const items: Product[] = []
+    for (let page = 1; page <= EXPORT_MAX_PAGES; page++) {
+      const res = await productsService.list({ ...params, page, pageSize: EXPORT_PAGE_SIZE })
+      items.push(...res.items)
+      if (items.length >= res.total || res.items.length === 0) break
     }
+    return items
+  },
+
+  stats: (params: ProductStatsParams = {}) => http.get<ProductStats>(`${BASE}/stats`, { params: { ...params } }),
+
+  sellable: () => http.get<ProductResponse[]>(`${BASE}/sellable`).then((list) => list.map(toProduct)),
+
+  options: (params: { keyword?: string; limit?: number; ids?: string[] } = {}) =>
+    http
+      .get<OptionResponse[]>(`${BASE}/options`, { params: { keyword: params.keyword, limit: params.limit, ids: params.ids?.join(',') } })
+      .then((list) => list.map((o): ProductOption => normalize(o))),
+
+  lookup: (code: string) => http.get<ProductResponse>(`${BASE}/lookup`, { params: { code } }).then(toProduct),
+
+  get: (id: string) => http.get<ProductResponse>(byId(id)).then(toProduct),
+
+  create: (payload: ProductPayload) => http.post<ProductResponse>(BASE, payload).then(toProduct),
+
+  update: (id: string, payload: ProductPayload) => http.patch<ProductResponse>(byId(id), payload).then(toProduct),
+
+  setStatus: (ids: string[], status: ProductStatus) => http.patch<{ updated: number }>(`${BASE}/status`, { ids, status }),
+
+  bulkDelete: (ids: string[]) => http.post<BulkDeleteResult>(`${BASE}/bulk-delete`, { ids }),
+
+  async uploadImage(file: File): Promise<string> {
     const body = new FormData()
     body.append('file', file)
-    const data = await http.post<{ url: string }>('/api/uploads/images', body)
-    return data.url
-  },
-
-  async getProducts(): Promise<Product[]> {
-    if (USE_MOCK) return sleep(400).then(() => structuredClone(MOCK_PRODUCTS))
-    return http.get<Product[]>('/api/products')
-  },
-
-  async createProduct(data: Omit<Product, 'id'>): Promise<Product> {
-    if (!USE_MOCK) return http.post<Product>('/api/products', data)
-    await sleep(450)
-    const now = new Date().toISOString()
-    const product: Product = { ...data, stock: 0, id: `p-${crypto.randomUUID().slice(0, 8)}`, createdAt: now, updatedAt: now }
-    MOCK_PRODUCTS.unshift(product)
-    if (data.stock > 0) recordStockMovement(product, 'initial', data.stock, { reason: 'Tồn đầu kỳ' })
-    return structuredClone(product)
-  },
-
-  async updateProduct(id: string, data: Partial<Omit<Product, 'id'>>): Promise<Product> {
-    if (!USE_MOCK) return http.put<Product>(`/api/products/${id}`, data)
-    await sleep(450)
-    const index = findIndex(id)
-    const current = MOCK_PRODUCTS[index]
-    const updated: Product = { ...current, ...data, stock: current.stock, id, updatedAt: new Date().toISOString() }
-    MOCK_PRODUCTS[index] = updated
-    if (data.stock !== undefined && data.stock !== current.stock) {
-      recordStockMovement(updated, data.stock > current.stock ? 'adjust-in' : 'adjust-out', data.stock - current.stock, {
-        reason: 'Sửa trong trang sản phẩm',
-      })
-    }
-    return structuredClone(updated)
-  },
-
-  async setStatus(ids: string[], status: ProductStatus): Promise<void> {
-    if (!USE_MOCK) return http.patch<void>('/api/products/status', { ids, status })
-    await sleep(300)
-    ids.forEach((id) => (MOCK_PRODUCTS[findIndex(id)].status = status))
-  },
-
-  async deleteProducts(ids: string[]): Promise<void> {
-    if (!USE_MOCK) return http.post<void>('/api/products/bulk-delete', { ids })
-    await sleep(400)
-    ids.forEach((id) => MOCK_PRODUCTS.splice(findIndex(id), 1))
+    return (await http.post<{ url: string }>('/api/uploads/images', body)).url
   },
 }
