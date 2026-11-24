@@ -1,6 +1,6 @@
 import { HttpError } from '@/lib/http'
 import { PASSWORD_RULE_MESSAGE, STRONG_PASSWORD } from '@/modules/auth/utils/auth.utils'
-import type { ChangePasswordValues, Profile, ProfileFormValues, UpdateProfilePayload } from '@/modules/profile/types/profile.types'
+import type { AuthSessionItem, ChangePasswordValues, Profile, ProfileFormValues, UpdateProfilePayload } from '@/modules/profile/types/profile.types'
 
 export type ProfileErrors = Partial<Record<keyof ProfileFormValues, string>>
 export type PasswordErrors = Partial<Record<keyof ChangePasswordValues, string>>
@@ -74,3 +74,10 @@ export const fieldFromError = (error: unknown) => (error instanceof HttpError &&
 
 export const formatDateTimeVi = (iso: string | null) =>
   iso ? new Date(iso).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Chưa có'
+
+export const sortSessions = (list: AuthSessionItem[]) =>
+  [...list].sort((a, b) => Number(b.current) - Number(a.current) || new Date(b.lastUsedAt).getTime() - new Date(a.lastUsedAt).getTime())
+
+export const isMobileAgent = (userAgent: string) => /android|ios|iphone|ipad|mobile/i.test(userAgent)
+
+export const sessionLabel = (userAgent: string) => userAgent.trim() || 'Thiết bị không xác định'
