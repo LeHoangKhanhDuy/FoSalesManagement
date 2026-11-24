@@ -78,6 +78,7 @@ export default function CategoriesPage() {
         state={categories.form}
         items={categories.items}
         saving={categories.saving}
+        nameConflict={categories.nameConflict}
         onClose={categories.closeForm}
         onSubmit={categories.submit}
       />

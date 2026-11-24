@@ -6,15 +6,15 @@ import { Modal } from '@/components/ui/Modal'
 import { Switch } from '@/components/ui/Switch'
 import { cn } from '@/lib/cn'
 import { CategoryIconTile } from '@/modules/categories/components/CategoryIconTile'
-import type { CategoryFormState } from '@/modules/categories/hooks/useCategoryManager'
-import type { CategoryFormValues, CategoryRecord } from '@/modules/categories/types/categories.types'
-import { categoryToForm, EMPTY_CATEGORY_FORM, validateCategoryForm } from '@/modules/categories/utils/categories.utils'
+import type { CategoryFormState, CategoryFormValues, CategoryRecord } from '@/modules/categories/types/categories.types'
+import { categoryToForm, EMPTY_CATEGORY_FORM, sameName, validateCategoryForm } from '@/modules/categories/utils/categories.utils'
 import { CATEGORY_COLORS, CATEGORY_ICONS } from '@/modules/categories/utils/category-visuals'
 
 interface CategoryFormModalProps {
   state: CategoryFormState
   items: CategoryRecord[]
   saving: boolean
+  nameConflict: string | null
   onClose: () => void
   onSubmit: (values: CategoryFormValues) => void
 }
@@ -24,11 +24,15 @@ export function CategoryFormModal({ state, ...props }: CategoryFormModalProps) {
   return <CategoryFormContent key={state.mode === 'edit' ? state.item.id : 'create'} state={state} {...props} />
 }
 
-function CategoryFormContent({ state, items, saving, onClose, onSubmit }: CategoryFormModalProps & { state: NonNullable<CategoryFormState> }) {
+function CategoryFormContent({ state, items, saving, nameConflict, onClose, onSubmit }: CategoryFormModalProps & { state: NonNullable<CategoryFormState> }) {
   const editing = state.mode === 'edit' ? state.item : undefined
   const [values, setValues] = useState<CategoryFormValues>(() => (editing ? categoryToForm(editing) : EMPTY_CATEGORY_FORM))
   const [submitted, setSubmitted] = useState(false)
-  const errors = useMemo(() => (submitted ? validateCategoryForm(values, items, editing?.id) : {}), [submitted, values, items, editing])
+  const errors = useMemo(() => {
+    const client = submitted ? validateCategoryForm(values, items, editing?.id) : {}
+    if (!client.name && nameConflict && sameName(values.name, nameConflict)) return { ...client, name: 'Tên danh mục đã tồn tại' }
+    return client
+  }, [submitted, values, items, editing, nameConflict])
   const set = <K extends keyof CategoryFormValues>(key: K, value: CategoryFormValues[K]) => setValues((v) => ({ ...v, [key]: value }))
 
   const submit = () => {

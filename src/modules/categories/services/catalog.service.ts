@@ -1,14 +1,8 @@
 import { USE_MOCK } from '@/lib/constants'
 import { http, sleep } from '@/lib/http'
 import { MOCK_UNITS } from '@/modules/categories/mocks/units.mock'
-import type {
-  CategoryFormValues,
-  CategoryRecord,
-  Unit,
-  UnitFormValues,
-  UnitRecord,
-} from '@/modules/categories/types/categories.types'
-import { categoryToForm, slugify, sortCategories, uniqueId } from '@/modules/categories/utils/categories.utils'
+import type { CategoryRecord, Unit, UnitFormValues, UnitRecord } from '@/modules/categories/types/categories.types'
+import { sortCategories } from '@/modules/categories/utils/categories.utils'
 import { registerCategoryVisuals } from '@/modules/categories/utils/category-visuals'
 import { MOCK_CATEGORIES } from '@/modules/sales/mocks/categories.mock'
 import { MOCK_PRODUCTS } from '@/modules/sales/mocks/products.mock'
@@ -26,14 +20,6 @@ const unitWithCount = (u: Unit): UnitRecord => ({
 
 const now = () => new Date().toISOString()
 
-const cleanCategory = (v: CategoryFormValues) => ({
-  name: v.name.trim(),
-  description: v.description.trim() || undefined,
-  icon: v.icon,
-  color: v.color,
-  status: v.status,
-})
-
 export const catalogService = {
   async getCategories(): Promise<CategoryRecord[]> {
     const list = USE_MOCK
@@ -41,50 +27,6 @@ export const catalogService = {
       : await http.get<CategoryRecord[]>('/api/categories', { params: { withCount: true } })
     registerCategoryVisuals(list)
     return list
-  },
-
-  async createCategory(values: CategoryFormValues): Promise<CategoryRecord> {
-    if (!USE_MOCK) return http.post<CategoryRecord>('/api/categories', values)
-    await sleep(350)
-    const category: Category = {
-      id: uniqueId(slugify(values.name), MOCK_CATEGORIES.map((c) => c.id)),
-      ...cleanCategory(values),
-      sortOrder: Math.max(0, ...MOCK_CATEGORIES.map((c) => c.sortOrder ?? 0)) + 1,
-      createdAt: now(),
-    }
-    MOCK_CATEGORIES.push(category)
-    registerCategoryVisuals([category])
-    return withCount(category)
-  },
-
-  async updateCategory(id: string, values: Partial<CategoryFormValues>): Promise<CategoryRecord> {
-    if (!USE_MOCK) return http.put<CategoryRecord>(`/api/categories/${id}`, values)
-    await sleep(300)
-    const category = MOCK_CATEGORIES.find((c) => c.id === id)
-    if (!category) throw new Error('Không tìm thấy danh mục')
-    Object.assign(category, cleanCategory({ ...categoryToForm(category), ...values }), { updatedAt: now() })
-    registerCategoryVisuals([category])
-    return withCount(category)
-  },
-
-  async reorderCategories(ids: string[]): Promise<void> {
-    if (!USE_MOCK) return http.put<void>('/api/categories/order', { ids })
-    await sleep(150)
-    ids.forEach((id, index) => {
-      const category = MOCK_CATEGORIES.find((c) => c.id === id)
-      if (category) category.sortOrder = index + 1
-    })
-  },
-
-  async deleteCategory(id: string, moveToId?: string): Promise<void> {
-    if (!USE_MOCK) return http.delete<void>(`/api/categories/${id}`, { params: { moveTo: moveToId } })
-    await sleep(400)
-    if (moveToId) MOCK_PRODUCTS.forEach((p) => p.categoryId === id && (p.categoryId = moveToId))
-    else if (MOCK_PRODUCTS.some((p) => p.categoryId === id)) throw new Error('Danh mục vẫn còn sản phẩm')
-    MOCK_CATEGORIES.splice(
-      MOCK_CATEGORIES.findIndex((c) => c.id === id),
-      1,
-    )
   },
 
   async getUnits(): Promise<UnitRecord[]> {
@@ -106,7 +48,7 @@ export const catalogService = {
   },
 
   async updateUnit(id: string, values: UnitFormValues): Promise<UnitRecord> {
-    if (!USE_MOCK) return http.put<UnitRecord>(`/api/units/${id}`, values)
+    if (!USE_MOCK) return http.patch<UnitRecord>(`/api/units/${encodeURIComponent(id)}`, values)
     await sleep(300)
     const unit = MOCK_UNITS.find((u) => u.id === id)
     if (!unit) throw new Error('Không tìm thấy đơn vị tính')
