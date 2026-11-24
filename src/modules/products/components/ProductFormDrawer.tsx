@@ -7,18 +7,19 @@ import { ProductBasicFields } from '@/modules/products/components/ProductBasicFi
 import { ProductImageField } from '@/modules/products/components/ProductImageField'
 import { ProductOptionFields } from '@/modules/products/components/ProductOptionFields'
 import { ProductPricingFields } from '@/modules/products/components/ProductPricingFields'
-import { useProductForm, type ProductFormMode } from '@/modules/products/hooks/useProductForm'
-import type { ProductFormValues } from '@/modules/products/types/products.types'
-import type { Category, Product } from '@/modules/sales/types/sales.types'
+import { useProductForm, type ProductServerError } from '@/modules/products/hooks/useProductForm'
+import type { ProductFormMode, ProductFormValues, UnitOption } from '@/modules/products/types/products.types'
+import type { Category } from '@/modules/sales/types/sales.types'
 
 interface ProductFormDrawerProps {
   state: ProductFormMode | null
-  products: Product[]
   categories: Category[]
-  units: string[]
+  units: UnitOption[]
+  unitIdByName: (name: string) => string | undefined
+  serverError: ProductServerError | null
   saving: boolean
   onClose: () => void
-  onSubmit: (values: ProductFormValues) => void
+  onSubmit: (values: ProductFormValues, initial: ProductFormValues) => void
 }
 
 export function ProductFormDrawer({ state: openState, ...props }: ProductFormDrawerProps) {
@@ -34,14 +35,15 @@ export function ProductFormDrawer({ state: openState, ...props }: ProductFormDra
 function ProductFormContent({
   state,
   open,
-  products,
   categories,
   units,
+  unitIdByName,
+  serverError,
   saving,
   onClose,
   onSubmit,
 }: ProductFormDrawerProps & { state: ProductFormMode; open: boolean }) {
-  const { values, errors, set, submit, title, description, submitLabel } = useProductForm(state, products, onSubmit)
+  const { values, errors, set, submit, isEdit, title, description, submitLabel } = useProductForm(state, unitIdByName, serverError, onSubmit)
 
   return (
     <Drawer
@@ -71,10 +73,10 @@ function ProductFormContent({
           <ProductImageField values={values} errors={errors} set={set} />
         </FormSection>
         <FormSection title="Thông tin cơ bản">
-          <ProductBasicFields values={values} errors={errors} set={set} products={products} categories={categories} units={units} />
+          <ProductBasicFields values={values} errors={errors} set={set} categories={categories} units={units} />
         </FormSection>
         <FormSection title="Giá & tồn kho">
-          <ProductPricingFields values={values} errors={errors} set={set} />
+          <ProductPricingFields values={values} errors={errors} set={set} isEdit={isEdit} />
         </FormSection>
         <FormSection title="Tùy chọn">
           <ProductOptionFields values={values} set={set} />
@@ -84,7 +86,7 @@ function ProductFormContent({
             value={values.description}
             onChange={(e) => set('description', e.target.value)}
             rows={3}
-            maxLength={500}
+            maxLength={1000}
             placeholder="Thông tin thêm về sản phẩm (không bắt buộc)"
             className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none placeholder:text-slate-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100"
           />

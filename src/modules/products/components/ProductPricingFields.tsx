@@ -9,9 +9,10 @@ interface ProductPricingFieldsProps {
   values: ProductFormValues
   errors: ProductFormErrors
   set: SetProductField
+  isEdit: boolean
 }
 
-export function ProductPricingFields({ values, errors, set }: ProductPricingFieldsProps) {
+export function ProductPricingFields({ values, errors, set, isEdit }: ProductPricingFieldsProps) {
   const margin = calcMargin(values.price, values.costPrice)
   const profit = values.price && values.costPrice ? values.price - values.costPrice : null
   const discount = values.originalPrice > values.price && values.price > 0 ? Math.round((1 - values.price / values.originalPrice) * 100) : null
@@ -34,8 +35,11 @@ export function ProductPricingFields({ values, errors, set }: ProductPricingFiel
         <Field label="Giá vốn" error={errors.costPrice}>
           <NumberInput value={values.costPrice} onChange={(v) => set('costPrice', v)} error={errors.costPrice} suffix="đ" />
         </Field>
-        <Field label="Tồn kho">
+        <Field label={isEdit ? 'Tồn kho' : 'Tồn kho ban đầu'} hint={isEdit ? 'Thay đổi sẽ ghi phiếu điều chỉnh' : undefined}>
           <NumberInput value={values.stock} onChange={(v) => set('stock', v)} />
+        </Field>
+        <Field label="Tồn tối thiểu" hint="Cảnh báo sắp hết khi ≤ mức này">
+          <NumberInput value={values.minStock} onChange={(v) => set('minStock', v)} />
         </Field>
       </div>
 

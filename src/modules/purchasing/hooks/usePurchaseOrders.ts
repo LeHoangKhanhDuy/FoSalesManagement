@@ -2,12 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/useDebounce'
 import { removeAccents } from '@/lib/format'
-import { productsService } from '@/modules/products/services/products.service'
 import { purchasingService } from '@/modules/purchasing/services/purchasing.service'
 import type { PurchaseOrder, PurchaseOrderFormValues, PurchaseOrderStatus} from '@/modules/purchasing/types/purchasing.types'
 import type { Supplier } from '@/modules/suppliers/types/suppliers.types'
 import { OPEN_STATUSES, PO_PAGE_SIZE, PO_STATUS_TABS } from '@/modules/purchasing/utils/purchasing.utils'
 import type { Product } from '@/modules/sales/types/sales.types'
+import { catalogService } from '@/modules/categories/services/catalog.service'
 
 export type PoTab = PurchaseOrderStatus | 'all' | 'open'
 export type PoFormState = { mode: 'create'; preset?: 'low-stock'; supplierId?: string } | { mode: 'edit'; order: PurchaseOrder } | null
@@ -32,7 +32,7 @@ export function usePurchaseOrders(onStockChanged: () => void) {
 
   const load = useCallback(() => {
     setLoading(true)
-    Promise.all([purchasingService.getPurchaseOrders(), purchasingService.getSuppliers(), productsService.getProducts()])
+    Promise.all([purchasingService.getPurchaseOrders(), purchasingService.getSuppliers(), catalogService.getProducts()])
       .then(([o, s, p]) => {
         setOrders(o)
         setSuppliers(s)
@@ -113,7 +113,7 @@ export function usePurchaseOrders(onStockChanged: () => void) {
     (order: PurchaseOrder, stockChanged = false) => {
       replace(order)
       if (stockChanged) {
-        productsService.getProducts().then(setProducts)
+        catalogService.getProducts().then(setProducts)
         onStockChanged()
       }
     },

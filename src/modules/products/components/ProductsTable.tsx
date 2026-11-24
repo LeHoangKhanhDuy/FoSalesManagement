@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { PackageSearch, RotateCcw } from 'lucide-react'
+import { CircleAlert, PackageSearch, RefreshCw, RotateCcw } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Pagination } from '@/components/ui/Pagination'
 import { Checkbox } from '@/components/ui/Switch'
@@ -15,6 +15,8 @@ interface ProductsTableProps {
   total: number
   page: number
   loading: boolean
+  refreshing: boolean
+  error?: string
   hasActiveFilters: boolean
   selectedIds: Set<string>
   selectedProducts: Product[]
@@ -27,6 +29,7 @@ interface ProductsTableProps {
   onDelete: (products: Product[]) => void
   onStatusChange: (ids: string[], status: ProductStatus) => void
   onResetFilters: () => void
+  onRetry: () => void
 }
 
 const COLUMNS: { label: string; className?: string }[] = [
@@ -47,6 +50,8 @@ export const ProductsTable = memo(function ProductsTable(props: ProductsTablePro
     total,
     page,
     loading,
+    refreshing,
+    error,
     hasActiveFilters,
     selectedIds,
     selectedProducts,
@@ -59,6 +64,7 @@ export const ProductsTable = memo(function ProductsTable(props: ProductsTablePro
     onDelete,
     onStatusChange,
     onResetFilters,
+    onRetry,
   } = props
 
   const pageSelected = products.filter((p) => selectedIds.has(p.id)).length
@@ -94,7 +100,7 @@ export const ProductsTable = memo(function ProductsTable(props: ProductsTablePro
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className={cn('divide-y divide-slate-100 transition-opacity', refreshing && 'pointer-events-none opacity-60')}>
             {loading &&
               Array.from({ length: 8 }).map((_, i) => (
                 <tr key={i}>
@@ -135,7 +141,24 @@ export const ProductsTable = memo(function ProductsTable(props: ProductsTablePro
           </tbody>
         </table>
 
-        {!loading && products.length === 0 && (
+        {!loading && error && products.length === 0 && (
+          <EmptyState
+            icon={<CircleAlert />}
+            title="Không tải được sản phẩm"
+            description={error}
+            className="py-16"
+            action={
+              <button
+                onClick={onRetry}
+                className="flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                <RefreshCw className="size-4" /> Thử lại
+              </button>
+            }
+          />
+        )}
+
+        {!loading && !error && products.length === 0 && (
           <EmptyState
             icon={<PackageSearch />}
             title="Không có sản phẩm phù hợp"

@@ -26,6 +26,7 @@ export interface Product {
   categoryId: CategoryId
   price: number
   originalPrice?: number
+  unitId?: string
   unit: string
   stock: number
   isBestSeller?: boolean

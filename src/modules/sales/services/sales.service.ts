@@ -1,6 +1,7 @@
 import { http, sleep } from '@/lib/http'
 import { USE_MOCK } from '@/lib/constants'
-import { MOCK_CATEGORIES } from '@/modules/sales/mocks/categories.mock'
+import { categoryService } from '@/modules/categories/services/category.service'
+import { productsService } from '@/modules/products/services/products.service'
 import { customersService } from '@/modules/customers/services/customers.service'
 import { MOCK_CUSTOMERS } from '@/modules/customers/mocks/customers.mock'
 import { MOCK_MEMBERSHIP } from '@/modules/customers/mocks/membership.mock'
@@ -14,25 +15,14 @@ import { getRunningAutoSync, promotionsService } from '@/modules/promotions/serv
 import { priceCart } from '@/modules/promotions/utils/promotion-engine'
 import { MOCK_ORDERS } from '@/modules/orders/mocks/orders.mock'
 import { recordStockMovement } from '@/modules/inventory/mocks/movements.mock'
-import { sortCategories } from '@/modules/categories/utils/categories.utils'
-import { registerCategoryVisuals } from '@/modules/categories/utils/category-visuals'
 
 export const salesService = {
   async getCategories(): Promise<Category[]> {
-    const list = USE_MOCK
-      ? await sleep(150).then(() => sortCategories(MOCK_CATEGORIES.filter((c) => c.status !== 'inactive')))
-      : await http.get<Category[]>('/api/categories', { params: { status: 'active' } })
-    registerCategoryVisuals(list)
+    const list = await categoryService.list({ status: 'active' })
     return [{ id: 'all', name: 'Tất cả' }, ...list]
   },
 
-  async getProducts(): Promise<Product[]> {
-    if (USE_MOCK) {
-      const hidden = new Set(MOCK_CATEGORIES.filter((c) => c.status === 'inactive').map((c) => c.id))
-      return sleep(500).then(() => structuredClone(MOCK_PRODUCTS.filter((p) => p.status !== 'inactive' && !hidden.has(p.categoryId))))
-    }
-    return http.get<Product[]>('/api/products', { params: { status: 'active' } })
-  },
+  getProducts: (): Promise<Product[]> => productsService.sellable(),
 
   searchCustomers(keyword: string): Promise<Customer[]> {
     return customersService.searchActive(keyword)

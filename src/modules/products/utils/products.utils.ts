@@ -1,11 +1,13 @@
 import { generateEan13, isValidEan13 } from '@/lib/barcode'
-import { removeAccents } from '@/lib/format'
+import { HttpError } from '@/lib/http'
 import type {
   ProductFilters,
   ProductFormErrors,
+  ProductFormMode,
   ProductFormValues,
+  ProductListParams,
+  ProductPayload,
   ProductSortKey,
-  ProductStats,
   StockFilter,
   StockLevel,
 } from '@/modules/products/types/products.types'
@@ -23,7 +25,7 @@ export const STATUS_TABS: { value: ProductStatus | 'all'; label: string }[] = [
 export const STOCK_OPTIONS: { value: StockFilter; label: string }[] = [
   { value: 'all', label: 'Tất cả tồn kho' },
   { value: 'in-stock', label: 'Còn hàng' },
-  { value: 'low', label: `Sắp hết (≤ ${LOW_STOCK_THRESHOLD})` },
+  { value: 'low', label: 'Sắp hết (≤ tồn tối thiểu)' },
   { value: 'out', label: 'Hết hàng' },
 ]
 
@@ -40,12 +42,13 @@ export const DEFAULT_FILTERS: ProductFilters = { keyword: '', status: 'all', cat
 export const EMPTY_FORM: ProductFormValues = {
   name: '',
   categoryId: '',
+  unitId: '',
   sku: '',
   barcode: '',
-  unit: 'Cái',
   price: 0,
   originalPrice: 0,
   costPrice: 0,
+  minStock: LOW_STOCK_THRESHOLD,
   stock: 0,
   image: '',
   imageFit: 'auto',
@@ -54,6 +57,18 @@ export const EMPTY_FORM: ProductFormValues = {
   description: '',
 }
 
+export const hasActiveFilters = (f: ProductFilters) => f.keyword.trim() !== '' || f.status !== 'all' || f.categoryId !== 'all' || f.stock !== 'all'
+
+export const toListParams = (f: ProductFilters, keyword: string, page: number, pageSize = PAGE_SIZE): ProductListParams => ({
+  keyword: keyword.trim() || undefined,
+  categoryId: f.categoryId === 'all' ? undefined : f.categoryId,
+  status: f.status === 'all' ? undefined : f.status,
+  stock: f.stock === 'all' ? undefined : f.stock,
+  sort: f.sort,
+  page,
+  pageSize,
+})
+
 export const getStockLevel = (stock: number, minStock = LOW_STOCK_THRESHOLD): StockLevel =>
   stock <= 0 ? 'out' : stock <= minStock ? 'low' : 'ok'
 
@@ -61,66 +76,20 @@ export const calcMargin = (price: number, cost?: number) => (price > 0 && cost ?
 
 export const getCategoryName = (categories: Category[], id: string) => categories.find((c) => c.id === id)?.name ?? '—'
 
-export const filterProducts = (products: Product[], f: ProductFilters, keyword: string) => {
-  const k = removeAccents(keyword.trim())
-  return products.filter((p) => {
-    if (f.categoryId !== 'all' && p.categoryId !== f.categoryId) return false
-    const level = getStockLevel(p.stock, p.minStock)
-    if (f.stock === 'in-stock' && level === 'out') return false
-    if (f.stock === 'low' && level !== 'low') return false
-    if (f.stock === 'out' && level !== 'out') return false
-    if (!k) return true
-    return removeAccents(p.name).includes(k) || p.sku.toLowerCase().includes(k) || p.barcode.includes(k)
-  })
-}
-
-export const sortProducts = (products: Product[], sort: ProductSortKey) => {
-  const list = [...products]
-  switch (sort) {
-    case 'name':
-      return list.sort((a, b) => a.name.localeCompare(b.name, 'vi'))
-    case 'price-desc':
-      return list.sort((a, b) => b.price - a.price)
-    case 'price-asc':
-      return list.sort((a, b) => a.price - b.price)
-    case 'stock-asc':
-      return list.sort((a, b) => a.stock - b.stock)
-    default:
-      return list.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
-  }
-}
-
-export const calcProductStats = (products: Product[]): ProductStats =>
-  products.reduce<ProductStats>(
-    (s, p) => {
-      const level = getStockLevel(p.stock, p.minStock)
-      s.total += 1
-      if (p.status !== 'inactive') s.active += 1
-      s.inventoryValue += p.stock * (p.costPrice ?? p.price)
-      s.inventoryUnits += p.stock
-      if (level === 'low') s.low += 1
-      if (level === 'out') s.out += 1
-      return s
-    },
-    { total: 0, active: 0, inventoryValue: 0, inventoryUnits: 0, low: 0, out: 0 },
-  )
-
-export const generateSku = (products: Product[]) => {
-  const max = products.reduce((m, p) => Math.max(m, Number(p.sku.replace(/\D/g, '')) || 0), 0)
-  return `SP${String(max + 1).padStart(4, '0')}`
-}
-
 export const generateBarcode = () => generateEan13()
 
-export const productToForm = (p: Product): ProductFormValues => ({
+const collapse = (value: string) => value.trim().replace(/\s+/g, ' ')
+
+export const productToForm = (p: Product, unitIdByName: (name: string) => string | undefined): ProductFormValues => ({
   name: p.name,
   categoryId: p.categoryId,
+  unitId: p.unitId ?? unitIdByName(p.unit) ?? '',
   sku: p.sku,
   barcode: p.barcode,
-  unit: p.unit,
   price: p.price,
   originalPrice: p.originalPrice ?? 0,
   costPrice: p.costPrice ?? 0,
+  minStock: p.minStock ?? LOW_STOCK_THRESHOLD,
   stock: p.stock,
   image: p.image ?? '',
   imageFit: p.imageFit ?? 'auto',
@@ -129,39 +98,69 @@ export const productToForm = (p: Product): ProductFormValues => ({
   description: p.description ?? '',
 })
 
-export const formToProduct = (v: ProductFormValues): Omit<Product, 'id'> => ({
-  name: v.name.trim(),
-  categoryId: v.categoryId as Product['categoryId'],
-  sku: v.sku.trim().toUpperCase(),
-  barcode: v.barcode.trim(),
-  unit: v.unit.trim(),
+export const initialFormValues = (state: ProductFormMode, unitIdByName: (name: string) => string | undefined): ProductFormValues => {
+  if (state.mode === 'create') return { ...EMPTY_FORM, barcode: generateBarcode() }
+  const base = productToForm(state.product, unitIdByName)
+  return state.mode === 'duplicate' ? { ...base, name: `${base.name} (bản sao)`, sku: '', barcode: '', stock: 0 } : base
+}
+
+const fullPayload = (v: ProductFormValues): ProductPayload => ({
+  name: collapse(v.name),
+  barcode: v.barcode.trim() || null,
+  categoryId: v.categoryId,
+  unitId: v.unitId,
   price: v.price,
-  originalPrice: v.originalPrice > v.price ? v.originalPrice : undefined,
-  costPrice: v.costPrice || undefined,
-  stock: v.stock,
-  image: v.image.trim() || undefined,
+  originalPrice: v.originalPrice > v.price ? v.originalPrice : null,
+  costPrice: v.costPrice || null,
+  minStock: v.minStock,
+  image: v.image.trim() || null,
   imageFit: v.imageFit,
   isBestSeller: v.isBestSeller,
   status: v.status,
-  description: v.description.trim() || undefined,
+  description: v.description.trim() || null,
 })
 
-export const validateProductForm = (v: ProductFormValues, products: Product[], editingId?: string): ProductFormErrors => {
+export const toCreatePayload = (v: ProductFormValues): ProductPayload => {
+  const sku = v.sku.trim().toUpperCase()
+  return { ...fullPayload(v), ...(sku && { sku }), ...(v.stock > 0 && { initialStock: v.stock }) }
+}
+
+export const toUpdatePayload = (v: ProductFormValues, original: ProductFormValues): ProductPayload => {
+  const next: ProductPayload = { ...fullPayload(v), sku: v.sku.trim().toUpperCase() }
+  const prev: ProductPayload = { ...fullPayload(original), sku: original.sku }
+  const changed = Object.fromEntries(Object.entries(next).filter(([k, value]) => prev[k as keyof ProductPayload] !== value)) as ProductPayload
+  return v.stock !== original.stock ? { ...changed, stock: v.stock } : changed
+}
+
+export const validateProductForm = (v: ProductFormValues): ProductFormErrors => {
   const errors: ProductFormErrors = {}
-  const others = products.filter((p) => p.id !== editingId)
+  const sku = v.sku.trim()
+  const barcode = v.barcode.trim()
   if (!v.name.trim()) errors.name = 'Vui lòng nhập tên sản phẩm'
   if (!v.categoryId) errors.categoryId = 'Vui lòng chọn danh mục'
-  if (!v.unit.trim()) errors.unit = 'Vui lòng nhập đơn vị tính'
+  if (!v.unitId) errors.unitId = 'Vui lòng chọn đơn vị tính'
   if (v.price <= 0) errors.price = 'Giá bán phải lớn hơn 0'
   if (v.originalPrice > 0 && v.originalPrice <= v.price) errors.originalPrice = 'Giá gốc phải lớn hơn giá bán'
   if (v.costPrice > v.price) errors.costPrice = 'Giá vốn đang cao hơn giá bán'
-  if (!v.sku.trim()) errors.sku = 'Vui lòng nhập mã SKU'
-  else if (others.some((p) => p.sku.toLowerCase() === v.sku.trim().toLowerCase())) errors.sku = 'Mã SKU đã tồn tại'
-  if (v.barcode.trim() && !/^\d{8,14}$/.test(v.barcode.trim())) errors.barcode = 'Mã vạch gồm 8–14 chữ số'
-  else if (v.barcode.trim().length === 13 && !isValidEan13(v.barcode.trim())) errors.barcode = 'Mã EAN-13 sai số kiểm tra (chữ số cuối)'
-  else if (v.barcode.trim() && others.some((p) => p.barcode === v.barcode.trim())) errors.barcode = 'Mã vạch đã tồn tại'
-  if (v.image.trim() && !/^(https?:\/\/|\/|data:image\/)/.test(v.image.trim())) errors.image = 'Đường dẫn ảnh phải bắt đầu bằng http(s):// hoặc /'
+  if (sku && !/^[A-Za-z0-9._-]{2,32}$/.test(sku)) errors.sku = 'SKU gồm 2–32 ký tự chữ, số, dấu . _ -'
+  if (barcode && !/^\d{8,14}$/.test(barcode)) errors.barcode = 'Mã vạch gồm 8–14 chữ số'
+  else if (barcode.length === 13 && !isValidEan13(barcode)) errors.barcode = 'Mã EAN-13 sai số kiểm tra (chữ số cuối)'
+  if (v.image.trim() && !/^(https?:\/\/|\/)/.test(v.image.trim())) errors.image = 'Đường dẫn ảnh phải bắt đầu bằng http(s):// hoặc /'
   return errors
+}
+
+const FIELD_BY_CODE: Record<string, keyof ProductFormValues> = {
+  PRODUCT_SKU_TAKEN: 'sku',
+  PRODUCT_BARCODE_INVALID: 'barcode',
+  PRODUCT_BARCODE_TAKEN: 'barcode',
+  PRODUCT_CATEGORY_INVALID: 'categoryId',
+  PRODUCT_UNIT_INVALID: 'unitId',
+  PRODUCT_ORIGINAL_PRICE_INVALID: 'originalPrice',
+}
+
+export const productFieldError = (error: unknown): ProductFormErrors | null => {
+  const field = error instanceof HttpError && error.code ? FIELD_BY_CODE[error.code] : undefined
+  return field ? { [field]: error instanceof Error ? error.message : '' } : null
 }
 
 export const exportProductsCsv = (products: Product[], categories: Category[]) => {
@@ -179,7 +178,7 @@ export const exportProductsCsv = (products: Product[], categories: Category[]) =
     p.status === 'inactive' ? 'Ngừng bán' : 'Đang bán',
   ])
   const csv = [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n')
-  const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }))
+  const url = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }))
   const a = document.createElement('a')
   a.href = url
   a.download = `san-pham-${new Date().toISOString().slice(0, 10)}.csv`

@@ -9,42 +9,8 @@ import { ProductStats } from '@/modules/products/components/ProductStats'
 import { useProductsPage } from '@/modules/products/hooks/useProductsPage'
 
 export default function ProductsPage() {
-  const {
-    products,
-    categories,
-    units,
-    loading,
-    filters,
-    updateFilter,
-    resetFilters,
-    hasActiveFilters,
-    statusCounts,
-    stats,
-    filtered,
-    paged,
-    page,
-    setPage,
-    selectedIds,
-    selectedProducts,
-    toggleSelect,
-    toggleSelectPage,
-    clearSelection,
-    form,
-    openCreate,
-    openEdit,
-    openDuplicate,
-    closeForm,
-    submitForm,
-    saving,
-    changeStatus,
-    deleteTarget,
-    requestDelete,
-    closeDelete,
-    confirmDelete,
-    deleting,
-    exportCsv,
-    reload,
-  } = useProductsPage()
+  const { filters, updateFilter, resetFilters, hasActiveFilters, page, setPage, list, stats, catalog, selection, actions, exporting, exportCsv, reload } =
+    useProductsPage()
 
   return (
     <div className="flex flex-col gap-4">
@@ -55,59 +21,63 @@ export default function ProductsPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={reload} title="Tải lại" aria-label="Tải lại">
-            <RefreshCw className={loading ? 'size-4 animate-spin' : 'size-4'} />
+            <RefreshCw className={list.loading ? 'size-4 animate-spin' : 'size-4'} />
           </Button>
-          <Button variant="outline" leftIcon={<Download className="size-4" />} onClick={exportCsv}>
+          <Button variant="outline" leftIcon={<Download className="size-4" />} loading={exporting} onClick={exportCsv}>
             Xuất Excel
           </Button>
-          <Button leftIcon={<Plus className="size-4" />} onClick={openCreate}>
+          <Button leftIcon={<Plus className="size-4" />} onClick={actions.openCreate}>
             Thêm sản phẩm
           </Button>
         </div>
       </div>
 
-      <ProductStats stats={stats} loading={loading} onStockFilter={(v) => updateFilter('stock', v)} />
+      <ProductStats stats={stats.stats} loading={stats.loading} onStockFilter={(v) => updateFilter('stock', v)} />
 
       <Card className="overflow-hidden">
         <ProductFilters
           filters={filters}
-          categories={categories}
-          counts={statusCounts}
+          categories={catalog.categories}
+          counts={stats.counts}
           onChange={updateFilter}
           onReset={resetFilters}
           hasActiveFilters={hasActiveFilters}
         />
         <ProductsTable
-          products={paged}
-          categories={categories}
-          total={filtered.length}
+          products={list.items}
+          categories={catalog.categories}
+          total={list.total}
           page={page}
-          loading={loading}
+          loading={list.initialLoading}
+          refreshing={list.loading && !list.initialLoading}
+          error={list.error}
           hasActiveFilters={hasActiveFilters}
-          selectedIds={selectedIds}
-          selectedProducts={selectedProducts}
+          selectedIds={selection.selectedIds}
+          selectedProducts={selection.selectedProducts}
           onPageChange={setPage}
-          onToggleSelect={toggleSelect}
-          onToggleSelectPage={toggleSelectPage}
-          onClearSelection={clearSelection}
-          onEdit={openEdit}
-          onDuplicate={openDuplicate}
-          onDelete={requestDelete}
-          onStatusChange={changeStatus}
+          onToggleSelect={selection.toggle}
+          onToggleSelectPage={selection.togglePage}
+          onClearSelection={selection.clear}
+          onEdit={actions.openEdit}
+          onDuplicate={actions.openDuplicate}
+          onDelete={actions.requestDelete}
+          onStatusChange={actions.changeStatus}
           onResetFilters={resetFilters}
+          onRetry={list.reload}
         />
       </Card>
 
       <ProductFormDrawer
-        state={form}
-        products={products}
-        categories={categories}
-        units={units}
-        saving={saving}
-        onClose={closeForm}
-        onSubmit={submitForm}
+        state={actions.form}
+        categories={catalog.categories}
+        units={catalog.units}
+        unitIdByName={catalog.unitIdByName}
+        serverError={actions.serverError}
+        saving={actions.saving}
+        onClose={actions.closeForm}
+        onSubmit={actions.submitForm}
       />
-      <DeleteProductsModal products={deleteTarget} deleting={deleting} onClose={closeDelete} onConfirm={confirmDelete} />
+      <DeleteProductsModal products={actions.deleteTarget} deleting={actions.deleting} onClose={actions.closeDelete} onConfirm={actions.confirmDelete} />
     </div>
   )
 }
