@@ -41,6 +41,35 @@ let restored = false
 
 const notify = () => listeners.forEach((fn) => fn())
 
+const persist = (session: AuthSession | null, remember: boolean) => {
+  current = session
+  try {
+    localStorage.removeItem(SESSION_KEY)
+    sessionStorage.removeItem(SESSION_KEY)
+    if (session) {
+      ;(remember ? localStorage : sessionStorage).setItem(SESSION_KEY, JSON.stringify(session))
+      localStorage.setItem(LAST_USER_KEY, session.user.username)
+    } else {
+      clearCsrf()
+    }
+  } catch {
+    current = session
+  }
+  notify()
+}
+
+const channel = typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel('fosales-auth')
+
+channel?.addEventListener('message', (event: MessageEvent<AuthSession | null>) => {
+  const session = event.data
+  if (!session) {
+    if (current) persist(null, false)
+    return
+  }
+  current = session
+  notify()
+})
+
 export const authStore = {
   get: () => current,
   isRestored: () => restored,
@@ -49,20 +78,8 @@ export const authStore = {
     return () => listeners.delete(fn)
   },
   set: (session: AuthSession | null, remember = isPersistent()) => {
-    current = session
-    try {
-      localStorage.removeItem(SESSION_KEY)
-      sessionStorage.removeItem(SESSION_KEY)
-      if (session) {
-        ;(remember ? localStorage : sessionStorage).setItem(SESSION_KEY, JSON.stringify(session))
-        localStorage.setItem(LAST_USER_KEY, session.user.username)
-      } else {
-        clearCsrf()
-      }
-    } catch {
-      current = session
-    }
-    notify()
+    persist(session, remember)
+    channel?.postMessage(session)
   },
   markRestored: () => {
     if (restored) return

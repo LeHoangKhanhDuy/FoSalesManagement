@@ -1,9 +1,21 @@
-import { useCallback, useEffect, useSyncExternalStore } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 import { HttpError } from '@/lib/http'
 import { authService } from '@/modules/auth/services/auth.service'
 import { authStore, initialsOf, ROLE_LABEL } from '@/modules/auth/utils/auth.utils'
 
 let restoring: Promise<void> | null = null
+let loggingOut: Promise<void> | null = null
+
+const endSession = () => {
+  loggingOut ??= authService
+    .logout()
+    .catch(() => undefined)
+    .then(() => authStore.set(null))
+    .finally(() => {
+      loggingOut = null
+    })
+  return loggingOut
+}
 
 const restoreSession = () => {
   const initial = authStore.get()
@@ -27,11 +39,6 @@ export function useAuth() {
     void restoreSession()
   }, [])
 
-  const logout = useCallback(async () => {
-    await authService.logout().catch(() => undefined)
-    authStore.set(null)
-  }, [])
-
   const user = session?.user ?? null
   return {
     session,
@@ -40,6 +47,6 @@ export function useAuth() {
     checking: !session && !restored,
     roleLabel: user ? ROLE_LABEL[user.role] : '',
     initials: user ? initialsOf(user.name) : '',
-    logout,
+    logout: endSession,
   }
 }

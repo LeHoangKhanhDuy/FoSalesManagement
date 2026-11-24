@@ -27,7 +27,7 @@ const ACCESS_AT_KEY = 'fosales_access_at'
 const ACCESS_TTL_MS = 15 * 60_000
 const REFRESH_MARGIN_MS = 60_000
 const ISSUES_ACCESS = new Set(['/api/auth/login', '/api/auth/refresh', '/api/auth/change-password'])
-const NO_REFRESH = new Set(['/api/auth/login', '/api/auth/refresh', '/api/auth/logout', '/api/auth/forgot-password', '/api/auth/reset-password'])
+const NO_REFRESH = new Set(['/api/auth/login', '/api/auth/refresh', '/api/auth/forgot-password', '/api/auth/reset-password'])
 
 let onUnauthorized: () => void = () => undefined
 let refreshing: Promise<boolean> | null = null
