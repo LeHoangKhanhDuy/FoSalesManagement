@@ -10,6 +10,39 @@ export const ROLE_LABEL: Record<UserRole, string> = {
 export const STRONG_PASSWORD = /^(?=.*\p{L})(?=.*\d).{8,128}$/u
 export const PASSWORD_RULE_MESSAGE = 'Mật khẩu mới phải có từ 8 ký tự, gồm cả chữ và số'
 
+export const OTP_LENGTH = 6
+export const OTP_TTL_SECONDS = 300
+export const OTP_RESEND_SECONDS = 60
+
+export type ResetField = 'otp' | 'newPassword' | 'confirm' | 'form'
+export type ResetErrors = Partial<Record<ResetField, string>>
+export interface ResetValues {
+  otp: string
+  newPassword: string
+  confirm: string
+}
+
+export const EMPTY_RESET: ResetValues = { otp: '', newPassword: '', confirm: '' }
+
+export const validateAccount = (account: string) => (account.trim() ? undefined : 'Nhập tên đăng nhập hoặc số điện thoại')
+
+export const validateReset = ({ otp, newPassword, confirm }: ResetValues): ResetErrors => {
+  const errors: ResetErrors = {}
+  if (!new RegExp(`^\\d{${OTP_LENGTH}}$`).test(otp)) errors.otp = `Mã OTP gồm ${OTP_LENGTH} chữ số`
+  if (!STRONG_PASSWORD.test(newPassword)) errors.newPassword = PASSWORD_RULE_MESSAGE
+  if (!confirm) errors.confirm = 'Nhập lại mật khẩu mới'
+  else if (confirm !== newPassword) errors.confirm = 'Mật khẩu nhập lại không khớp'
+  return errors
+}
+
+export const resetFieldFromCode = (code?: string): ResetField => {
+  if (code?.includes('OTP')) return 'otp'
+  if (code?.includes('PASSWORD')) return 'newPassword'
+  return 'form'
+}
+
+export const formatSeconds = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+
 const SESSION_KEY = 'fosales_session'
 const LEGACY_TOKEN_KEY = 'fosales_token'
 const LAST_USER_KEY = 'fosales_last_username'

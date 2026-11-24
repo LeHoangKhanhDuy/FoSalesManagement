@@ -5,8 +5,8 @@ import { authStore } from '@/modules/auth/utils/auth.utils'
 
 type Errors = Partial<Record<'username' | 'password' | 'form', string>>
 
-export function useLoginForm(onSuccess: () => void) {
-  const [username, setUsername] = useState(() => authStore.lastUsername())
+export function useLoginForm(onSuccess: () => void, defaultUsername?: string) {
+  const [username, setUsername] = useState(() => defaultUsername ?? authStore.lastUsername())
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
