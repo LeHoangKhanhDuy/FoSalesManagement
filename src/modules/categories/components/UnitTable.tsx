@@ -1,4 +1,4 @@
-import { Pencil, Ruler, Search, Trash2, X } from 'lucide-react'
+import { Pencil, Search, Trash2, X } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
 import { formatNumber } from '@/lib/format'
@@ -48,12 +48,7 @@ export function UnitTable({ manager }: { manager: Manager }) {
         {filtered.map((u) => (
           <tr key={u.id} onClick={() => openEdit(u)} className="group cursor-pointer transition hover:bg-slate-50/80">
             <Td>
-              <div className="flex items-center gap-3">
-                <span className="grid size-9 place-items-center rounded-lg bg-primary-50 text-primary-600">
-                  <Ruler className="size-4" />
-                </span>
-                <span className="font-semibold text-slate-900 group-hover:text-primary-700">{u.name}</span>
-              </div>
+              <span className="font-semibold text-slate-900 group-hover:text-primary-700">{u.name}</span>
             </Td>
             <Td className="max-w-[360px] truncate text-slate-500">{u.description || '—'}</Td>
             <Td className="text-right">

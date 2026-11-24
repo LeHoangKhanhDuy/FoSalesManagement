@@ -1,13 +1,11 @@
 import { useCallback, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { errorMessage, HttpError } from '@/lib/http'
+import { errorMessage } from '@/lib/http'
 import { useCategoryList } from '@/modules/categories/hooks/useCategoryList'
 import { categoryService } from '@/modules/categories/services/category.service'
 import type { CategoryFormState, CategoryFormValues, CategoryRecord } from '@/modules/categories/types/categories.types'
-import { CATEGORY_ERROR, errorProductCount } from '@/modules/categories/utils/categories.utils'
+import { CATEGORY_ERROR, errorCode, errorProductCount } from '@/modules/categories/utils/categories.utils'
 import type { CategoryStatus } from '@/modules/sales/types/sales.types'
-
-const codeOf = (e: unknown) => (e instanceof HttpError ? e.code : undefined)
 
 export function useCategoryManager() {
   const list = useCategoryList()
@@ -27,7 +25,7 @@ export function useCategoryManager() {
 
   const handleMissing = useCallback(
     (e: unknown) => {
-      if (codeOf(e) !== CATEGORY_ERROR.notFound) return false
+      if (errorCode(e) !== CATEGORY_ERROR.notFound) return false
       toast.error('Danh mục không còn tồn tại, danh sách đã được tải lại')
       setForm(null)
       setDeleteTarget(null)
@@ -46,7 +44,7 @@ export function useCategoryManager() {
       toast.success(form.mode === 'edit' ? `Đã cập nhật danh mục "${saved.name}"` : `Đã thêm danh mục "${saved.name}"`)
       setForm(null)
     } catch (e) {
-      if (codeOf(e) === CATEGORY_ERROR.nameTaken) setNameConflict(values.name)
+      if (errorCode(e) === CATEGORY_ERROR.nameTaken) setNameConflict(values.name)
       else if (!handleMissing(e)) toast.error(errorMessage(e, 'Lưu danh mục thất bại'))
     } finally {
       setSaving(false)
@@ -110,9 +108,9 @@ export function useCategoryManager() {
       toast.success(`Đã xóa danh mục "${deleteTarget.name}"`)
       setDeleteTarget(null)
     } catch (e) {
-      const code = codeOf(e)
+      const code = errorCode(e)
       if (code === CATEGORY_ERROR.inUse) {
-        const productCount = errorProductCount(e instanceof HttpError ? e.data : null) ?? Math.max(1, deleteTarget.productCount)
+        const productCount = errorProductCount(e) ?? Math.max(1, deleteTarget.productCount)
         setDeleteTarget({ ...deleteTarget, productCount })
         patch(deleteTarget.id, { productCount })
         toast.warning('Danh mục đang có sản phẩm, hãy chọn danh mục nhận lại sản phẩm')

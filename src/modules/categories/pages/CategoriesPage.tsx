@@ -82,7 +82,7 @@ export default function CategoriesPage() {
         onClose={categories.closeForm}
         onSubmit={categories.submit}
       />
-      <UnitFormModal state={units.form} items={units.items} saving={units.saving} onClose={units.closeForm} onSubmit={units.submit} />
+      <UnitFormModal state={units.form} items={units.items} saving={units.saving} nameConflict={units.nameConflict} onClose={units.closeForm} onSubmit={units.submit} />
       <DeleteCatalogModal
         kind="category"
         target={categories.deleteTarget}

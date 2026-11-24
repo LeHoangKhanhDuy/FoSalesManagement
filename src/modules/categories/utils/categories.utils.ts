@@ -1,4 +1,5 @@
 import { removeAccents } from '@/lib/format'
+import { HttpError } from '@/lib/http'
 import type {
   CategoryFormValues,
   CategoryRecord,
@@ -74,7 +75,16 @@ export const CATEGORY_ERROR = {
   orderInvalid: 'CATEGORY_ORDER_INVALID',
 } as const
 
-export const errorProductCount = (data: unknown) => {
-  const count = (data as { details?: { productCount?: unknown } } | null)?.details?.productCount
+export const UNIT_ERROR = {
+  nameTaken: 'UNIT_NAME_TAKEN',
+  inUse: 'UNIT_IN_USE',
+  notFound: 'UNIT_NOT_FOUND',
+  replaceTargetInvalid: 'UNIT_REPLACE_TARGET_INVALID',
+} as const
+
+export const errorCode = (error: unknown) => (error instanceof HttpError ? error.code : undefined)
+
+export const errorProductCount = (error: unknown) => {
+  const count = (error instanceof HttpError ? (error.data as { details?: { productCount?: unknown } } | null) : null)?.details?.productCount
   return typeof count === 'number' ? count : undefined
 }
