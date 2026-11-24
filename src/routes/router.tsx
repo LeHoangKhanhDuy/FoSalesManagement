@@ -2,9 +2,11 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { LoaderCircle } from 'lucide-react'
 import { ComingSoon } from '@/components/common/ComingSoon'
+import { GuestOnly, RequireAuth } from '@/components/common/RouteGuards'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { PATHS } from '@/routes/paths'
 
+const LoginPage = lazy(() => import('@/modules/auth/pages/LoginPage'))
 const SalesPage = lazy(() => import('@/modules/sales/pages/SalesPage'))
 const OrdersPage = lazy(() => import('@/modules/orders/pages/OrdersPage'))
 const ProductsPage = lazy(() => import('@/modules/products/pages/ProductsPage'))
@@ -13,6 +15,7 @@ const InventoryPage = lazy(() => import('@/modules/inventory/pages/InventoryPage
 const SuppliersPage = lazy(() => import('@/modules/suppliers/pages/SuppliersPage'))
 const PromotionsPage = lazy(() => import('@/modules/promotions/pages/PromotionsPage'))
 const CustomersPage = lazy(() => import('@/modules/customers/pages/CustomersPage'))
+const ProfilePage = lazy(() => import('@/modules/profile/pages/ProfilePage'))
 
 const Loadable = ({ children }: { children: ReactNode }) => (
   <Suspense
@@ -28,7 +31,21 @@ const Loadable = ({ children }: { children: ReactNode }) => (
 
 export const router = createBrowserRouter([
   {
-    element: <MainLayout />,
+    path: PATHS.login,
+    element: (
+      <GuestOnly>
+        <Loadable>
+          <LoginPage />
+        </Loadable>
+      </GuestOnly>
+    ),
+  },
+  {
+    element: (
+      <RequireAuth>
+        <MainLayout />
+      </RequireAuth>
+    ),
     children: [
       { path: PATHS.home, element: <Navigate to={PATHS.pos} replace /> },
       {
@@ -92,6 +109,14 @@ export const router = createBrowserRouter([
         element: (
           <Loadable>
             <CustomersPage />
+          </Loadable>
+        ),
+      },
+      {
+        path: PATHS.profile,
+        element: (
+          <Loadable>
+            <ProfilePage />
           </Loadable>
         ),
       },
