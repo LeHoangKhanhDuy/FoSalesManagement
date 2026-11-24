@@ -1,4 +1,4 @@
-import { Pencil, Ruler, Search, Trash2, X } from 'lucide-react'
+import { Pencil, Search, Trash2, X } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
 import { formatNumber } from '@/lib/format'
@@ -9,6 +9,7 @@ import { formatShortDate } from '@/modules/categories/utils/categories.utils'
 type Manager = ReturnType<typeof useUnitManager>
 
 const COLUMNS = [
+  { label: 'STT', className: 'w-16 text-center' },
   { label: 'Đơn vị tính' },
   { label: 'Mô tả' },
   { label: 'Số sản phẩm', className: 'text-right w-32' },
@@ -45,15 +46,11 @@ export function UnitTable({ manager }: { manager: Manager }) {
         emptyTitle={items.length ? 'Không tìm thấy đơn vị tính' : 'Chưa có đơn vị tính'}
         emptyDescription={items.length ? 'Thử tìm với từ khóa khác.' : 'Thêm đơn vị tính như cái, chai, hộp, kg...'}
       >
-        {filtered.map((u) => (
+        {filtered.map((u, index) => (
           <tr key={u.id} onClick={() => openEdit(u)} className="group cursor-pointer transition hover:bg-slate-50/80">
+            <Td className="text-center text-xs font-semibold text-slate-400 tabular-nums">{index + 1}</Td>
             <Td>
-              <div className="flex items-center gap-3">
-                <span className="grid size-9 place-items-center rounded-lg bg-primary-50 text-primary-600">
-                  <Ruler className="size-4" />
-                </span>
-                <span className="font-semibold text-slate-900 group-hover:text-primary-700">{u.name}</span>
-              </div>
+              <span className="font-semibold text-slate-900 group-hover:text-primary-700">{u.name}</span>
             </Td>
             <Td className="max-w-[360px] truncate text-slate-500">{u.description || '—'}</Td>
             <Td className="text-right">

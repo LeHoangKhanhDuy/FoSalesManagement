@@ -4,6 +4,13 @@ Nền tảng bán hàng, quản lý & thống kê của FoTech. Màu chủ đạ
 
 **Stack:** React 19 · TypeScript · Vite · TailwindCSS v4 · lucide-react · sonner (toast) · React Router · deploy Vercel
 
+## Tài liệu cho dev
+
+- [`docs/CONVENTIONS.md`](docs/CONVENTIONS.md) — cấu trúc thư mục, module, luồng dữ liệu, đặt tên, quy tắc bắt buộc
+- [`docs/CODE_STYLE.md`](docs/CODE_STYLE.md) — cách viết TypeScript/React/hook/form, Tailwind, văn phong giao diện
+- [`docs/UI_PATTERNS.md`](docs/UI_PATTERNS.md) — màu sắc, UI kit, bố cục trang danh sách, drawer, modal
+- [`CLAUDE.md`](CLAUDE.md) — bản tóm tắt quy ước cho AI assistant
+
 ## Chạy dự án
 
 ```bash

@@ -1,16 +1,21 @@
 import { Fragment } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ChevronRight, House } from 'lucide-react'
+import { ChevronRight, House, UserRound, type LucideIcon } from 'lucide-react'
 import { findNavItem } from '@/config/navigation'
 import { useClock } from '@/hooks/useClock'
 import { formatDate, formatTime } from '@/lib/format'
+import { PATHS } from '@/routes/paths'
+
+const EXTRA_CRUMBS: Record<string, { label: string; icon?: LucideIcon }[]> = {
+  [PATHS.profile]: [{ label: 'Tài khoản' }, { label: 'Hồ sơ cá nhân', icon: UserRound }],
+}
 
 export function PageBar() {
   const { pathname } = useLocation()
   const now = useClock(30_000)
   const nav = findNavItem(pathname)
 
-  const crumbs = nav && nav.item.path !== '/' ? [{ label: nav.group.title }, { label: nav.item.label, icon: nav.item.icon }] : []
+  const crumbs: { label: string; icon?: LucideIcon }[] = nav && nav.item.path !== '/' ? [{ label: nav.group.title }, { label: nav.item.label, icon: nav.item.icon }] : (EXTRA_CRUMBS[pathname] ?? [])
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-5 pb-4 lg:px-6">

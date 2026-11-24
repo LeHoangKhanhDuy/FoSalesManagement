@@ -1,5 +1,6 @@
 export const PATHS = {
   home: '/',
+  login: '/login',
   dashboard: '/dashboard',
   ai: '/ai-assistant',
   pos: '/sales/pos',
@@ -14,5 +15,6 @@ export const PATHS = {
   revenueReport: '/reports/revenue',
   productReport: '/reports/products',
   staffReport: '/reports/staff',
+  profile: '/profile',
   settings: '/settings',
 } as const

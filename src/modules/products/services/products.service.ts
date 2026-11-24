@@ -1,4 +1,4 @@
-import { API_BASE_URL, USE_MOCK } from '@/lib/constants'
+import { USE_MOCK } from '@/lib/constants'
 import { http, sleep } from '@/lib/http'
 import { compressImage } from '@/lib/image'
 import { recordStockMovement } from '@/modules/inventory/mocks/movements.mock'
@@ -19,14 +19,7 @@ export const productsService = {
     }
     const body = new FormData()
     body.append('file', file)
-    const token = localStorage.getItem('fosales_token')
-    const res = await fetch(`${API_BASE_URL}/api/uploads/images`, {
-      method: 'POST',
-      body,
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    })
-    if (!res.ok) throw new Error('Tải ảnh thất bại')
-    const data = (await res.json()) as { url: string }
+    const data = await http.post<{ url: string }>('/api/uploads/images', body)
     return data.url
   },
 

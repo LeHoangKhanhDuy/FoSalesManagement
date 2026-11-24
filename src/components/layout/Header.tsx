@@ -1,9 +1,13 @@
 import { useRef, useState } from 'react'
-import { Bell, Check, ChevronDown, LogOut, Menu, Search, Settings, Store, UserRound } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { Bell, Check, ChevronDown, LoaderCircle, LogOut, Menu, Search, Settings, Store, UserRound } from 'lucide-react'
 import { Kbd } from '@/components/ui/Kbd'
 import { useClickOutside } from '@/hooks/useClickOutside'
 import { useHotkey } from '@/hooks/useHotkey'
 import { cn } from '@/lib/cn'
+import { useAuth } from '@/modules/auth/hooks/useAuth'
+import { PATHS } from '@/routes/paths'
 
 const STORES = [
   { id: 'hcm-01', name: 'FoTech Mart Quận 1', code: 'CN-HCM01' },
@@ -15,10 +19,23 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
   const [storeId, setStoreId] = useState(STORES[0].id)
   const [storeOpen, setStoreOpen] = useState(false)
   const [userOpen, setUserOpen] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
   const storeRef = useRef<HTMLDivElement>(null)
   const userRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
   const store = STORES.find((s) => s.id === storeId) ?? STORES[0]
+  const { user, roleLabel, initials, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    if (loggingOut) return
+    setLoggingOut(true)
+    await logout()
+    setLoggingOut(false)
+    setUserOpen(false)
+    toast.success('Đã đăng xuất')
+    navigate(PATHS.login, { replace: true })
+  }
 
   useClickOutside(storeRef, () => setStoreOpen(false), storeOpen)
   useClickOutside(userRef, () => setUserOpen(false), userOpen)
@@ -98,30 +115,46 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
             className="flex h-12 cursor-pointer items-center gap-2.5 rounded-lg border border-slate-200 bg-white pr-3 pl-1.5 shadow-soft transition hover:border-slate-300"
           >
             <span className="grid size-9 place-items-center rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 text-xs font-bold text-white">
-              KD
+              {initials}
             </span>
             <span className="hidden text-left leading-tight sm:block">
-              <span className="block text-[13px] font-bold text-slate-900">Khánh Duy</span>
-              <span className="block text-[11px] text-slate-400">Quản trị viên</span>
+              <span className="block text-[13px] font-bold text-slate-900">{user?.name}</span>
+              <span className="block text-[11px] text-slate-400">{roleLabel}</span>
             </span>
             <ChevronDown className="size-4 text-slate-400" />
           </button>
           {userOpen && (
             <div className="absolute top-14 right-0 w-56 animate-slide-up rounded-lg border border-slate-100 bg-white p-1.5 shadow-card">
+              <div className="px-2.5 py-2">
+                <p className="truncate text-sm font-semibold text-slate-900">{user?.name}</p>
+                <p className="truncate text-xs text-slate-400">
+                  @{user?.username} · {roleLabel}
+                </p>
+              </div>
+              <div className="my-1 h-px bg-slate-100" />
               {[
-                { icon: UserRound, label: 'Hồ sơ của tôi' },
-                { icon: Settings, label: 'Cài đặt' },
-              ].map(({ icon: Icon, label }) => (
+                { icon: UserRound, label: 'Hồ sơ của tôi', path: PATHS.profile },
+                { icon: Settings, label: 'Cài đặt', path: PATHS.settings },
+              ].map(({ icon: Icon, label, path }) => (
                 <button
                   key={label}
+                  onClick={() => {
+                    setUserOpen(false)
+                    navigate(path)
+                  }}
                   className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-slate-700 hover:bg-slate-50"
                 >
                   <Icon className="size-4 text-slate-400" /> {label}
                 </button>
               ))}
               <div className="my-1 h-px bg-slate-100" />
-              <button className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-rose-600 hover:bg-rose-50">
-                <LogOut className="size-4" /> Đăng xuất
+              <button
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-rose-600 hover:bg-rose-50 disabled:cursor-wait disabled:opacity-70"
+              >
+                {loggingOut ? <LoaderCircle className="size-4 animate-spin" /> : <LogOut className="size-4" />}
+                {loggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
               </button>
             </div>
           )}

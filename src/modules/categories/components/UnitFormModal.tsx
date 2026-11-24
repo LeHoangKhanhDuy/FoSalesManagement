@@ -3,9 +3,8 @@ import { Info } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Field, inputClass } from '@/components/ui/FormField'
 import { Modal } from '@/components/ui/Modal'
-import type { UnitFormState } from '@/modules/categories/hooks/useUnitManager'
-import type { UnitFormValues, UnitRecord } from '@/modules/categories/types/categories.types'
-import { EMPTY_UNIT_FORM, unitToForm, validateUnitForm } from '@/modules/categories/utils/categories.utils'
+import type { UnitFormState, UnitFormValues, UnitRecord } from '@/modules/categories/types/categories.types'
+import { EMPTY_UNIT_FORM, sameName, unitToForm, validateUnitForm } from '@/modules/categories/utils/categories.utils'
 
 const SUGGESTIONS = ['Cái', 'Chai', 'Lon', 'Hộp', 'Gói', 'Kg', 'Gram', 'Lít', 'Thùng', 'Bịch', 'Vỉ', 'Bộ']
 
@@ -13,6 +12,7 @@ interface UnitFormModalProps {
   state: UnitFormState
   items: UnitRecord[]
   saving: boolean
+  nameConflict: string | null
   onClose: () => void
   onSubmit: (values: UnitFormValues) => void
 }
@@ -22,11 +22,15 @@ export function UnitFormModal({ state, ...props }: UnitFormModalProps) {
   return <UnitFormContent key={state.mode === 'edit' ? state.item.id : 'create'} state={state} {...props} />
 }
 
-function UnitFormContent({ state, items, saving, onClose, onSubmit }: UnitFormModalProps & { state: NonNullable<UnitFormState> }) {
+function UnitFormContent({ state, items, saving, nameConflict, onClose, onSubmit }: UnitFormModalProps & { state: NonNullable<UnitFormState> }) {
   const editing = state.mode === 'edit' ? state.item : undefined
   const [values, setValues] = useState<UnitFormValues>(() => (editing ? unitToForm(editing) : EMPTY_UNIT_FORM))
   const [submitted, setSubmitted] = useState(false)
-  const errors = useMemo(() => (submitted ? validateUnitForm(values, items, editing?.id) : {}), [submitted, values, items, editing])
+  const errors = useMemo(() => {
+    const client = submitted ? validateUnitForm(values, items, editing?.id) : {}
+    if (!client.name && nameConflict && sameName(values.name, nameConflict)) return { ...client, name: 'Đơn vị tính đã tồn tại' }
+    return client
+  }, [submitted, values, items, editing, nameConflict])
   const taken = new Set(items.map((u) => u.name.toLowerCase()))
   const suggestions = SUGGESTIONS.filter((s) => !taken.has(s.toLowerCase()))
   const renaming = editing && editing.productCount > 0 && values.name.trim() && values.name.trim() !== editing.name
