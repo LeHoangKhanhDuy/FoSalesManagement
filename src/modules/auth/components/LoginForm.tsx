@@ -10,8 +10,8 @@ const fieldClass = (error?: string) =>
     error ? 'border-rose-300 focus-within:border-rose-400 focus-within:ring-rose-100' : 'border-slate-200 hover:border-slate-300 focus-within:border-primary-500 focus-within:ring-primary-100',
   )
 
-export function LoginForm({ onSuccess, onForgot }: { onSuccess: () => void; onForgot: () => void }) {
-  const f = useLoginForm(onSuccess)
+export function LoginForm({ onSuccess, onForgot, defaultUsername }: { onSuccess: () => void; onForgot: () => void; defaultUsername?: string }) {
+  const f = useLoginForm(onSuccess, defaultUsername)
   const locked = f.lockLeft > 0
 
   return (

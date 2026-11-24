@@ -8,6 +8,7 @@ export type LoginMode = 'login' | 'forgot'
 
 export function useLoginPage() {
   const [mode, setMode] = useState<LoginMode>('login')
+  const [prefill, setPrefill] = useState<string>()
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: string } | null)?.from
@@ -18,5 +19,10 @@ export function useLoginPage() {
     navigate(from && from !== '/login' ? from : PATHS.pos, { replace: true })
   }
 
-  return { mode, setMode, onSuccess }
+  const onResetDone = (account: string) => {
+    setPrefill(account)
+    setMode('login')
+  }
+
+  return { mode, setMode, prefill, onSuccess, onResetDone }
 }

@@ -3,6 +3,7 @@ import { errorMessage } from '@/lib/http'
 import { authStore } from '@/modules/auth/utils/auth.utils'
 import { useChangePassword } from '@/modules/profile/hooks/useChangePassword'
 import { useProfileForm } from '@/modules/profile/hooks/useProfileForm'
+import { useSessions } from '@/modules/profile/hooks/useSessions'
 import { profileService } from '@/modules/profile/services/profile.service'
 import type { Profile } from '@/modules/profile/types/profile.types'
 
@@ -38,8 +39,16 @@ export function useProfilePage() {
     syncAuthUser(p)
   }, [])
 
-  const info = useProfileForm(profile, applyProfile)
-  const password = useChangePassword(load)
+  const sessions = useSessions()
+  const reloadSessions = sessions.reload
 
-  return { profile, loading, error, reload: load, info, password }
+  const reloadAll = useCallback(() => {
+    load()
+    reloadSessions()
+  }, [load, reloadSessions])
+
+  const info = useProfileForm(profile, applyProfile)
+  const password = useChangePassword(reloadAll)
+
+  return { profile, loading, error, reload: reloadAll, info, password, sessions }
 }

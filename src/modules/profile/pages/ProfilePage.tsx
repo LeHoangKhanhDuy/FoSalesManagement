@@ -4,10 +4,11 @@ import { AccountActivityCard } from '@/modules/profile/components/AccountActivit
 import { ChangePasswordCard } from '@/modules/profile/components/ChangePasswordCard'
 import { ProfileInfoCard } from '@/modules/profile/components/ProfileInfoCard'
 import { ProfileSummaryCard } from '@/modules/profile/components/ProfileSummaryCard'
+import { SessionsCard } from '@/modules/profile/components/SessionsCard'
 import { useProfilePage } from '@/modules/profile/hooks/useProfilePage'
 
 export default function ProfilePage() {
-  const { profile, loading, error, reload, info, password } = useProfilePage()
+  const { profile, loading, error, reload, info, password, sessions } = useProfilePage()
 
   return (
     <div className="flex flex-col gap-4">
@@ -51,6 +52,7 @@ export default function ProfilePage() {
           <div className="space-y-4">
             <ProfileInfoCard profile={profile} form={info} />
             <ChangePasswordCard form={password} />
+            <SessionsCard s={sessions} />
           </div>
         </div>
       )}

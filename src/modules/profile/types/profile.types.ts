@@ -39,3 +39,15 @@ export interface ChangePasswordPayload {
 export interface ChangePasswordValues extends ChangePasswordPayload {
   confirmPassword: string
 }
+
+export interface AuthSessionItem {
+  id: string
+  userAgent: string
+  ip: string
+  remember: boolean
+  createdAt: string
+  lastUsedAt: string
+  current: boolean
+}
+
+export type RevokeTarget = { kind: 'one'; session: AuthSessionItem } | { kind: 'others'; count: number }

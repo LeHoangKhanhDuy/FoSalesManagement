@@ -26,6 +26,16 @@ export interface LoginPayload {
   remember: boolean
 }
 
+export interface ForgotPasswordPayload {
+  account: string
+}
+
+export interface ForgotPasswordResponse {
+  maskedTarget?: string | null
+  expiresIn?: number
+  resendIn?: number
+}
+
 export interface ResetPasswordPayload {
   account: string
   otp: string

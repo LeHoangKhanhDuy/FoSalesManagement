@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Bell, Check, ChevronDown, LogOut, Menu, Search, Settings, Store, UserRound } from 'lucide-react'
+import { Bell, Check, ChevronDown, LoaderCircle, LogOut, Menu, Search, Settings, Store, UserRound } from 'lucide-react'
 import { Kbd } from '@/components/ui/Kbd'
 import { useClickOutside } from '@/hooks/useClickOutside'
 import { useHotkey } from '@/hooks/useHotkey'
@@ -19,6 +19,7 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
   const [storeId, setStoreId] = useState(STORES[0].id)
   const [storeOpen, setStoreOpen] = useState(false)
   const [userOpen, setUserOpen] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
   const storeRef = useRef<HTMLDivElement>(null)
   const userRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
@@ -27,8 +28,11 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
   const navigate = useNavigate()
 
   const handleLogout = async () => {
-    setUserOpen(false)
+    if (loggingOut) return
+    setLoggingOut(true)
     await logout()
+    setLoggingOut(false)
+    setUserOpen(false)
     toast.success('Đã đăng xuất')
     navigate(PATHS.login, { replace: true })
   }
@@ -144,8 +148,13 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
                 </button>
               ))}
               <div className="my-1 h-px bg-slate-100" />
-              <button onClick={handleLogout} className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-rose-600 hover:bg-rose-50">
-                <LogOut className="size-4" /> Đăng xuất
+              <button
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-rose-600 hover:bg-rose-50 disabled:cursor-wait disabled:opacity-70"
+              >
+                {loggingOut ? <LoaderCircle className="size-4 animate-spin" /> : <LogOut className="size-4" />}
+                {loggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
               </button>
             </div>
           )}
