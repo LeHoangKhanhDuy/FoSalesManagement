@@ -1,3 +1,4 @@
+import { toast } from 'sonner'
 import { clearCsrf, setUnauthorizedHandler } from '@/lib/http'
 import type { AuthSession, UserRole } from '@/modules/auth/types/auth.types'
 
@@ -129,7 +130,9 @@ export const authStore = {
 }
 
 setUnauthorizedHandler(() => {
-  if (current) authStore.set(null)
+  if (!current) return
+  authStore.set(null)
+  toast.warning('Phiên đăng nhập đã hết hạn', { id: 'session-expired', description: 'Vui lòng đăng nhập lại để tiếp tục' })
 })
 
 export const initialsOf = (name: string) =>
