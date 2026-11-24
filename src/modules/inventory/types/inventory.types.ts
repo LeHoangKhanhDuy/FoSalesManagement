@@ -23,13 +23,62 @@ export interface StockMovement {
 export type StockLevelFilter = 'all' | 'ok' | 'low' | 'out' | 'slow'
 export type InventorySort = 'value-desc' | 'stock-asc' | 'stock-desc' | 'name' | 'recent'
 
+export type StockLevel = 'ok' | 'low' | 'out'
+
 export interface InventoryItem extends Product {
   minStockValue: number
   stockValue: number
-  level: 'ok' | 'low' | 'out'
+  level: StockLevel
   soldLast30: number
   lastMovementAt?: string
   slow: boolean
+}
+
+export interface InventoryListParams {
+  keyword?: string
+  categoryId?: string
+  level?: Exclude<StockLevelFilter, 'all'>
+  sort: InventorySort
+  page: number
+  pageSize: number
+}
+
+export interface InventoryListResult {
+  items: InventoryItem[]
+  total: number
+  levelCounts: Record<StockLevelFilter, number>
+}
+
+export interface MovementListParams {
+  keyword?: string
+  type?: MovementFilters['type']
+  productId?: string
+  from?: string
+  to?: string
+  page: number
+  pageSize: number
+}
+
+export interface MovementSummary {
+  inQty: number
+  outQty: number
+}
+
+export interface MovementListResult {
+  items: StockMovement[]
+  total: number
+  summary: MovementSummary
+}
+
+export interface InventoryDetail {
+  item: InventoryItem
+  series: StockPoint[]
+  recent: StockMovement[]
+}
+
+export interface AdjustStockResult {
+  item: InventoryItem
+  movement: StockMovement
 }
 
 export interface InventoryFilters {
@@ -57,6 +106,7 @@ export interface AdjustStockPayload {
   quantity: number
   reason: string
   note: string
+  expectedStock?: number
 }
 
 export interface InventoryStats {

@@ -1,13 +1,14 @@
 import { memo, type ReactNode } from 'react'
-import { PackageSearch, SlidersHorizontal } from 'lucide-react'
+import { CircleAlert, PackageSearch, SlidersHorizontal } from 'lucide-react'
+import { RetryButton } from '@/components/common/RetryButton'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Pagination } from '@/components/ui/Pagination'
 import { cn } from '@/lib/cn'
-import { formatCurrency, formatNumber } from '@/lib/format'
+import { formatCurrency, formatNumber, timeAgo } from '@/lib/format'
 import type { InventoryItem } from '@/modules/inventory/types/inventory.types'
 import { getCategoryName } from '@/modules/products/utils/products.utils'
-import { PAGE_SIZE, timeAgo } from '@/modules/inventory/utils/inventory.utils'
+import { PAGE_SIZE } from '@/modules/inventory/utils/inventory.utils'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
 import type { Category } from '@/modules/sales/types/sales.types'
 import { ProductCode } from '@/components/common/ProductCode'
@@ -18,6 +19,9 @@ interface StockTableProps {
   total: number
   page: number
   loading: boolean
+  refreshing: boolean
+  error?: string
+  onRetry: () => void
   onPageChange: (page: number) => void
   onView: (item: InventoryItem) => void
   onAdjust: (item: InventoryItem) => void
@@ -68,7 +72,7 @@ function StockLevelCell({ item }: { item: InventoryItem }) {
   )
 }
 
-export const StockTable = memo(function StockTable({ items, categories, total, page, loading, onPageChange, onView, onAdjust }: StockTableProps) {
+export const StockTable = memo(function StockTable({ items, categories, total, page, loading, refreshing, error, onRetry, onPageChange, onView, onAdjust }: StockTableProps) {
   return (
     <div>
       <div className="overflow-x-auto">
@@ -82,7 +86,7 @@ export const StockTable = memo(function StockTable({ items, categories, total, p
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className={cn('divide-y divide-slate-100 transition-opacity', refreshing && 'pointer-events-none opacity-60')}>
             {loading
               ? Array.from({ length: 8 }).map((_, i) => (
                   <tr key={i}>
@@ -133,7 +137,13 @@ export const StockTable = memo(function StockTable({ items, categories, total, p
           </tbody>
         </table>
         {!loading && items.length === 0 && (
-          <EmptyState icon={<PackageSearch />} title="Không có sản phẩm phù hợp" description="Thử đổi từ khóa hoặc bộ lọc." className="py-16" />
+          <EmptyState
+            icon={error ? <CircleAlert /> : <PackageSearch />}
+            title={error ? 'Không tải được tồn kho' : 'Không có sản phẩm phù hợp'}
+            description={error ?? 'Thử đổi từ khóa hoặc bộ lọc.'}
+            className="py-16"
+            action={error && <RetryButton onClick={onRetry} />}
+          />
         )}
       </div>
       {!loading && total > 0 && (

@@ -1,47 +1,83 @@
-import { USE_MOCK } from '@/lib/constants'
-import { http, sleep } from '@/lib/http'
-import { MOCK_MOVEMENTS, recordStockMovement } from '@/modules/inventory/mocks/movements.mock'
-import type { AdjustStockPayload, StockMovement } from '@/modules/inventory/types/inventory.types'
-import { MOCK_PRODUCTS } from '@/modules/sales/mocks/products.mock'
-import type { Product } from '@/modules/sales/types/sales.types'
+import { http } from '@/lib/http'
+import type {
+  AdjustStockPayload,
+  AdjustStockResult,
+  InventoryDetail,
+  InventoryItem,
+  InventoryListParams,
+  InventoryListResult,
+  InventoryStats,
+  MovementListParams,
+  MovementListResult,
+  StockMovement,
+} from '@/modules/inventory/types/inventory.types'
 
-const findProduct = (id: string) => {
-  const product = MOCK_PRODUCTS.find((p) => p.id === id)
-  if (!product) throw new Error('Không tìm thấy sản phẩm')
-  return product
-}
+const BASE = '/api/inventory'
+const EXPORT_PAGE_SIZE = 100
+const EXPORT_MAX_PAGES = 50
+
+type Nullable<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: T[P] | null }
+type ItemResponse = Nullable<InventoryItem, 'barcode' | 'image' | 'originalPrice' | 'costPrice' | 'description' | 'lastMovementAt'>
+type MovementResponse = Nullable<StockMovement, 'barcode' | 'reason' | 'note' | 'refCode'>
+
+const toItem = (i: ItemResponse): InventoryItem => ({
+  ...i,
+  barcode: i.barcode ?? '',
+  image: i.image ?? undefined,
+  originalPrice: i.originalPrice ?? undefined,
+  costPrice: i.costPrice ?? undefined,
+  description: i.description ?? undefined,
+  lastMovementAt: i.lastMovementAt ?? undefined,
+})
+
+const toMovement = (m: MovementResponse): StockMovement => ({
+  ...m,
+  barcode: m.barcode ?? '',
+  reason: m.reason ?? undefined,
+  note: m.note ?? undefined,
+  refCode: m.refCode ?? undefined,
+})
+
+const byProduct = (productId: string) => `${BASE}/${encodeURIComponent(productId)}`
 
 export const inventoryService = {
-  async getStock(): Promise<{ products: Product[]; movements: StockMovement[] }> {
-    if (!USE_MOCK) {
-      const [products, movements] = await Promise.all([
-        http.get<Product[]>('/api/inventory'),
-        http.get<StockMovement[]>('/api/inventory/movements', { params: { days: 60 } }),
-      ])
-      return { products, movements }
+  list: (params: InventoryListParams) =>
+    http
+      .get<Omit<InventoryListResult, 'items'> & { items: ItemResponse[] }>(BASE, { params: { ...params } })
+      .then((res): InventoryListResult => ({ ...res, items: res.items.map(toItem) })),
+
+  stats: () => http.get<InventoryStats>(`${BASE}/stats`),
+
+  detail: (productId: string, days = 30) =>
+    http
+      .get<{ item: ItemResponse; series: { date: string; stock: number }[]; recent: MovementResponse[] }>(byProduct(productId), { params: { days } })
+      .then(
+        (res): InventoryDetail => ({
+          item: toItem(res.item),
+          series: res.series.map((p) => ({ date: new Date(p.date), stock: p.stock })),
+          recent: res.recent.map(toMovement),
+        }),
+      ),
+
+  movements: (params: MovementListParams) =>
+    http
+      .get<Omit<MovementListResult, 'items'> & { items: MovementResponse[] }>(`${BASE}/movements`, { params: { ...params } })
+      .then((res): MovementListResult => ({ ...res, items: res.items.map(toMovement) })),
+
+  async movementsAll(params: Omit<MovementListParams, 'page' | 'pageSize'>): Promise<StockMovement[]> {
+    const items: StockMovement[] = []
+    for (let page = 1; page <= EXPORT_MAX_PAGES; page++) {
+      const res = await inventoryService.movements({ ...params, page, pageSize: EXPORT_PAGE_SIZE })
+      items.push(...res.items)
+      if (items.length >= res.total || res.items.length === 0) break
     }
-    await sleep(400)
-    return { products: structuredClone(MOCK_PRODUCTS), movements: structuredClone(MOCK_MOVEMENTS) }
+    return items
   },
 
-  async adjustStock(payload: AdjustStockPayload): Promise<{ product: Product; movement: StockMovement }> {
-    if (!USE_MOCK) return http.post('/api/inventory/adjust', payload)
-    await sleep(400)
-    const product = findProduct(payload.productId)
-    const delta =
-      payload.mode === 'increase' ? payload.quantity : payload.mode === 'decrease' ? -payload.quantity : payload.quantity - product.stock
-    const movement = recordStockMovement(product, delta >= 0 ? 'adjust-in' : 'adjust-out', delta, {
-      reason: payload.reason,
-      note: payload.note || undefined,
-    })
-    return { product: structuredClone(product), movement: structuredClone(movement) }
-  },
+  adjust: (payload: AdjustStockPayload, idempotencyKey: string) =>
+    http
+      .post<{ item: ItemResponse; movement: MovementResponse }>(`${BASE}/adjust`, payload, { headers: { 'Idempotency-Key': idempotencyKey } })
+      .then((res): AdjustStockResult => ({ item: toItem(res.item), movement: toMovement(res.movement) })),
 
-  async updateMinStock(productId: string, minStock: number): Promise<Product> {
-    if (!USE_MOCK) return http.patch<Product>(`/api/inventory/${productId}/min-stock`, { minStock })
-    await sleep(250)
-    const product = findProduct(productId)
-    product.minStock = minStock
-    return structuredClone(product)
-  },
+  updateMinStock: (productId: string, minStock: number) => http.patch<ItemResponse>(`${byProduct(productId)}/min-stock`, { minStock }).then(toItem),
 }

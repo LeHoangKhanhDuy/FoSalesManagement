@@ -21,21 +21,23 @@ export default function InventoryPage() {
   const {
     tab,
     setTab,
-    data,
+    stats,
+    statsLoading,
+    categories,
     stock,
     history,
     purchasing,
     detail,
+    detailSeries,
     detailMovements,
+    detailLoading,
     openDetail,
     closeDetail,
-    adjustTarget,
-    openAdjust,
-    closeAdjust,
-    submitAdjust,
-    adjusting,
+    adjust,
     saveMinStock,
     viewHistoryOf,
+    reload,
+    reloading,
   } = useInventoryPage()
 
   return (
@@ -45,14 +47,14 @@ export default function InventoryPage() {
           <h1 className="text-[22px] font-bold tracking-tight text-slate-900">Quản lý tồn kho</h1>
           <p className="text-sm text-slate-500">Theo dõi số lượng, cảnh báo sắp hết và lịch sử xuất nhập của từng sản phẩm</p>
         </div>
-        <Button variant="outline" leftIcon={<RefreshCw className={data.loading ? 'size-4 animate-spin' : 'size-4'} />} onClick={data.reload}>
+        <Button variant="outline" leftIcon={<RefreshCw className={reloading ? 'size-4 animate-spin' : 'size-4'} />} onClick={reload}>
           Tải lại
         </Button>
       </div>
 
       <InventoryStats
-        stats={stock.stats}
-        loading={data.loading}
+        stats={stats}
+        loading={statsLoading}
         active={stock.filters.level}
         onSelect={(level) => {
           setTab('stock')
@@ -87,39 +89,44 @@ export default function InventoryPage() {
           <>
             <StockFilters
               filters={stock.filters}
-              categories={data.categories}
+              categories={categories}
               counts={stock.levelCounts}
               onChange={stock.updateFilter}
               onReset={stock.resetFilters}
               hasActiveFilters={stock.hasActiveFilters}
             />
             <StockTable
-              items={stock.paged}
-              categories={data.categories}
-              total={stock.filtered.length}
+              items={stock.items}
+              categories={categories}
+              total={stock.total}
               page={stock.page}
-              loading={data.loading}
+              loading={stock.loading}
+              refreshing={stock.refreshing}
+              error={stock.error}
+              onRetry={stock.reload}
               onPageChange={stock.setPage}
               onView={openDetail}
-              onAdjust={openAdjust}
+              onAdjust={adjust.open}
             />
           </>
         ) : tab === 'purchasing' ? (
           <PurchaseOrdersPanel po={purchasing} />
         ) : (
-          <MovementHistory history={history} loading={data.loading} />
+          <MovementHistory history={history} />
         )}
       </Card>
 
       <StockDetailDrawer
         item={detail}
+        series={detailSeries}
         movements={detailMovements}
+        loading={detailLoading}
         onClose={closeDetail}
-        onAdjust={openAdjust}
+        onAdjust={adjust.open}
         onSaveMinStock={saveMinStock}
         onViewHistory={viewHistoryOf}
       />
-      <AdjustStockModal item={adjustTarget} saving={adjusting} onClose={closeAdjust} onSubmit={submitAdjust} />
+      <AdjustStockModal item={adjust.target} saving={adjust.saving} onClose={adjust.close} onSubmit={adjust.submit} />
     </div>
   )
 }

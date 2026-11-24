@@ -19,8 +19,7 @@ import {
 } from "@/components/ui/Dropdown";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/cn";
-import { formatCurrency } from "@/lib/format";
-import { timeAgo } from "@/modules/inventory/utils/inventory.utils";
+import { formatCurrency, timeAgo } from "@/lib/format";
 import type {
   Supplier,
   SupplierStatus,

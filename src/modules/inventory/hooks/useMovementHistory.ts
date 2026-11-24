@@ -1,53 +1,54 @@
 import { useCallback, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/useDebounce'
-import type { MovementFilters, StockMovement } from '@/modules/inventory/types/inventory.types'
-import { DEFAULT_MOVEMENT_FILTERS, exportMovementsCsv, filterMovements, PAGE_SIZE } from '@/modules/inventory/utils/inventory.utils'
+import { useQuery } from '@/hooks/useQuery'
+import { errorMessage } from '@/lib/http'
+import { inventoryService } from '@/modules/inventory/services/inventory.service'
+import type { MovementFilters } from '@/modules/inventory/types/inventory.types'
+import { DEFAULT_MOVEMENT_FILTERS, exportMovementsCsv, hasMovementFilters, PAGE_SIZE, toMovementParams } from '@/modules/inventory/utils/inventory.utils'
 
-export function useMovementHistory(movements: StockMovement[]) {
+const EMPTY_SUMMARY = { inQty: 0, outQty: 0 }
+
+export function useMovementHistory(enabled: boolean) {
   const [filters, setFilters] = useState<MovementFilters>(DEFAULT_MOVEMENT_FILTERS)
   const [page, setPage] = useState(1)
-  const keyword = useDebounce(filters.keyword, 250)
+  const [exporting, setExporting] = useState(false)
+  const keyword = useDebounce(filters.keyword, 300)
+  const params = useMemo(() => toMovementParams(filters, keyword, page), [filters, keyword, page])
+  const query = useQuery(inventoryService.movements, params, { enabled, errorText: 'Không tải được lịch sử xuất nhập' })
 
-  const updateFilter = useCallback(<K extends keyof MovementFilters>(key: K, value: MovementFilters[K]) => {
-    setFilters((f) => ({ ...f, [key]: value }))
+  const update = useCallback((patch: Partial<MovementFilters>) => {
+    setFilters((f) => ({ ...f, ...patch }))
     setPage(1)
   }, [])
 
-  const setRangePreset = useCallback((range: MovementFilters['range']) => {
-    setFilters((f) => ({ ...f, range, dateFrom: undefined, dateTo: undefined }))
-    setPage(1)
-  }, [])
-
-  const setCustomRange = useCallback((dateFrom?: Date, dateTo?: Date) => {
-    setFilters((f) => ({ ...f, dateFrom, dateTo, range: dateFrom || dateTo ? 'custom' : DEFAULT_MOVEMENT_FILTERS.range }))
-    setPage(1)
-  }, [])
-
+  const updateFilter = useCallback(<K extends keyof MovementFilters>(key: K, value: MovementFilters[K]) => update({ [key]: value }), [update])
+  const setRangePreset = useCallback((range: MovementFilters['range']) => update({ range, dateFrom: undefined, dateTo: undefined }), [update])
+  const setCustomRange = useCallback(
+    (dateFrom?: Date, dateTo?: Date) => update({ dateFrom, dateTo, range: dateFrom || dateTo ? 'custom' : DEFAULT_MOVEMENT_FILTERS.range }),
+    [update],
+  )
   const resetFilters = useCallback(() => {
     setFilters(DEFAULT_MOVEMENT_FILTERS)
     setPage(1)
   }, [])
 
-  const filtered = useMemo(() => filterMovements(movements, filters, keyword), [movements, filters, keyword])
-  const summary = useMemo(
-    () =>
-      filtered.reduce(
-        (s, m) => (m.quantity >= 0 ? { ...s, inQty: s.inQty + m.quantity } : { ...s, outQty: s.outQty - m.quantity }),
-        { inQty: 0, outQty: 0 },
-      ),
-    [filtered],
-  )
+  const total = query.data?.total ?? 0
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages)
-  const paged = useMemo(() => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [filtered, currentPage])
-  const hasActiveFilters = filters.keyword !== '' || filters.type !== 'all' || filters.range !== DEFAULT_MOVEMENT_FILTERS.range
-
-  const exportCsv = () => {
-    if (!filtered.length) return toast.info('Không có dữ liệu để xuất')
-    exportMovementsCsv(filtered)
-    toast.success(`Đã xuất ${filtered.length} dòng`)
+  const exportCsv = async () => {
+    if (exporting) return
+    if (!total) return toast.info('Không có dữ liệu để xuất')
+    setExporting(true)
+    try {
+      const { page: _, pageSize: __, ...rest } = params
+      const list = await inventoryService.movementsAll(rest)
+      exportMovementsCsv(list)
+      toast.success(`Đã xuất ${list.length} dòng`)
+    } catch (e) {
+      toast.error(errorMessage(e, 'Xuất file thất bại'))
+    } finally {
+      setExporting(false)
+    }
   }
 
   return {
@@ -56,12 +57,17 @@ export function useMovementHistory(movements: StockMovement[]) {
     setRangePreset,
     setCustomRange,
     resetFilters,
-    hasActiveFilters,
-    filtered,
-    summary,
-    paged,
-    page: currentPage,
+    hasActiveFilters: hasMovementFilters(filters),
+    items: query.data?.items ?? [],
+    total,
+    summary: query.data?.summary ?? EMPTY_SUMMARY,
+    page: Math.min(page, Math.max(1, Math.ceil(total / PAGE_SIZE))),
     setPage,
+    loading: query.initialLoading,
+    refreshing: query.loading && !query.initialLoading,
+    error: query.error,
+    reload: query.reload,
+    exporting,
     exportCsv,
   }
 }

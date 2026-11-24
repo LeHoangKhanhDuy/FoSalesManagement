@@ -1,4 +1,5 @@
-import { ArrowDownLeft, ArrowRight, ArrowUpRight, CalendarDays, Download, Filter, PackageSearch, RotateCcw, Search, X } from 'lucide-react'
+import { ArrowDownLeft, ArrowRight, ArrowUpRight, CalendarDays, CircleAlert, Download, Filter, LoaderCircle, PackageSearch, RotateCcw, Search, X } from 'lucide-react'
+import { RetryButton } from '@/components/common/RetryButton'
 import type { ReactNode } from 'react'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { FilterDropdown } from '@/components/ui/Dropdown'
@@ -20,8 +21,8 @@ const Td = ({ children, className }: { children: ReactNode; className?: string }
   <td className={cn('px-4 py-3 align-middle', className)}>{children}</td>
 )
 
-export function MovementHistory({ history, loading }: { history: History; loading: boolean }) {
-  const { filters, updateFilter, setRangePreset, setCustomRange, resetFilters, hasActiveFilters, filtered, summary, paged, page, setPage, exportCsv } = history
+export function MovementHistory({ history }: { history: History }) {
+  const { filters, updateFilter, setRangePreset, setCustomRange, resetFilters, hasActiveFilters, items, total, summary, page, setPage, loading, refreshing, error, reload, exporting, exportCsv } = history
   const rangeLabel = filters.range === 'custom' ? 'Tùy chọn' : (MOVEMENT_RANGE_OPTIONS.find((o) => o.value === filters.range)?.label ?? '')
   const typeLabel = filters.type === 'all' ? 'Loại' : (MOVEMENT_TYPE_OPTIONS.find((o) => o.value === filters.type)?.label ?? '')
 
@@ -64,7 +65,7 @@ export function MovementHistory({ history, loading }: { history: History; loadin
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-slate-100 bg-slate-50/60 px-4 py-2.5 text-sm">
         <span className="text-slate-500">
-          <span className="font-semibold text-slate-800">{formatNumber(filtered.length)}</span> biến động
+          <span className="font-semibold text-slate-800">{formatNumber(total)}</span> biến động
         </span>
         <span className="flex items-center gap-1.5 text-slate-500">
           <ArrowDownLeft className="size-4 text-primary-600" /> Tổng nhập <span className="font-bold text-primary-600">+{formatNumber(summary.inQty)}</span>
@@ -72,8 +73,12 @@ export function MovementHistory({ history, loading }: { history: History; loadin
         <span className="flex items-center gap-1.5 text-slate-500">
           <ArrowUpRight className="size-4 text-rose-500" /> Tổng xuất <span className="font-bold text-rose-500">−{formatNumber(summary.outQty)}</span>
         </span>
-        <button onClick={exportCsv} className="ml-auto flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-primary-300 hover:text-primary-700">
-          <Download className="size-3.5" /> Xuất Excel
+        <button
+          onClick={exportCsv}
+          disabled={exporting}
+          className="ml-auto flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:border-primary-300 hover:text-primary-700 disabled:cursor-wait disabled:opacity-60"
+        >
+          {exporting ? <LoaderCircle className="size-3.5 animate-spin" /> : <Download className="size-3.5" />} Xuất Excel
         </button>
       </div>
 
@@ -88,7 +93,7 @@ export function MovementHistory({ history, loading }: { history: History; loadin
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className={cn('divide-y divide-slate-100 transition-opacity', refreshing && 'pointer-events-none opacity-60')}>
             {loading
               ? Array.from({ length: 8 }).map((_, i) => (
                   <tr key={i}>
@@ -99,7 +104,7 @@ export function MovementHistory({ history, loading }: { history: History; loadin
                     ))}
                   </tr>
                 ))
-              : paged.map((m) => (
+              : items.map((m) => (
                   <tr key={m.id} className="transition hover:bg-slate-50/80">
                     <Td className="whitespace-nowrap text-slate-600">{formatDateTime(new Date(m.createdAt))}</Td>
                     <Td>
@@ -125,12 +130,18 @@ export function MovementHistory({ history, loading }: { history: History; loadin
                 ))}
           </tbody>
         </table>
-        {!loading && filtered.length === 0 && (
-          <EmptyState icon={<PackageSearch />} title="Không có biến động phù hợp" description="Thử đổi bộ lọc thời gian hoặc loại biến động." className="py-16" />
+        {!loading && items.length === 0 && (
+          <EmptyState
+            icon={error ? <CircleAlert /> : <PackageSearch />}
+            title={error ? 'Không tải được lịch sử' : 'Không có biến động phù hợp'}
+            description={error ?? 'Thử đổi bộ lọc thời gian hoặc loại biến động.'}
+            className="py-16"
+            action={error && <RetryButton onClick={reload} />}
+          />
         )}
       </div>
-      {!loading && filtered.length > 0 && (
-        <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPageChange={setPage} unit="biến động" className="border-t border-slate-100 px-4 py-3" />
+      {!loading && total > 0 && (
+        <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} unit="biến động" className="border-t border-slate-100 px-4 py-3" />
       )}
     </div>
   )
