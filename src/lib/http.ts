@@ -23,6 +23,10 @@ type RequestOptions = Omit<RequestInit, 'body'> & {
 const CSRF_COOKIE = 'fs_csrf'
 const CSRF_STORAGE_KEY = 'fosales_csrf'
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
+const ACCESS_AT_KEY = 'fosales_access_at'
+const ACCESS_TTL_MS = 15 * 60_000
+const REFRESH_MARGIN_MS = 60_000
+const ISSUES_ACCESS = new Set(['/api/auth/login', '/api/auth/refresh', '/api/auth/change-password'])
 const NO_REFRESH = new Set(['/api/auth/login', '/api/auth/refresh', '/api/auth/logout', '/api/auth/forgot-password', '/api/auth/reset-password'])
 
 let onUnauthorized: () => void = () => undefined
@@ -55,9 +59,27 @@ const rememberCsrf = (data: unknown) => {
   }
 }
 
+const markAccessIssued = () => {
+  try {
+    localStorage.setItem(ACCESS_AT_KEY, String(Date.now()))
+  } catch {
+    return
+  }
+}
+
+const accessNearExpiry = () => {
+  try {
+    const issuedAt = Number(localStorage.getItem(ACCESS_AT_KEY))
+    return issuedAt > 0 && Date.now() - issuedAt > ACCESS_TTL_MS - REFRESH_MARGIN_MS
+  } catch {
+    return false
+  }
+}
+
 export const clearCsrf = () => {
   try {
     localStorage.removeItem(CSRF_STORAGE_KEY)
+    localStorage.removeItem(ACCESS_AT_KEY)
   } catch {
     return
   }
@@ -92,10 +114,14 @@ async function parse(res: Response) {
   return res.headers.get('content-type')?.includes('application/json') ? res.json() : res.text()
 }
 
-async function runRefresh() {
+async function runRefresh(force: boolean) {
   const exec = async () => {
+    if (!force && !accessNearExpiry()) return true
     const res = await send('/api/auth/refresh', { method: 'POST' })
-    if (res.ok) rememberCsrf(await parse(res))
+    if (res.ok) {
+      rememberCsrf(await parse(res))
+      markAccessIssued()
+    }
     return res.ok
   }
   try {
@@ -105,14 +131,15 @@ async function runRefresh() {
   }
 }
 
-const refreshSession = () => {
-  refreshing ??= runRefresh().finally(() => {
+const refreshSession = (force = true) => {
+  refreshing ??= runRefresh(force).finally(() => {
     refreshing = null
   })
   return refreshing
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  if (!NO_REFRESH.has(path) && accessNearExpiry()) await refreshSession(false)
   let res = await send(path, options)
   if (res.status === 401 && !NO_REFRESH.has(path)) {
     if (await refreshSession()) res = await send(path, options)
@@ -125,6 +152,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     throw new HttpError(res.status, message, data)
   }
   rememberCsrf(data)
+  if (ISSUES_ACCESS.has(path)) markAccessIssued()
   return data as T
 }
 

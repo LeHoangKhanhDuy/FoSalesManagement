@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { errorMessage } from '@/lib/http'
 import { authService } from '@/modules/auth/services/auth.service'
+import { STRONG_PASSWORD } from '@/modules/auth/utils/auth.utils'
 
 type ResetField = 'otp' | 'newPassword' | 'confirm' | 'form'
 type ResetErrors = Partial<Record<ResetField, string>>
 
-const STRONG_PASSWORD = /^(?=.*\p{L})(?=.*\d).{8,128}$/u
 
 const validateReset = (otp: string, newPassword: string, confirm: string): ResetErrors => {
   const errors: ResetErrors = {}

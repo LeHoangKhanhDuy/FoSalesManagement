@@ -15,6 +15,7 @@ const InventoryPage = lazy(() => import('@/modules/inventory/pages/InventoryPage
 const SuppliersPage = lazy(() => import('@/modules/suppliers/pages/SuppliersPage'))
 const PromotionsPage = lazy(() => import('@/modules/promotions/pages/PromotionsPage'))
 const CustomersPage = lazy(() => import('@/modules/customers/pages/CustomersPage'))
+const ProfilePage = lazy(() => import('@/modules/profile/pages/ProfilePage'))
 
 const Loadable = ({ children }: { children: ReactNode }) => (
   <Suspense
@@ -108,6 +109,14 @@ export const router = createBrowserRouter([
         element: (
           <Loadable>
             <CustomersPage />
+          </Loadable>
+        ),
+      },
+      {
+        path: PATHS.profile,
+        element: (
+          <Loadable>
+            <ProfilePage />
           </Loadable>
         ),
       },

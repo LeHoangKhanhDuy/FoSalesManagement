@@ -15,5 +15,6 @@ export const PATHS = {
   revenueReport: '/reports/revenue',
   productReport: '/reports/products',
   staffReport: '/reports/staff',
+  profile: '/profile',
   settings: '/settings',
 } as const

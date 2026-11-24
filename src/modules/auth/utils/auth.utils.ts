@@ -7,6 +7,9 @@ export const ROLE_LABEL: Record<UserRole, string> = {
   cashier: 'Thu ngân',
 }
 
+export const STRONG_PASSWORD = /^(?=.*\p{L})(?=.*\d).{8,128}$/u
+export const PASSWORD_RULE_MESSAGE = 'Mật khẩu mới phải có từ 8 ký tự, gồm cả chữ và số'
+
 const SESSION_KEY = 'fosales_session'
 const LEGACY_TOKEN_KEY = 'fosales_token'
 const LAST_USER_KEY = 'fosales_last_username'

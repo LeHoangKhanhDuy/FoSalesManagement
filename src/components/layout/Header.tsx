@@ -129,11 +129,15 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
               </div>
               <div className="my-1 h-px bg-slate-100" />
               {[
-                { icon: UserRound, label: 'Hồ sơ của tôi' },
-                { icon: Settings, label: 'Cài đặt' },
-              ].map(({ icon: Icon, label }) => (
+                { icon: UserRound, label: 'Hồ sơ của tôi', path: PATHS.profile },
+                { icon: Settings, label: 'Cài đặt', path: PATHS.settings },
+              ].map(({ icon: Icon, label, path }) => (
                 <button
                   key={label}
+                  onClick={() => {
+                    setUserOpen(false)
+                    navigate(path)
+                  }}
                   className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-slate-700 hover:bg-slate-50"
                 >
                   <Icon className="size-4 text-slate-400" /> {label}
