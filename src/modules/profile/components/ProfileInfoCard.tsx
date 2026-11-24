@@ -1,4 +1,4 @@
-import { Lock, ShieldAlert } from 'lucide-react'
+import { Lock } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { Field, inputClass } from '@/components/ui/FormField'
@@ -46,7 +46,7 @@ export function ProfileInfoCard({ profile, form }: Props) {
           {form.phoneChanged && (
             <div className="rounded-lg bg-amber-50/70 p-3 sm:col-span-2">
               <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-amber-700">
-                <ShieldAlert className="size-4" /> Đổi số điện thoại cần xác nhận mật khẩu hiện tại
+                Đổi số điện thoại cần xác nhận mật khẩu hiện tại
               </p>
               <Field label="Mật khẩu hiện tại" required error={errors.currentPassword}>
                 <input type="password" autoComplete="current-password" value={v.currentPassword} onChange={(e) => form.set('currentPassword', e.target.value)} className={inputClass(errors.currentPassword)} />
