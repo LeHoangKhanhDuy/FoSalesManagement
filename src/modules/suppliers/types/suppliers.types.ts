@@ -113,6 +113,7 @@ export interface LedgerEntry {
   code: string
   label: string
   at: string
+  dueAt?: string
   amount: number
   balance: number
 }
@@ -128,4 +129,13 @@ export interface TopProduct {
   qty: number
   value: number
   lastCost: number
+}
+
+export interface SupplierOption {
+  id: string
+  code: string
+  name: string
+  paymentTermDays: number
+  status: SupplierStatus
+  categoryIds: string[]
 }

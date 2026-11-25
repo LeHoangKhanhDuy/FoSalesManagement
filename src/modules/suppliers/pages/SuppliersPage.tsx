@@ -55,6 +55,7 @@ export default function SuppliersPage() {
           onChangeStatus={actions.changeStatus}
           onDelete={actions.requestDelete}
           onCreate={actions.openCreate}
+          startIndex={(page.page - 1) * SUPPLIER_PAGE_SIZE}
         />
         {!page.loading && page.total > 0 && (
           <Pagination page={page.page} pageSize={SUPPLIER_PAGE_SIZE} total={page.total} onPageChange={page.setPage} unit="nhà cung cấp" className="border-t border-slate-100 px-4 py-3" />

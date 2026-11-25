@@ -1,72 +1,117 @@
-import { ArrowDownLeft, ArrowUpRight, ClipboardList, Package, Wallet } from 'lucide-react'
-import { Badge } from '@/components/ui/Badge'
+import { ArrowDownLeft, ArrowUpRight, Banknote, CircleAlert, Landmark, LoaderCircle, Package, Wallet } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { RetryButton } from '@/components/common/RetryButton'
 import { cn } from '@/lib/cn'
 import { formatCurrency, formatDateTime } from '@/lib/format'
-import type { PurchaseOrder } from '@/modules/purchasing/types/purchasing.types'
-import { calcPoTotals, PO_STATUS } from '@/modules/purchasing/utils/purchasing.utils'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
-import type { LedgerEntry, TopProduct } from '@/modules/suppliers/types/suppliers.types'
+import type { LedgerEntry, SupplierPayment, TopProduct } from '@/modules/suppliers/types/suppliers.types'
 import { ProductCode } from '@/components/common/ProductCode'
 
-export function SupplierLedger({ entries }: { entries: LedgerEntry[] }) {
-  if (!entries.length) return <EmptyState icon={<Wallet />} title="Chưa phát sinh công nợ" description="Công nợ tăng khi nhập kho và giảm khi thanh toán." className="py-10" />
+interface PagedList<T> {
+  items: T[]
+  loading: boolean
+  error?: string
+  hasMore: boolean
+  loadMore: () => void
+  reload: () => void
+}
+
+function ListState<T>({ list, empty, children }: { list: PagedList<T>; empty: ReactNode; children: ReactNode }) {
+  if (list.loading && !list.items.length) return <div className="h-32 animate-pulse rounded-lg bg-slate-50" />
+  if (list.error && !list.items.length) {
+    return <EmptyState icon={<CircleAlert />} title="Không tải được dữ liệu" description={list.error} action={<RetryButton onClick={list.reload} />} className="py-10" />
+  }
+  if (!list.items.length) return empty
   return (
-    <ul className="divide-y divide-slate-100 rounded-lg border border-slate-100">
-      {entries.map((e) => {
-        const isPay = e.kind === 'payment'
-        return (
-          <li key={e.id} className="flex items-center gap-3 p-3">
-            <span className={cn('grid size-9 shrink-0 place-items-center rounded-lg', isPay ? 'bg-primary-50 text-primary-600' : 'bg-amber-50 text-amber-600')}>
-              {isPay ? <ArrowUpRight className="size-4" /> : <ArrowDownLeft className="size-4" />}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-slate-800">
-                {e.code} <span className="font-normal text-slate-500">· {e.label}</span>
-              </p>
-              <p className="text-xs text-slate-400">{formatDateTime(new Date(e.at))}</p>
-            </div>
-            <div className="text-right">
-              <p className={cn('text-sm font-bold', isPay ? 'text-primary-600' : 'text-slate-900')}>
-                {isPay ? '−' : '+'}
-                {formatCurrency(Math.abs(e.amount))}
-              </p>
-              <p className="text-[11px] text-slate-400">Dư nợ {formatCurrency(e.balance)}</p>
-            </div>
-          </li>
-        )
-      })}
-    </ul>
+    <>
+      {children}
+      {list.hasMore && (
+        <button
+          type="button"
+          onClick={list.loadMore}
+          disabled={list.loading}
+          className="mt-2 flex h-9 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-wait"
+        >
+          {list.loading && <LoaderCircle className="size-3.5 animate-spin" />} Xem thêm
+        </button>
+      )}
+    </>
   )
 }
 
-export function SupplierOrders({ orders }: { orders: PurchaseOrder[] }) {
-  if (!orders.length) return <EmptyState icon={<ClipboardList />} title="Chưa có đơn đặt hàng" className="py-10" />
+export function SupplierLedger({ list }: { list: PagedList<LedgerEntry> }) {
+  const now = Date.now()
   return (
-    <ul className="divide-y divide-slate-100 rounded-lg border border-slate-100">
-      {orders.map((o) => {
-        const totals = calcPoTotals(o.items, o.discount)
-        const status = PO_STATUS[o.status]
-        return (
-          <li key={o.id} className="flex items-center gap-3 p-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-slate-800">{o.code}</p>
-              <p className="text-xs text-slate-400">
-                {new Date(o.createdAt).toLocaleDateString('vi-VN')} · {totals.lines} SP · {totals.receivedQty}/{totals.orderedQty} đv
-              </p>
-            </div>
-            <p className="text-sm font-bold text-slate-900">{formatCurrency(totals.total)}</p>
-            <Badge tone={status.tone} dot className="w-[118px] justify-center whitespace-nowrap">
-              {status.label}
-            </Badge>
-          </li>
-        )
-      })}
-    </ul>
+    <ListState list={list} empty={<EmptyState icon={<Wallet />} title="Chưa phát sinh công nợ" description="Công nợ tăng khi nhập kho và giảm khi thanh toán." className="py-10" />}>
+      <ul className="divide-y divide-slate-100 rounded-lg border border-slate-100">
+        {list.items.map((e) => {
+          const decrease = e.amount < 0
+          const overdue = !!e.dueAt && new Date(e.dueAt).getTime() < now
+          return (
+            <li key={e.id} className="flex items-center gap-3 p-3">
+              <span className={cn('grid size-9 shrink-0 place-items-center rounded-lg', decrease ? 'bg-primary-50 text-primary-600' : 'bg-amber-50 text-amber-600')}>
+                {decrease ? <ArrowUpRight className="size-4" /> : <ArrowDownLeft className="size-4" />}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-slate-800">
+                  {e.code} <span className="font-normal text-slate-500">· {e.label}</span>
+                </p>
+                <p className="text-xs text-slate-400">
+                  {formatDateTime(new Date(e.at))}
+                  {e.dueAt && <span className={cn(overdue && 'font-semibold text-rose-500')}> · Hạn {new Date(e.dueAt).toLocaleDateString('vi-VN')}</span>}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className={cn('text-sm font-bold', decrease ? 'text-primary-600' : 'text-slate-900')}>
+                  {decrease ? '−' : '+'}
+                  {formatCurrency(Math.abs(e.amount))}
+                </p>
+                <p className="text-[11px] text-slate-400">Dư nợ {formatCurrency(e.balance)}</p>
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+    </ListState>
   )
 }
 
-export function SupplierProducts({ products }: { products: TopProduct[] }) {
+export function SupplierPayments({ list }: { list: PagedList<SupplierPayment> }) {
+  return (
+    <ListState list={list} empty={<EmptyState icon={<Banknote />} title="Chưa có lần thanh toán nào" className="py-10" />}>
+      <ul className="divide-y divide-slate-100 rounded-lg border border-slate-100">
+        {list.items.map((p) => {
+          const Icon = p.method === 'cash' ? Banknote : Landmark
+          return (
+            <li key={p.id} className="flex items-center gap-3 p-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary-50 text-primary-600">
+                <Icon className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-slate-800">
+                  {p.code}{' '}
+                  <span className="font-normal text-slate-500">
+                    · {p.method === 'cash' ? 'Tiền mặt' : `Chuyển khoản${p.reference ? ` · ${p.reference}` : ''}`}
+                  </span>
+                </p>
+                <p className="truncate text-xs text-slate-400">
+                  {formatDateTime(new Date(p.paidAt))} · {p.paidBy}
+                  {p.note && ` · ${p.note}`}
+                </p>
+              </div>
+              <p className="text-sm font-bold text-primary-600">{formatCurrency(p.amount)}</p>
+            </li>
+          )
+        })}
+      </ul>
+    </ListState>
+  )
+}
+
+export function SupplierProducts({ products, loading, error }: { products: TopProduct[]; loading: boolean; error?: string }) {
+  if (loading && !products.length) return <div className="h-32 animate-pulse rounded-lg bg-slate-50" />
+  if (error && !products.length) return <EmptyState icon={<CircleAlert />} title="Không tải được dữ liệu" description={error} className="py-10" />
   if (!products.length) return <EmptyState icon={<Package />} title="Chưa nhập sản phẩm nào" className="py-10" />
   const max = products[0].qty
   return (

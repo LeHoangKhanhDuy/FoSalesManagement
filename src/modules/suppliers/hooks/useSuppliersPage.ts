@@ -14,6 +14,7 @@ import { PATHS } from '@/routes/paths'
 export type { SupplierFormState } from '@/modules/suppliers/hooks/useSupplierActions'
 
 const fetchStats = () => suppliersService.stats()
+const fetchSupplier = (id: string | null) => suppliersService.get(id ?? '')
 const fetchCategories = () => categoryService.list()
 
 export function useSuppliersPage() {
@@ -28,12 +29,17 @@ export function useSuppliersPage() {
   const list = useQuery(suppliersService.list, params, { errorText: 'Không tải được danh sách nhà cung cấp' })
   const stats = useQuery(fetchStats, null, { errorText: 'Không tải được thống kê nhà cung cấp' })
   const categories = useQuery(fetchCategories, null, { errorText: 'Không tải được danh mục' })
+  const detailQuery = useQuery(fetchSupplier, detailId, { enabled: !!detailId, errorText: 'Không tải được nhà cung cấp' })
   const { setData: setList, reload: reloadList } = list
   const { reload: reloadStats } = stats
+  const { setData: setDetail } = detailQuery
 
   const replaceItem = useCallback(
-    (item: SupplierListItem) => setList((d) => (d ? { ...d, items: d.items.map((s) => (s.id === item.id ? item : s)) } : d)),
-    [setList],
+    (item: SupplierListItem) => {
+      setList((d) => (d ? { ...d, items: d.items.map((s) => (s.id === item.id ? item : s)) } : d))
+      setDetail((d) => (d?.id === item.id ? item : d))
+    },
+    [setList, setDetail],
   )
 
   const refresh = useCallback(() => {
@@ -76,7 +82,11 @@ export function useSuppliersPage() {
 
   const items = useMemo(() => list.data?.items ?? [], [list.data])
   const total = list.data?.total ?? 0
-  const detail = useMemo(() => items.find((s) => s.id === detailId) ?? null, [items, detailId])
+  const detail = useMemo(() => {
+    if (!detailId) return null
+    const fresh = detailQuery.data?.id === detailId ? detailQuery.data : null
+    return fresh ?? items.find((s) => s.id === detailId) ?? null
+  }, [detailId, detailQuery.data, items])
 
   const createOrder = useCallback((s: SupplierListItem) => navigate(PATHS.inventory, { state: { tab: 'purchasing', supplierId: s.id } }), [navigate])
 

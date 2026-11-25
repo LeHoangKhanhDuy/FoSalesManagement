@@ -12,7 +12,6 @@ import {
   Truck,
 } from "lucide-react";
 import { RetryButton } from "@/components/common/RetryButton";
-import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import {
   Dropdown,
@@ -45,9 +44,11 @@ interface Props {
   onChangeStatus: (s: SupplierListItem, status: SupplierStatus) => void;
   onDelete: (s: SupplierListItem) => void;
   onCreate: () => void;
+  startIndex: number;
 }
 
 const COLUMNS = [
+  "STT",
   "Nhà cung cấp",
   "Liên hệ",
   "Đơn hàng",
@@ -80,6 +81,7 @@ export function SupplierTable({
   onChangeStatus,
   onDelete,
   onCreate,
+  startIndex,
 }: Props) {
   return (
     <div className="overflow-x-auto">
@@ -92,6 +94,7 @@ export function SupplierTable({
                 className={cn(
                   "px-4 py-3 whitespace-nowrap",
                   ["Tổng nhập", "Nợ phải trả"].includes(c) && "text-right",
+                  c === "STT" && "w-14 text-center",
                 )}
               >
                 {c}
@@ -115,7 +118,7 @@ export function SupplierTable({
                   ))}
                 </tr>
               ))
-            : suppliers.map((s) => {
+            : suppliers.map((s, index) => {
                 const m = s.summary;
                 const inactive = s.status === "inactive";
                 const status = SUPPLIER_STATUS[s.status];
@@ -128,9 +131,11 @@ export function SupplierTable({
                       inactive && "opacity-60",
                     )}
                   >
+                    <Td className="w-14 text-center text-xs font-semibold text-slate-400 tabular-nums">
+                      {startIndex + index + 1}
+                    </Td>
                     <Td className="max-w-[300px]">
                       <div className="flex items-center gap-3">
-                        <Avatar name={s.name} className="size-10 rounded-lg" />
                         <div className="min-w-0">
                           <p className="truncate font-semibold text-slate-900 group-hover:text-primary-700">
                             {s.name}
