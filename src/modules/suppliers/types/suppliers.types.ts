@@ -129,3 +129,12 @@ export interface TopProduct {
   value: number
   lastCost: number
 }
+
+export interface SupplierOption {
+  id: string
+  code: string
+  name: string
+  paymentTermDays: number
+  status: SupplierStatus
+  categoryIds: string[]
+}

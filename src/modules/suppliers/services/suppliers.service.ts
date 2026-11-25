@@ -8,6 +8,7 @@ import type {
   SupplierListItem,
   SupplierListParams,
   SupplierListResult,
+  SupplierOption,
   SupplierPayment,
   SupplierStatsData,
   SupplierStatus,
@@ -86,6 +87,8 @@ export const suppliersService = {
   },
 
   stats: () => http.get<SupplierStatsData>(`${BASE}/stats`),
+
+  options: (params: { status?: SupplierStatus; categoryId?: string } = {}) => http.get<SupplierOption[]>(`${BASE}/options`, { params: { ...params } }),
 
   nextCode: () => http.get<{ code: string }>(`${BASE}/next-code`).then((r) => r.code),
 
