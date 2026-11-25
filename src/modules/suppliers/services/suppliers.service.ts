@@ -103,7 +103,15 @@ export const suppliersService = {
 
   remove: (id: string) => http.delete<void>(byId(id)),
 
-  ledger: (id: string, page = 1, pageSize = 50) => http.get<Paginated<LedgerEntry>>(`${byId(id)}/ledger`, { params: { page, pageSize } }),
+  ledger: (id: string, page = 1, pageSize = 20) =>
+    http
+      .get<Paginated<Omit<LedgerEntry, 'dueAt'> & { dueAt?: string | null }>>(`${byId(id)}/ledger`, { params: { page, pageSize } })
+      .then((res): Paginated<LedgerEntry> => ({ ...res, items: res.items.map((e) => ({ ...e, dueAt: orUndef(e.dueAt ?? null) })) })),
+
+  payments: (id: string, page = 1, pageSize = 20) =>
+    http
+      .get<Paginated<PaymentResponse>>(`${byId(id)}/payments`, { params: { page, pageSize } })
+      .then((res): Paginated<SupplierPayment> => ({ ...res, items: res.items.map(toPayment) })),
 
   topProducts: (id: string, limit = 8) =>
     http

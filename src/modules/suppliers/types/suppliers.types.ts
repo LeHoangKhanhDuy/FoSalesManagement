@@ -113,6 +113,7 @@ export interface LedgerEntry {
   code: string
   label: string
   at: string
+  dueAt?: string
   amount: number
   balance: number
 }

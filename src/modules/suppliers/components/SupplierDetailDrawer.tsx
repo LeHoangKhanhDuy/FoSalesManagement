@@ -7,7 +7,7 @@ import { useLastValue } from '@/hooks/useLastValue'
 import { cn } from '@/lib/cn'
 import { formatCurrency, formatPhone } from '@/lib/format'
 import type { Category } from '@/modules/sales/types/sales.types'
-import { SupplierLedger, SupplierOrders, SupplierProducts } from '@/modules/suppliers/components/SupplierActivity'
+import { SupplierLedger, SupplierPayments, SupplierProducts } from '@/modules/suppliers/components/SupplierActivity'
 import { useSupplierDetail, type SupplierDetailTab } from '@/modules/suppliers/hooks/useSupplierDetail'
 import type { SupplierListItem } from '@/modules/suppliers/types/suppliers.types'
 import { SUPPLIER_STATUS, termLabel } from '@/modules/suppliers/utils/suppliers.utils'
@@ -23,13 +23,13 @@ interface Props {
 
 const TABS: { value: SupplierDetailTab; label: string }[] = [
   { value: 'ledger', label: 'Công nợ' },
-  { value: 'orders', label: 'Đơn đặt hàng' },
+  { value: 'payments', label: 'Thanh toán' },
   { value: 'products', label: 'Sản phẩm nhập' },
 ]
 
 export function SupplierDetailDrawer({ supplier: open, categories, onClose, onEdit, onPay, onOrder }: Props) {
   const supplier = useLastValue(open)
-  const detail = useSupplierDetail(open?.id ?? null)
+  const detail = useSupplierDetail(open?.id ?? null, open ? `${open.updatedAt ?? ''}:${open.summary.debt}:${open.summary.paid}` : '')
   if (!supplier) return null
   const m = supplier.summary
   const status = SUPPLIER_STATUS[supplier.status]
@@ -147,10 +147,9 @@ export function SupplierDetailDrawer({ supplier: open, categories, onClose, onEd
           </button>
         ))}
       </div>
-      {detail.loading[detail.tab] && <div className="h-32 animate-pulse rounded-lg bg-slate-50" />}
-      {!detail.loading[detail.tab] && detail.tab === 'ledger' && <SupplierLedger entries={detail.ledger} />}
-      {!detail.loading[detail.tab] && detail.tab === 'orders' && <SupplierOrders orders={detail.orders} />}
-      {!detail.loading[detail.tab] && detail.tab === 'products' && <SupplierProducts products={detail.products} />}
+      {detail.tab === 'ledger' && <SupplierLedger list={detail.ledger} />}
+      {detail.tab === 'payments' && <SupplierPayments list={detail.payments} />}
+      {detail.tab === 'products' && <SupplierProducts products={detail.products.items} loading={detail.products.loading} error={detail.products.error} />}
     </Drawer>
   )
 }
