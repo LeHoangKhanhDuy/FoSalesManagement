@@ -52,7 +52,7 @@ export function PurchaseOrdersPanel({ po }: { po: ReturnType<typeof usePurchaseO
           Đặt hàng sắp hết
         </Button>
         <Button className="h-11 rounded-lg" leftIcon={<Plus className="size-4" />} onClick={() => po.openCreate()}>
-          Tạo đơn đặt hàng
+          Đặt hàng
         </Button>
       </div>
 
