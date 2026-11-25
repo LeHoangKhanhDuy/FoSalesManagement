@@ -69,9 +69,9 @@ export function Drawer({ open, onClose, title, description, headerExtra, childre
           className,
         )}
       >
-        <header className="flex items-start gap-3 border-b border-slate-100 px-6 py-4">
+        <header className="flex items-start gap-3 px-6 py-4">
           <div className="min-w-0 flex-1">
-            {title && <h2 className="truncate text-lg font-bold text-slate-900">{title}</h2>}
+            {title && <h2 className="truncate text-lg font-bold text-slate-900 uppercase">{title}</h2>}
             {description && <p className="mt-0.5 text-sm text-slate-500">{description}</p>}
           </div>
           {headerExtra}

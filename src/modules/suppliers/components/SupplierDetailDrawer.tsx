@@ -1,4 +1,4 @@
-import { AlarmClock, Building2, PauseCircle, CreditCard, Mail, MapPin, Phone, StickyNote } from 'lucide-react'
+import { AlarmClock, Building2, PauseCircle, Mail, MapPin, Phone, StickyNote, CreditCard } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -35,11 +35,11 @@ export function SupplierDetailDrawer({ supplier: open, categories, onClose, onEd
   const status = SUPPLIER_STATUS[supplier.status]
   const groups = categories.filter((c) => supplier.categoryIds.includes(c.id))
   const contacts = [
-    { icon: Phone, value: `${supplier.contact} · ${formatPhone(supplier.phone)}`, href: `tel:${supplier.phone}` },
+    { icon: Phone, value: `${supplier.contact} | ${formatPhone(supplier.phone)}`, href: `tel:${supplier.phone}` },
     supplier.email && { icon: Mail, value: supplier.email, href: `mailto:${supplier.email}` },
     supplier.address && { icon: MapPin, value: supplier.address },
-    supplier.taxCode && { icon: Building2, value: `MST ${supplier.taxCode}` },
-    supplier.bankAccount && { icon: CreditCard, value: `${supplier.bankName ?? ''} · ${supplier.bankAccount}${supplier.bankHolder ? ` · ${supplier.bankHolder}` : ''}` },
+    supplier.taxCode && { icon: Building2, value: `MST: ${supplier.taxCode}` },
+    supplier.bankAccount && { icon: CreditCard, value: `${supplier.bankName ?? ''} | ${supplier.bankAccount}${supplier.bankHolder ? ` | ${supplier.bankHolder}` : ''}` },
     supplier.note && { icon: StickyNote, value: supplier.note },
   ].filter((c): c is { icon: typeof Phone; value: string; href?: string } => !!c)
 
