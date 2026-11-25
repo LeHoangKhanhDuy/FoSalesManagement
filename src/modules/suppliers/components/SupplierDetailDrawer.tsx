@@ -5,24 +5,20 @@ import { Button } from '@/components/ui/Button'
 import { Drawer } from '@/components/ui/Drawer'
 import { useLastValue } from '@/hooks/useLastValue'
 import { cn } from '@/lib/cn'
-import { formatCurrency } from '@/lib/format'
-import type { PurchaseOrder } from '@/modules/purchasing/types/purchasing.types'
+import { formatCurrency, formatPhone } from '@/lib/format'
 import type { Category } from '@/modules/sales/types/sales.types'
 import { SupplierLedger, SupplierOrders, SupplierProducts } from '@/modules/suppliers/components/SupplierActivity'
 import { useSupplierDetail, type SupplierDetailTab } from '@/modules/suppliers/hooks/useSupplierDetail'
-import type { Supplier, SupplierPayment, SupplierSummary } from '@/modules/suppliers/types/suppliers.types'
-import { EMPTY_SUMMARY, formatPhone, SUPPLIER_STATUS, termLabel } from '@/modules/suppliers/utils/suppliers.utils'
+import type { SupplierListItem } from '@/modules/suppliers/types/suppliers.types'
+import { SUPPLIER_STATUS, termLabel } from '@/modules/suppliers/utils/suppliers.utils'
 
 interface Props {
-  supplier: Supplier | null
-  summaries: Record<string, SupplierSummary>
-  orders: PurchaseOrder[]
-  payments: SupplierPayment[]
+  supplier: SupplierListItem | null
   categories: Category[]
   onClose: () => void
-  onEdit: (s: Supplier) => void
-  onPay: (s: Supplier) => void
-  onOrder: (s: Supplier) => void
+  onEdit: (s: SupplierListItem) => void
+  onPay: (s: SupplierListItem) => void
+  onOrder: (s: SupplierListItem) => void
 }
 
 const TABS: { value: SupplierDetailTab; label: string }[] = [
@@ -31,11 +27,11 @@ const TABS: { value: SupplierDetailTab; label: string }[] = [
   { value: 'products', label: 'Sản phẩm nhập' },
 ]
 
-export function SupplierDetailDrawer({ supplier: open, summaries, orders, payments, categories, onClose, onEdit, onPay, onOrder }: Props) {
+export function SupplierDetailDrawer({ supplier: open, categories, onClose, onEdit, onPay, onOrder }: Props) {
   const supplier = useLastValue(open)
-  const detail = useSupplierDetail(supplier, orders, payments)
+  const detail = useSupplierDetail(open?.id ?? null)
   if (!supplier) return null
-  const m = summaries[supplier.id] ?? EMPTY_SUMMARY
+  const m = supplier.summary
   const status = SUPPLIER_STATUS[supplier.status]
   const groups = categories.filter((c) => supplier.categoryIds.includes(c.id))
   const contacts = [
@@ -151,9 +147,10 @@ export function SupplierDetailDrawer({ supplier: open, summaries, orders, paymen
           </button>
         ))}
       </div>
-      {detail.tab === 'ledger' && <SupplierLedger entries={detail.ledger} />}
-      {detail.tab === 'orders' && <SupplierOrders orders={detail.orders} />}
-      {detail.tab === 'products' && <SupplierProducts products={detail.products} />}
+      {detail.loading[detail.tab] && <div className="h-32 animate-pulse rounded-lg bg-slate-50" />}
+      {!detail.loading[detail.tab] && detail.tab === 'ledger' && <SupplierLedger entries={detail.ledger} />}
+      {!detail.loading[detail.tab] && detail.tab === 'orders' && <SupplierOrders orders={detail.orders} />}
+      {!detail.loading[detail.tab] && detail.tab === 'products' && <SupplierProducts products={detail.products} />}
     </Drawer>
   )
 }

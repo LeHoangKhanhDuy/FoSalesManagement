@@ -57,3 +57,8 @@ export const timeAgo = (iso?: string, now = Date.now()) => {
   const days = Math.floor(hours / 24)
   return days < 30 ? `${days} ngày trước` : new Date(iso).toLocaleDateString('vi-VN')
 }
+
+export const formatPhone = (phone: string) => {
+  const d = phone.replace(/\D/g, '')
+  return d.length === 10 ? `${d.slice(0, 4)} ${d.slice(4, 7)} ${d.slice(7)}` : phone
+}

@@ -7,9 +7,9 @@ import { DatePicker } from '@/components/ui/DatePicker'
 import { useLastValue } from '@/hooks/useLastValue'
 import { cn } from '@/lib/cn'
 import type { Category } from '@/modules/sales/types/sales.types'
-import { useSupplierForm } from '@/modules/suppliers/hooks/useSupplierForm'
+import { useSupplierForm, type SupplierServerError } from '@/modules/suppliers/hooks/useSupplierForm'
 import type { SupplierFormState } from '@/modules/suppliers/hooks/useSuppliersPage'
-import type { Supplier, SupplierFormValues, SupplierStatus } from '@/modules/suppliers/types/suppliers.types'
+import type { SupplierFormValues, SupplierStatus } from '@/modules/suppliers/types/suppliers.types'
 import { PAYMENT_TERMS, SUPPLIER_STATUS, termLabel } from '@/modules/suppliers/utils/suppliers.utils'
 
 const STATUS_ACTIVE_CLASS: Record<SupplierStatus, string> = {
@@ -20,7 +20,7 @@ const STATUS_ACTIVE_CLASS: Record<SupplierStatus, string> = {
 
 interface Props {
   state: SupplierFormState
-  suppliers: Supplier[]
+  serverError: SupplierServerError | null
   categories: Category[]
   saving: boolean
   onClose: () => void
@@ -36,8 +36,8 @@ export function SupplierFormDrawer({ state: openState, ...props }: Props) {
   return <FormContent key={session.current.count} state={state} open={!!openState} {...props} />
 }
 
-function FormContent({ state, open, suppliers, categories, saving, onClose, onSubmit }: Omit<Props, 'state'> & { state: NonNullable<SupplierFormState>; open: boolean }) {
-  const { values, errors, set, toggleCategory, submit, isEdit } = useSupplierForm(state, suppliers, onSubmit)
+function FormContent({ state, open, serverError, categories, saving, onClose, onSubmit }: Omit<Props, 'state'> & { state: NonNullable<SupplierFormState>; open: boolean }) {
+  const { values, errors, set, toggleCategory, submit, isEdit } = useSupplierForm(state, serverError, onSubmit)
   const text = (key: keyof SupplierFormValues, placeholder: string, extra?: string) => (
     <input value={(values[key] as string | undefined) ?? ''} onChange={(e) => set(key, e.target.value as never)} placeholder={placeholder} className={cn(inputClass(errors[key as keyof typeof errors]), extra)} />
   )
@@ -65,13 +65,13 @@ function FormContent({ state, open, suppliers, categories, saving, onClose, onSu
           <Field label="Tên nhà cung cấp" required error={errors.name} className="col-span-2">
             <input autoFocus value={values.name} onChange={(e) => set('name', e.target.value)} placeholder="VD: Công ty TNHH Phân phối ABC" className={inputClass(errors.name)} />
           </Field>
-          <Field label="Mã NCC" required error={errors.code}>
-            {text('code', 'NCC001', 'uppercase placeholder:normal-case')}
+          <Field label="Mã NCC" error={errors.code}>
+            {text('code', 'Để trống để tự sinh', 'uppercase placeholder:normal-case')}
           </Field>
           <Field label="Mã số thuế" error={errors.taxCode}>
             {text('taxCode', '10 hoặc 13 số')}
           </Field>
-          <Field label="Địa chỉ" className="col-span-2">
+          <Field label="Địa chỉ" required error={errors.address} className="col-span-2">
             {text('address', 'Số nhà, đường, phường, quận/huyện, tỉnh')}
           </Field>
         </div>
@@ -92,6 +92,7 @@ function FormContent({ state, open, suppliers, categories, saving, onClose, onSu
       </FormSection>
 
       <FormSection title={`Nhóm hàng cung cấp${values.categoryIds.length ? ` (${values.categoryIds.length})` : ''}`}>
+        {errors.categoryIds && <p className="mb-2 text-xs font-medium text-rose-500">{errors.categoryIds}</p>}
         <div className="flex flex-wrap gap-2">
           {categories.map((c) => {
             const active = values.categoryIds.includes(c.id)

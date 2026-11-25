@@ -19,6 +19,11 @@ export interface Supplier {
   suspendReason?: string
   suspendedUntil?: string
   createdAt: string
+  updatedAt?: string
+}
+
+export interface SupplierListItem extends Supplier {
+  summary: SupplierSummary
 }
 
 export type PaymentMethod = 'cash' | 'transfer'
@@ -61,7 +66,39 @@ export interface SupplierFilters {
   sort: SupplierSort
 }
 
-export type SupplierFormValues = Omit<Supplier, 'id' | 'createdAt'>
+export type SupplierFormValues = Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>
+
+export interface SupplierListParams {
+  keyword?: string
+  tab?: Exclude<SupplierTab, 'all'>
+  categoryId?: string
+  sort: SupplierSort
+  page: number
+  pageSize: number
+}
+
+export interface SupplierListResult {
+  items: SupplierListItem[]
+  total: number
+  tabCounts: Record<SupplierTab, number>
+}
+
+export interface SupplierStatsData {
+  total: number
+  active: number
+  suspended: number
+  purchased30: number
+  openOrders: number
+  debt: number
+  debtors: number
+  overdue: number
+  overdueCount: number
+}
+
+export interface PaymentResult {
+  payment: SupplierPayment
+  supplier: SupplierListItem
+}
 
 export interface PaymentFormValues {
   amount: number
@@ -72,7 +109,7 @@ export interface PaymentFormValues {
 
 export interface LedgerEntry {
   id: string
-  kind: 'receipt' | 'payment'
+  kind: 'receipt' | 'payment' | 'return' | 'adjustment'
   code: string
   label: string
   at: string

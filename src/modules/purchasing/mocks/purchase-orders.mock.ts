@@ -1,4 +1,4 @@
-import { MOCK_SUPPLIERS } from '@/modules/suppliers/mocks/suppliers.mock'
+import { MOCK_SUPPLIERS } from '@/modules/purchasing/mocks/suppliers.mock'
 import type { GoodsReceipt, PurchaseOrder, PurchaseOrderStatus } from '@/modules/purchasing/types/purchasing.types'
 import { productToPoItem } from '@/modules/purchasing/utils/purchasing.utils'
 import { MOCK_PRODUCTS } from '@/modules/sales/mocks/products.mock'

@@ -4,14 +4,13 @@ import { Button } from '@/components/ui/Button'
 import { Drawer } from '@/components/ui/Drawer'
 import { useLastValue } from '@/hooks/useLastValue'
 import { cn } from '@/lib/cn'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency, formatPhone } from '@/lib/format'
 import { CustomerOrders, PointHistory } from '@/modules/customers/components/CustomerActivity'
 import { MemberCard } from '@/modules/customers/components/MemberCard'
 import { TierBadge } from '@/modules/customers/components/TierBadge'
 import { useCustomerDetail, type CustomerDetailTab } from '@/modules/customers/hooks/useCustomerDetail'
 import type { CustomerWithStats, MembershipSettings } from '@/modules/customers/types/customers.types'
 import { ageOf, formatBirthday, isBirthdayMonth } from '@/modules/customers/utils/customers.utils'
-import { formatPhone } from '@/modules/suppliers/utils/suppliers.utils'
 
 interface Props {
   customer: CustomerWithStats | null

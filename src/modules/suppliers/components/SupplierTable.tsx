@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import {
+  CircleAlert,
   ClipboardPlus,
   Ellipsis,
   Eye,
@@ -10,6 +11,7 @@ import {
   Trash2,
   Truck,
 } from "lucide-react";
+import { RetryButton } from "@/components/common/RetryButton";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import {
@@ -19,30 +21,29 @@ import {
 } from "@/components/ui/Dropdown";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/cn";
-import { formatCurrency, timeAgo } from "@/lib/format";
+import { formatCurrency, formatPhone, timeAgo } from "@/lib/format";
 import type {
-  Supplier,
+  SupplierListItem,
   SupplierStatus,
-  SupplierSummary,
 } from "@/modules/suppliers/types/suppliers.types";
 import {
-  EMPTY_SUMMARY,
-  formatPhone,
   SUPPLIER_STATUS,
   termLabel,
 } from "@/modules/suppliers/utils/suppliers.utils";
 
 interface Props {
-  suppliers: Supplier[];
-  summaries: Record<string, SupplierSummary>;
+  suppliers: SupplierListItem[];
   loading: boolean;
+  refreshing: boolean;
+  error?: string;
+  onRetry: () => void;
   hasActiveFilters: boolean;
-  onView: (s: Supplier) => void;
-  onEdit: (s: Supplier) => void;
-  onPay: (s: Supplier) => void;
-  onOrder: (s: Supplier) => void;
-  onChangeStatus: (s: Supplier, status: SupplierStatus) => void;
-  onDelete: (s: Supplier) => void;
+  onView: (s: SupplierListItem) => void;
+  onEdit: (s: SupplierListItem) => void;
+  onPay: (s: SupplierListItem) => void;
+  onOrder: (s: SupplierListItem) => void;
+  onChangeStatus: (s: SupplierListItem, status: SupplierStatus) => void;
+  onDelete: (s: SupplierListItem) => void;
   onCreate: () => void;
 }
 
@@ -67,8 +68,10 @@ const Td = ({
 
 export function SupplierTable({
   suppliers,
-  summaries,
   loading,
+  refreshing,
+  error,
+  onRetry,
   hasActiveFilters,
   onView,
   onEdit,
@@ -96,7 +99,12 @@ export function SupplierTable({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody
+          className={cn(
+            "divide-y divide-slate-100 transition-opacity",
+            refreshing && "pointer-events-none opacity-60",
+          )}
+        >
           {loading
             ? Array.from({ length: 6 }).map((_, i) => (
                 <tr key={i}>
@@ -108,7 +116,7 @@ export function SupplierTable({
                 </tr>
               ))
             : suppliers.map((s) => {
-                const m = summaries[s.id] ?? EMPTY_SUMMARY;
+                const m = s.summary;
                 const inactive = s.status === "inactive";
                 const status = SUPPLIER_STATUS[s.status];
                 return (
@@ -288,7 +296,16 @@ export function SupplierTable({
               })}
         </tbody>
       </table>
-      {!loading && suppliers.length === 0 && (
+      {!loading && suppliers.length === 0 && error && (
+        <EmptyState
+          icon={<CircleAlert />}
+          title="Không tải được nhà cung cấp"
+          description={error}
+          action={<RetryButton onClick={onRetry} />}
+          className="py-14"
+        />
+      )}
+      {!loading && suppliers.length === 0 && !error && (
         <EmptyState
           icon={<Truck />}
           title={

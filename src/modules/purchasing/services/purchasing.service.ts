@@ -1,7 +1,7 @@
 import { USE_MOCK } from '@/lib/constants'
 import { http, sleep } from '@/lib/http'
 import { MOCK_PURCHASE_ORDERS } from '@/modules/purchasing/mocks/purchase-orders.mock'
-import { MOCK_SUPPLIERS } from '@/modules/suppliers/mocks/suppliers.mock'
+import { MOCK_SUPPLIERS } from '@/modules/purchasing/mocks/suppliers.mock'
 import type { GoodsReceipt, PurchaseOrder, PurchaseOrderFormValues, ReceivingDraft} from '@/modules/purchasing/types/purchasing.types'
 import type { Supplier } from '@/modules/suppliers/types/suppliers.types'
 import { generateCode } from '@/modules/purchasing/utils/purchasing.utils'
