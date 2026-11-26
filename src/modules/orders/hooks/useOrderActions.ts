@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { errorMessage, HttpError } from '@/lib/http'
+import { playVoice } from '@/lib/sound'
 import { ordersService } from '@/modules/orders/services/orders.service'
 import type { OrderAction, OrderActionInput, OrderPayment, OrderSummary } from '@/modules/orders/types/orders.types'
 
@@ -49,6 +50,7 @@ export function useOrderActions(callbacks: { onDone: (orderId: string) => void }
       else if (action === 'refund')
         await ordersService.refund(order.id, { reason: reason.trim(), refundMethod, refundReference: reference.trim() || undefined }, key.current)
       else await confirmPending(order.id, payments, reference, key.current)
+      if (action === 'confirm') playVoice('paymentReceived')
       toast.success(SUCCESS[action](order.code))
       setTarget(null)
       handlers.current.onDone(order.id)
