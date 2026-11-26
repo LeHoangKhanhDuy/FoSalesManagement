@@ -6,14 +6,16 @@ import type { ViewMode } from '@/modules/sales/components/ProductToolbar'
 import { useActivePromotions } from '@/modules/sales/hooks/useActivePromotions'
 import { useInvoices } from '@/modules/sales/hooks/useInvoices'
 import { useProducts } from '@/modules/sales/hooks/useProducts'
-import { salesService } from '@/modules/sales/services/sales.service'
-import type { Order, PaymentMethod, Product } from '@/modules/sales/types/sales.types'
+import { useReceiptPrinter } from '@/modules/orders/hooks/useReceiptPrinter'
+import type { OrderDetail } from '@/modules/orders/types/orders.types'
+import type { Product } from '@/modules/sales/types/sales.types'
 
 export function useSalesPage() {
   const searchRef = useRef<HTMLInputElement>(null)
   const [view, setView] = useState<ViewMode>('grid')
   const [paymentOpen, setPaymentOpen] = useState(false)
-  const [completedOrder, setCompletedOrder] = useState<Order | null>(null)
+  const [completedOrder, setCompletedOrder] = useState<OrderDetail | null>(null)
+  const printer = useReceiptPrinter()
   const productState = useProducts()
   const promo = useActivePromotions(productState.products)
   const invoice = useInvoices(promo.promotions, productState.products, promo.memberOf)
@@ -56,22 +58,14 @@ export function useSalesPage() {
     setPaymentOpen(true)
   }, [hasItems])
 
-  const handleConfirmPayment = async (method: PaymentMethod, paidAmount: number) => {
-    const order = await salesService.createOrder(
-      {
-        items: active.items.map(({ productId, price, quantity }) => ({ productId, price, quantity })),
-        customerId: active.customer?.id ?? null,
-        voucherCode: active.voucher?.code ?? null,
-        note: active.note,
-        paymentMethod: method,
-        paidAmount,
-      },
-      { products: productState.products, customer: active.customer, voucher: active.voucher ?? null },
-    )
-    productState.decreaseStock(order.items)
-    setCompletedOrder(order)
-    return order
-  }
+  const { decreaseStock } = productState
+  const handleOrderCreated = useCallback(
+    (order: OrderDetail) => {
+      decreaseStock(order.lines)
+      setCompletedOrder(order)
+    },
+    [decreaseStock],
+  )
 
   const handleClosePayment = () => {
     setPaymentOpen(false)
@@ -101,7 +95,8 @@ export function useSalesPage() {
     handleAdd,
     handleSearchSubmit,
     openPayment,
-    handleConfirmPayment,
+    handleOrderCreated,
+    printer,
     handleClosePayment,
   }
 }

@@ -2,8 +2,7 @@ import { MOCK_CUSTOMERS } from '@/modules/customers/mocks/customers.mock'
 import { MOCK_MEMBERSHIP } from '@/modules/customers/mocks/membership.mock'
 import type { CustomerProfile, PointLog, PointLogType } from '@/modules/customers/types/customers.types'
 import { calcEarnedPoints, computeStats, customerOrders, resolveTier, totalSpent } from '@/modules/customers/utils/customers.utils'
-import { MOCK_ORDERS } from '@/modules/orders/mocks/orders.mock'
-import type { OrderRecord } from '@/modules/orders/types/orders.types'
+import { MOCK_ORDERS } from '@/modules/customers/mocks/orders.mock'
 
 export const MOCK_POINT_LOGS: PointLog[] = []
 
@@ -25,23 +24,6 @@ export const addPointLog = (c: CustomerProfile, type: PointLogType, points: numb
   }
   MOCK_POINT_LOGS.unshift(log)
   return log
-}
-
-export const earnOrderPoints = (order: Pick<OrderRecord, 'customer' | 'totals' | 'code' | 'createdAt'>) => {
-  const c = MOCK_CUSTOMERS.find((x) => x.id === order.customer?.id)
-  if (!c) return 0
-  const points = calcEarnedPoints(MOCK_MEMBERSHIP, c.tier, order.totals.total)
-  if (points > 0) addPointLog(c, 'earn', points, { refCode: order.code, createdAt: order.createdAt })
-  refreshCustomer(c)
-  return points
-}
-
-export const revokeOrderPoints = (order: Pick<OrderRecord, 'customer' | 'code'>) => {
-  const c = MOCK_CUSTOMERS.find((x) => x.id === order.customer?.id)
-  if (!c) return
-  const earned = MOCK_POINT_LOGS.filter((l) => l.customerId === c.id && l.refCode === order.code && l.type === 'earn').reduce((s, l) => s + l.points, 0)
-  if (earned > 0) addPointLog(c, 'revoke', -earned, { refCode: order.code, reason: 'Hoàn tiền đơn hàng' })
-  refreshCustomer(c)
 }
 
 const seed = () => {

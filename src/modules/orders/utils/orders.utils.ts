@@ -1,13 +1,32 @@
 import type { BadgeProps } from '@/components/ui/Badge'
-import type { PaymentMethod } from '@/modules/sales/types/sales.types'
-import type { DateRange, OrderAction, OrderRecord, OrderSort, OrderStats, OrderStatus } from '@/modules/orders/types/orders.types'
+import type {
+  DateRange,
+  OrderAction,
+  OrderFilters,
+  OrderQuery,
+  OrderStatus,
+  OrderSummary,
+  PaymentMethod,
+  RefundMethod,
+} from '@/modules/orders/types/orders.types'
 
 export const PAGE_SIZE = 10
+
+export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  cash: 'Tiền mặt',
+  transfer: 'Chuyển khoản',
+  card: 'Thẻ',
+  ewallet: 'Ví điện tử',
+  points: 'Điểm',
+}
+
+export const REFUND_METHODS: RefundMethod[] = ['cash', 'transfer', 'card', 'ewallet']
 
 export const ORDER_STATUS: Record<OrderStatus, { label: string; tone: NonNullable<BadgeProps['tone']> }> = {
   completed: { label: 'Hoàn thành', tone: 'success' },
   pending: { label: 'Chờ thanh toán', tone: 'warning' },
   cancelled: { label: 'Đã hủy', tone: 'neutral' },
+  partially_refunded: { label: 'Hoàn một phần', tone: 'violet' },
   refunded: { label: 'Đã hoàn tiền', tone: 'danger' },
 }
 
@@ -16,6 +35,7 @@ export const STATUS_TABS: { value: OrderStatus | 'all'; label: string }[] = [
   { value: 'completed', label: 'Hoàn thành' },
   { value: 'pending', label: 'Chờ thanh toán' },
   { value: 'cancelled', label: 'Đã hủy' },
+  { value: 'partially_refunded', label: 'Hoàn một phần' },
   { value: 'refunded', label: 'Hoàn tiền' },
 ]
 
@@ -28,52 +48,75 @@ export const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
   { value: 'all', label: 'Toàn thời gian' },
 ]
 
-export const SORT_OPTIONS: { value: OrderSort; label: string }[] = [
+export const SORT_OPTIONS: { value: OrderFilters['sort']; label: string }[] = [
   { value: 'newest', label: 'Mới nhất' },
   { value: 'oldest', label: 'Cũ nhất' },
   { value: 'total-desc', label: 'Tổng tiền cao → thấp' },
   { value: 'total-asc', label: 'Tổng tiền thấp → cao' },
 ]
 
-export const ACTION_CONFIG: Record<OrderAction, { title: string; confirm: string; reasons: string[]; nextStatus: OrderStatus }> = {
+export const ACTION_CONFIG: Record<OrderAction, { title: string; confirm: string; reasons: string[]; danger: boolean }> = {
   cancel: {
     title: 'Hủy đơn hàng',
     confirm: 'Xác nhận hủy',
-    reasons: ['Khách đổi ý', 'Khách không thanh toán', 'Nhập sai đơn', 'Hết hàng'],
-    nextStatus: 'cancelled',
+    reasons: ['Khách không chuyển khoản', 'Khách đổi ý', 'Nhập sai đơn', 'Hết hàng'],
+    danger: true,
   },
   refund: {
     title: 'Hoàn tiền đơn hàng',
     confirm: 'Xác nhận hoàn tiền',
     reasons: ['Sản phẩm lỗi', 'Sai sản phẩm', 'Hết hạn sử dụng', 'Khách trả hàng'],
-    nextStatus: 'refunded',
+    danger: true,
+  },
+  confirm: {
+    title: 'Xác nhận đã nhận tiền',
+    confirm: 'Đã nhận tiền',
+    reasons: [],
+    danger: false,
   },
 }
 
+export const isToday = (iso: string, now = new Date()) => new Date(iso).toDateString() === now.toDateString()
+
+export const availableActions = (o: Pick<OrderSummary, 'status' | 'createdAt'>): OrderAction[] => {
+  switch (o.status) {
+    case 'pending':
+      return ['confirm', 'cancel']
+    case 'completed':
+      return isToday(o.createdAt) ? ['refund', 'cancel'] : ['refund']
+    case 'partially_refunded':
+      return ['refund']
+    default:
+      return []
+  }
+}
+
+export const refundableAmount = (o: Pick<OrderSummary, 'totals' | 'refundedTotal'>) => Math.max(0, o.totals.total - o.refundedTotal)
+
+export const paymentSummary = (o: Pick<OrderSummary, 'paymentMethods' | 'paymentMethod'>) =>
+  (o.paymentMethods.length ? o.paymentMethods : [o.paymentMethod]).map((m) => PAYMENT_METHOD_LABEL[m]).join(' + ')
+
+const DAY = 86_400_000
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
 
-export const getDateRange = (
-  range: DateRange,
-  custom: { from?: Date; to?: Date } = {},
-  now = new Date(),
-): { from: Date; to: Date } | null => {
+export const getDateRange = (range: DateRange, custom: { from?: Date; to?: Date } = {}, now = new Date()): { from: Date; to: Date } | null => {
   const today = startOfDay(now)
-  const tomorrow = new Date(today.getTime() + 86_400_000)
+  const tomorrow = new Date(today.getTime() + DAY)
   switch (range) {
     case 'custom':
       if (!custom.from && !custom.to) return null
       return {
         from: custom.from ? startOfDay(custom.from) : new Date(0),
-        to: custom.to ? new Date(startOfDay(custom.to).getTime() + 86_400_000) : tomorrow,
+        to: custom.to ? new Date(startOfDay(custom.to).getTime() + DAY) : tomorrow,
       }
     case 'today':
       return { from: today, to: tomorrow }
     case 'yesterday':
-      return { from: new Date(today.getTime() - 86_400_000), to: today }
+      return { from: new Date(today.getTime() - DAY), to: today }
     case '7d':
-      return { from: new Date(today.getTime() - 6 * 86_400_000), to: tomorrow }
+      return { from: new Date(today.getTime() - 6 * DAY), to: tomorrow }
     case '30d':
-      return { from: new Date(today.getTime() - 29 * 86_400_000), to: tomorrow }
+      return { from: new Date(today.getTime() - 29 * DAY), to: tomorrow }
     case 'month':
       return { from: new Date(today.getFullYear(), today.getMonth(), 1), to: tomorrow }
     default:
@@ -81,41 +124,21 @@ export const getDateRange = (
   }
 }
 
-export const sortOrders = (orders: OrderRecord[], sort: OrderSort) => {
-  const list = [...orders]
-  switch (sort) {
-    case 'oldest':
-      return list.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-    case 'total-desc':
-      return list.sort((a, b) => b.totals.total - a.totals.total)
-    case 'total-asc':
-      return list.sort((a, b) => a.totals.total - b.totals.total)
-    default:
-      return list.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-  }
+export const toRangeParams = (filters: Pick<OrderFilters, 'range' | 'dateFrom' | 'dateTo'>) => {
+  const range = getDateRange(filters.range, { from: filters.dateFrom, to: filters.dateTo })
+  return range ? { from: range.from.toISOString(), to: range.to.toISOString() } : {}
 }
 
-export const calcOrderStats = (orders: OrderRecord[]): OrderStats => {
-  const stats: OrderStats = { revenue: 0, orders: orders.length, avgOrderValue: 0, pending: 0, pendingAmount: 0, cancelled: 0, cancelledAmount: 0 }
-  let completed = 0
-  for (const o of orders) {
-    if (o.status === 'completed') {
-      stats.revenue += o.totals.total
-      completed += 1
-    } else if (o.status === 'pending') {
-      stats.pending += 1
-      stats.pendingAmount += o.totals.total
-    } else {
-      stats.cancelled += 1
-      stats.cancelledAmount += o.totals.total
-    }
-  }
-  stats.avgOrderValue = completed ? Math.round(stats.revenue / completed) : 0
-  return stats
-}
+export const toOrderQuery = (filters: OrderFilters, keyword: string): Omit<OrderQuery, 'page' | 'pageSize'> => ({
+  ...toRangeParams(filters),
+  keyword: keyword.trim() || undefined,
+  status: filters.status === 'all' ? undefined : filters.status,
+  payment: filters.payment === 'all' ? undefined : filters.payment,
+  sort: filters.sort,
+})
 
-export const exportOrdersCsv = (orders: OrderRecord[], paymentLabel: Record<PaymentMethod, string>) => {
-  const header = ['Mã đơn', 'Thời gian', 'Khách hàng', 'SĐT', 'Số SP', 'Tạm tính', 'Giảm giá', 'Mã giảm giá', 'Tổng tiền', 'Thanh toán', 'Trạng thái', 'Thu ngân', 'Ghi chú']
+export const exportOrdersCsv = (orders: OrderSummary[]) => {
+  const header = ['Mã đơn', 'Thời gian', 'Khách hàng', 'SĐT', 'Số SP', 'Tạm tính', 'Giảm giá', 'Mã giảm giá', 'Tổng tiền', 'Đã hoàn', 'Thanh toán', 'Chờ xác nhận', 'Trạng thái', 'Thu ngân', 'Ghi chú']
   const rows = orders.map((o) => [
     o.code,
     new Date(o.createdAt).toLocaleString('vi-VN'),
@@ -124,9 +147,11 @@ export const exportOrdersCsv = (orders: OrderRecord[], paymentLabel: Record<Paym
     o.totals.itemCount,
     o.totals.subtotal,
     o.totals.discountAmount,
-    o.voucher?.code ?? '',
+    o.voucherCode ?? '',
     o.totals.total,
-    paymentLabel[o.paymentMethod],
+    o.refundedTotal,
+    paymentSummary(o),
+    o.pendingAmount,
     ORDER_STATUS[o.status].label,
     o.cashier,
     o.reason ?? o.note ?? '',

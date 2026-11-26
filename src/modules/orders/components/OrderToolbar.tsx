@@ -4,10 +4,8 @@ import { DatePicker } from '@/components/ui/DatePicker'
 import { FilterDropdown } from '@/components/ui/Dropdown'
 import { Input } from '@/components/ui/Input'
 import { cn } from '@/lib/cn'
-import type { OrderFilters, OrderStatus } from '@/modules/orders/types/orders.types'
-import { DATE_RANGE_OPTIONS, SORT_OPTIONS, STATUS_TABS } from '@/modules/orders/utils/orders.utils'
-import type { PaymentMethod } from '@/modules/sales/types/sales.types'
-import { PAYMENT_METHOD_LABEL } from '@/modules/sales/utils/constants'
+import type { OrderFilters, PaymentMethod, StatusCounts } from '@/modules/orders/types/orders.types'
+import { DATE_RANGE_OPTIONS, PAYMENT_METHOD_LABEL, SORT_OPTIONS, STATUS_TABS } from '@/modules/orders/utils/orders.utils'
 
 const PAYMENT_OPTIONS: { value: PaymentMethod | 'all'; label: string; icon?: LucideIcon }[] = [
   { value: 'all', label: 'Tất cả phương thức', icon: Wallet },
@@ -19,7 +17,7 @@ const PAYMENT_OPTIONS: { value: PaymentMethod | 'all'; label: string; icon?: Luc
 
 interface OrderToolbarProps {
   filters: OrderFilters
-  counts: Record<OrderStatus | 'all', number>
+  counts?: StatusCounts
   onChange: <K extends keyof OrderFilters>(key: K, value: OrderFilters[K]) => void
   onDateRangeChange: (from?: Date, to?: Date) => void
   onRangePresetChange: (range: OrderFilters['range']) => void
@@ -62,7 +60,7 @@ export const OrderToolbar = memo(function OrderToolbar({
                   active ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-500',
                 )}
               >
-                {counts[tab.value]}
+                {counts?.[tab.value] ?? '–'}
               </span>
               {active && <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-primary-600" />}
             </button>

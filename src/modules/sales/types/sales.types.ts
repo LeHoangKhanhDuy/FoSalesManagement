@@ -101,8 +101,6 @@ export interface Invoice {
   createdAt: string
 }
 
-export type PaymentMethod = 'cash' | 'transfer' | 'card' | 'ewallet'
-
 export interface InvoiceTotals {
   itemCount: number
   subtotal: number
@@ -111,41 +109,4 @@ export interface InvoiceTotals {
   promoDiscount?: number
   voucherDiscount?: number
   memberDiscount?: number
-}
-
-export interface CreateOrderPayload {
-  items: Pick<CartItem, 'productId' | 'price' | 'quantity'>[]
-  customerId: string | null
-  voucherCode: string | null
-  note: string
-  paymentMethod: PaymentMethod
-  paidAmount: number
-}
-
-export interface Order {
-  id: string
-  code: string
-  createdAt: string
-  customer: Customer | null
-  voucher: Voucher | null
-  promotions?: AppliedPromotion[]
-  pointsEarned?: number
-  items: CartItem[]
-  totals: InvoiceTotals
-  paymentMethod: PaymentMethod
-  paidAmount: number
-  changeAmount: number
-  note: string
-  cashier: string
-}
-
-export interface SalesStats {
-  revenue: number
-  revenueGrowth: number
-  orders: number
-  ordersGrowth: number
-  itemsSold: number
-  itemsSoldGrowth: number
-  customers: number
-  customersGrowth: number
 }

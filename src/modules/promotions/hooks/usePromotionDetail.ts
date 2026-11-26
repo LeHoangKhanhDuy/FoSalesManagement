@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { OrderRecord } from '@/modules/orders/types/orders.types'
+import type { LegacyOrder as OrderRecord } from '@/modules/customers/mocks/orders.mock'
 import { promotionsService } from '@/modules/promotions/services/promotions.service'
 import type { PromotionWithUsage } from '@/modules/promotions/types/promotions.types'
 

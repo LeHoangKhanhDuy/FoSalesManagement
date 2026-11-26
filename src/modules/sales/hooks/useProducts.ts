@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/useDebounce'
 import { removeAccents } from '@/lib/format'
 import { salesService } from '@/modules/sales/services/sales.service'
-import type { CartItem, Category, CategoryId, Product } from '@/modules/sales/types/sales.types'
+import type { Category, CategoryId, Product } from '@/modules/sales/types/sales.types'
 
 export type ProductSort = 'default' | 'price-asc' | 'price-desc' | 'name' | 'best-seller'
 
@@ -66,7 +66,7 @@ export function useProducts() {
     [products],
   )
 
-  const decreaseStock = useCallback((items: CartItem[]) => {
+  const decreaseStock = useCallback((items: { productId: string; quantity: number }[]) => {
     setProducts((prev) =>
       prev.map((p) => {
         const sold = items.find((i) => i.productId === p.id)

@@ -40,11 +40,3 @@ export const suggestCashAmounts = (total: number, limit = 6) => {
   steps.forEach((step) => set.add(Math.ceil(total / step) * step))
   return [...set].sort((a, b) => a - b).slice(0, limit)
 }
-
-export const generateOrderCode = (date = new Date()) => {
-  const y = String(date.getFullYear()).slice(-2)
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  const rand = Math.floor(Math.random() * 9000 + 1000)
-  return `HD${y}${m}${d}-${rand}`
-}

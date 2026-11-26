@@ -5,8 +5,8 @@ import { MOCK_MEMBERSHIP } from '@/modules/customers/mocks/membership.mock'
 import { addPointLog, MOCK_POINT_LOGS, refreshCustomer } from '@/modules/customers/mocks/points.mock'
 import type { AdjustPointsPayload, CustomerFormValues, CustomerProfile, CustomerStatus, CustomerWithStats, MembershipSettings, PointLog } from '@/modules/customers/types/customers.types'
 import { computeStats, customerOrders } from '@/modules/customers/utils/customers.utils'
-import { MOCK_ORDERS } from '@/modules/orders/mocks/orders.mock'
-import type { OrderRecord } from '@/modules/orders/types/orders.types'
+import { MOCK_ORDERS } from '@/modules/customers/mocks/orders.mock'
+import type { LegacyOrder as OrderRecord } from '@/modules/customers/mocks/orders.mock'
 
 const withStats = (c: CustomerProfile): CustomerWithStats => ({ ...structuredClone(c), stats: computeStats(customerOrders(MOCK_ORDERS, c.id)) })
 
