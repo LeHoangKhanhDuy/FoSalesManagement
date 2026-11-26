@@ -1,6 +1,6 @@
 import { Crown, Gem, Medal, UserRound, type LucideIcon } from 'lucide-react'
 import { removeAccents } from '@/lib/format'
-import type { OrderRecord } from '@/modules/orders/types/orders.types'
+import type { LegacyOrder as OrderRecord } from '@/modules/customers/mocks/orders.mock'
 import type {
   CustomerFilters,
   CustomerFormValues,

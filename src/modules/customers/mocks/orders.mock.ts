@@ -3,9 +3,32 @@ import { MOCK_PRODUCTS } from '@/modules/sales/mocks/products.mock'
 import { MOCK_PROMOTIONS } from '@/modules/promotions/mocks/promotions.mock'
 import { priceCart } from '@/modules/promotions/utils/promotion-engine'
 import { isRunningAt, toVoucher } from '@/modules/promotions/utils/promotions.utils'
-import type { CartItem, PaymentMethod } from '@/modules/sales/types/sales.types'
+import type { AppliedPromotion, CartItem, Customer, InvoiceTotals, Voucher } from '@/modules/sales/types/sales.types'
 import { suggestCashAmounts } from '@/modules/sales/utils/cart.utils'
-import type { OrderRecord, OrderStatus } from '@/modules/orders/types/orders.types'
+
+type LegacyStatus = 'completed' | 'pending' | 'cancelled' | 'refunded'
+type LegacyPayment = 'cash' | 'transfer' | 'card' | 'ewallet'
+
+export interface LegacyOrder {
+  id: string
+  code: string
+  createdAt: string
+  updatedAt?: string
+  customer: Customer | null
+  voucher: Voucher | null
+  promotions?: AppliedPromotion[]
+  pointsEarned?: number
+  items: CartItem[]
+  totals: InvoiceTotals
+  paymentMethod: LegacyPayment
+  paidAmount: number
+  changeAmount: number
+  note: string
+  cashier: string
+  status: LegacyStatus
+  channel: 'pos' | 'online'
+  reason?: string
+}
 
 const createRandom = (seed: number) => () => {
   seed = (seed * 1103515245 + 12345) & 0x7fffffff
@@ -15,12 +38,12 @@ const createRandom = (seed: number) => () => {
 const CASHIERS = ['Khánh Duy', 'Minh Thư', 'Quốc Huy']
 const NOTES = ['', '', '', '', 'Khách lấy túi riêng', 'Giao trước 17h', 'Xuất hóa đơn VAT']
 
-const generateOrders = (count: number): OrderRecord[] => {
+const generateOrders = (count: number): LegacyOrder[] => {
   const rand = createRandom(20261122)
   const pick = <T,>(list: T[]) => list[Math.floor(rand() * list.length)]
   const now = Date.now()
   const products = MOCK_PRODUCTS.filter((p) => p.stock > 0 && p.status !== 'inactive' && p.sku !== 'SP0014')
-  const orders: OrderRecord[] = []
+  const orders: LegacyOrder[] = []
 
   for (let n = 0; n < count; n++) {
     const day = Math.floor(rand() * 35)
@@ -57,9 +80,9 @@ const generateOrders = (count: number): OrderRecord[] => {
     const { subtotal, discountAmount, total } = pricing
 
     const r = rand()
-    const status: OrderStatus = r < 0.8 ? 'completed' : r < 0.88 ? 'pending' : r < 0.94 ? 'cancelled' : 'refunded'
+    const status: LegacyStatus = r < 0.8 ? 'completed' : r < 0.88 ? 'pending' : r < 0.94 ? 'cancelled' : 'refunded'
     const pm = rand()
-    const paymentMethod: PaymentMethod =
+    const paymentMethod: LegacyPayment =
       status === 'pending' ? 'transfer' : pm < 0.5 ? 'cash' : pm < 0.8 ? 'transfer' : pm < 0.9 ? 'card' : 'ewallet'
     const paidAmount = status === 'pending' ? 0 : paymentMethod === 'cash' ? pick(suggestCashAmounts(total, 3)) : total
     const yymmdd = date.toISOString().slice(2, 10).replace(/-/g, '')
@@ -90,4 +113,4 @@ const generateOrders = (count: number): OrderRecord[] => {
   return orders.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 
-export const MOCK_ORDERS: OrderRecord[] = generateOrders(86)
+export const MOCK_ORDERS: LegacyOrder[] = generateOrders(86)

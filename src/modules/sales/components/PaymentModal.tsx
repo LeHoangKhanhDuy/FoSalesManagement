@@ -1,324 +1,196 @@
-import { memo, useCallback, useMemo, useState } from 'react'
-import { Banknote, CircleCheck, CreditCard, Printer, QrCode, RotateCcw, ShoppingCart, Smartphone, type LucideIcon } from 'lucide-react'
+import { memo, useCallback, useState } from 'react'
+import { Banknote, CreditCard, Pencil, QrCode, Smartphone, type LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/lib/cn'
-import { formatCurrency, formatDateTime, formatNumber, parseNumber } from '@/lib/format'
-import type { Order, PaymentMethod } from '@/modules/sales/types/sales.types'
-import { PAYMENT_METHOD_LABEL } from '@/modules/sales/utils/constants'
-import { ProductCode } from '@/components/common/ProductCode'
+import { formatCurrency } from '@/lib/format'
+import type { OrderDetail } from '@/modules/orders/types/orders.types'
+import { PAYMENT_METHOD_LABEL } from '@/modules/orders/utils/orders.utils'
+import { CashShortfallModal } from '@/modules/sales/components/CashShortfallModal'
+import { CashTendered } from '@/modules/sales/components/CashTendered'
+import { PaymentSuccess } from '@/modules/sales/components/PaymentSuccess'
+import { PaymentSummary } from '@/modules/sales/components/PaymentSummary'
+import { describeStockWarnings, useCheckout } from '@/modules/sales/hooks/useCheckout'
+import { usePaymentForm, type NonCashMethod, type PaymentChoice } from '@/modules/sales/hooks/usePaymentForm'
+import type { Invoice } from '@/modules/sales/types/sales.types'
 
-const CASH_DENOMINATIONS = [1_000, 2_000, 5_000, 10_000, 20_000, 50_000, 100_000, 200_000, 500_000]
-
-const METHODS: { value: PaymentMethod; icon: LucideIcon }[] = [
-  { value: 'cash', icon: Banknote },
-  { value: 'transfer', icon: QrCode },
-  { value: 'card', icon: CreditCard },
-  { value: 'ewallet', icon: Smartphone },
+const METHODS: { value: PaymentChoice; label: string; icon: LucideIcon }[] = [
+  { value: 'cash', label: PAYMENT_METHOD_LABEL.cash, icon: Banknote },
+  { value: 'transfer', label: PAYMENT_METHOD_LABEL.transfer, icon: QrCode },
+  { value: 'card', label: PAYMENT_METHOD_LABEL.card, icon: CreditCard },
+  { value: 'ewallet', label: PAYMENT_METHOD_LABEL.ewallet, icon: Smartphone },
 ]
+
+const REFERENCE_LABEL: Record<NonCashMethod, string> = {
+  transfer: 'Mã giao dịch chuyển khoản',
+  card: 'Mã chuẩn chi / 4 số cuối thẻ',
+  ewallet: 'Mã giao dịch ví',
+}
 
 interface PaymentModalProps {
   open: boolean
-  total: number
+  invoice: Invoice
+  printingId: string | null
   onClose: () => void
-  onConfirm: (method: PaymentMethod, paidAmount: number) => Promise<Order>
+  onCreated: (order: OrderDetail) => void
+  onPrint: (orderId: string) => void
 }
-
-const FakeQr = memo(function FakeQr({ seed }: { seed: number }) {
-  const d = useMemo(() => {
-    const inFinder = (r: number, c: number) => (r < 7 && c < 7) || (r < 7 && c >= 14) || (r >= 14 && c < 7)
-    const finderOn = (r: number, c: number) => {
-      const lr = r >= 14 ? r - 14 : r
-      const lc = c >= 14 ? c - 14 : c
-      return lr === 0 || lr === 6 || lc === 0 || lc === 6 || (lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4)
-    }
-    let x = seed || 1
-    let path = ''
-    for (let i = 0; i < 21 * 21; i++) {
-      x = (x * 1103515245 + 12345) & 0x7fffffff
-      const r = Math.floor(i / 21)
-      const c = i % 21
-      if (inFinder(r, c) ? finderOn(r, c) : x % 3 === 0) path += `M${c} ${r}h1v1h-1z`
-    }
-    return path
-  }, [seed])
-
-  return (
-    <svg viewBox="0 0 21 21" className="size-40" shapeRendering="crispEdges">
-      <path d={d} fill="#0f172a" />
-    </svg>
-  )
-})
 
 export const PaymentModal = memo(function PaymentModal(props: PaymentModalProps) {
   if (!props.open) return null
   return <PaymentModalContent {...props} />
 })
 
-function PaymentModalContent({ total, onClose, onConfirm }: PaymentModalProps) {
-  const [method, setMethod] = useState<PaymentMethod>('cash')
-  const [paid, setPaid] = useState(0)
-  const [noteCounts, setNoteCounts] = useState<Record<number, number>>({})
-  const [submitting, setSubmitting] = useState(false)
-  const [order, setOrder] = useState<Order | null>(null)
-
-  const isCash = method === 'cash'
-  const paidAmount = isCash ? paid : total
-  const change = paidAmount - total
-  const addNote = (value: number) => {
-    setPaid((p) => p + value)
-    setNoteCounts((c) => ({ ...c, [value]: (c[value] ?? 0) + 1 }))
-  }
-  const payExact = () => {
-    setPaid(total)
-    setNoteCounts({})
-  }
-  const resetPaid = () => {
-    setPaid(0)
-    setNoteCounts({})
-  }
+function PaymentModalContent({ invoice, printingId, onClose, onCreated, onPrint }: PaymentModalProps) {
+  const checkout = useCheckout(invoice, onCreated)
+  const due = checkout.quote?.totals.due ?? 0
+  const form = usePaymentForm(due)
+  const { submitting, order } = checkout
+  const [shortfallOpen, setShortfallOpen] = useState(false)
   const handleClose = useCallback(() => {
     if (!submitting) onClose()
   }, [submitting, onClose])
 
-  const submit = async () => {
-    if (paidAmount < total) {
-      toast.error('Số tiền khách đưa chưa đủ')
-      return
-    }
-    setSubmitting(true)
-    try {
-      const created = await onConfirm(method, paidAmount)
-      setOrder(created)
-      toast.success(`Thanh toán thành công đơn ${created.code}`)
-    } catch {
-      toast.error('Thanh toán thất bại, vui lòng thử lại')
-    } finally {
-      setSubmitting(false)
-    }
-  }
+  if (order) return <PaymentSuccess order={order} printing={printingId === order.id} onPrint={() => onPrint(order.id)} onClose={onClose} />
 
-  if (order) {
+  const stockWarning = checkout.quote?.stockWarnings.length ? describeStockWarnings(checkout.quote.stockWarnings, invoice.items) : undefined
+  const canSubmit = !!checkout.quote && !checkout.syncing && !stockWarning
+  const submit = () => {
+    if (!canSubmit || submitting) return
+    if (form.status === 'empty') return toast.info('Nhập số tiền khách đưa')
+    if (form.status === 'shortfall') return setShortfallOpen(true)
+    checkout.submit(form.payments)
+  }
+  const method = form.nonCashMethod
+  const methods = form.split ? METHODS.filter((m) => m.value !== 'cash') : METHODS
+
+  if (shortfallOpen)
     return (
-      <Modal open onClose={onClose} hideClose className="max-w-md">
-        <div className="text-center">
-          <div className="mx-auto grid size-16 place-items-center rounded-full bg-primary-50 ring-8 ring-primary-50/60">
-            <CircleCheck className="size-9 text-primary-600" />
-          </div>
-          <h2 className="mt-4 text-xl font-bold text-slate-900">Thanh toán thành công</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Mã đơn <span className="font-semibold text-slate-800">{order.code}</span> · {formatDateTime(new Date(order.createdAt))}
-          </p>
-        </div>
-
-        <div className="mt-5 rounded-lg border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm">
-          <ul className="space-y-1.5">
-            {order.items.map((i) => (
-              <li key={`${i.productId}-${i.isGift ? 'gift' : 'item'}`} className="flex justify-between gap-3">
-                <span className="min-w-0 text-slate-600">
-                  <span className="block truncate">
-                    {i.quantity} × {i.name}
-                    {i.isGift && <span className="ml-1.5 rounded bg-violet-100 px-1.5 text-[10px] font-bold text-violet-700">Quà tặng</span>}
-                  </span>
-                  <ProductCode barcode={i.barcode} className="text-[11px]" />
-                </span>
-                <span className="shrink-0 font-medium text-slate-800">{formatCurrency(i.price * i.quantity - (i.discount ?? 0))}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="my-3 border-t border-dashed border-slate-200" />
-          <dl className="space-y-1.5">
-            {(order.promotions ?? [])
-              .filter((p) => p.kind !== 'gift' && p.kind !== 'product')
-              .map((p) => (
-                <div key={p.id} className="flex justify-between gap-3 text-rose-500">
-                  <dt className="truncate">{p.kind === 'voucher' ? `Mã ${p.code}` : p.name}</dt>
-                  <dd className="shrink-0">-{formatCurrency(p.amount)}</dd>
-                </div>
-              ))}
-            {!!order.pointsEarned && order.customer && (
-              <div className="flex justify-between text-amber-600">
-                <dt>Điểm tích lũy ({order.customer.name})</dt>
-                <dd className="font-semibold">+{order.pointsEarned} điểm</dd>
-              </div>
-            )}
-            <div className="flex justify-between text-base font-bold text-slate-900">
-              <dt>Tổng cộng</dt>
-              <dd className="text-primary-600">{formatCurrency(order.totals.total)}</dd>
-            </div>
-            <div className="flex justify-between text-slate-500">
-              <dt>{PAYMENT_METHOD_LABEL[order.paymentMethod]}</dt>
-              <dd>{formatCurrency(order.paidAmount)}</dd>
-            </div>
-            {order.changeAmount > 0 && (
-              <div className="flex justify-between font-semibold text-slate-800">
-                <dt>Tiền thừa trả khách</dt>
-                <dd>{formatCurrency(order.changeAmount)}</dd>
-              </div>
-            )}
-          </dl>
-        </div>
-
-        <div className="mt-5 grid grid-cols-2 gap-2">
-          <Button variant="outline" leftIcon={<Printer className="size-4" />} onClick={() => window.print()}>
-            In hóa đơn
-          </Button>
-          <Button leftIcon={<ShoppingCart className="size-4" />} onClick={onClose} autoFocus>
-            Đơn mới
-          </Button>
-        </div>
-      </Modal>
+      <CashShortfallModal
+        due={due}
+        tendered={form.tendered}
+        onBack={() => setShortfallOpen(false)}
+        onPayRest={() => {
+          form.payRestWithOther()
+          setShortfallOpen(false)
+        }}
+      />
     )
-  }
 
   return (
     <Modal
       open
       onClose={handleClose}
       title="Thanh toán"
-      description="Chọn phương thức và xác nhận số tiền"
+      description="Giá đã được máy chủ tính lại theo khuyến mãi, hạng thành viên và voucher"
       className="max-w-xl"
       footer={
         <>
-          <Button variant="outline" onClick={onClose} disabled={submitting}>
+          <Button variant="outline" onClick={handleClose} disabled={submitting}>
             Hủy
           </Button>
-          <Button onClick={submit} loading={submitting} className="min-w-40">
-            Xác nhận thanh toán
+          <Button onClick={submit} loading={submitting} disabled={!canSubmit} className="min-w-40">
+            {form.pending ? 'Tạo đơn chờ chuyển khoản' : 'Xác nhận thanh toán'}
           </Button>
         </>
       }
     >
-      <div className="rounded-lg bg-gradient-to-br from-primary-600 to-primary-800 p-5 text-white">
-        <p className="text-sm text-primary-100">Khách cần trả</p>
-        <p className="mt-1 text-3xl font-extrabold tracking-tight">{formatCurrency(total)}</p>
-      </div>
+      <PaymentSummary
+        quote={checkout.quote ?? null}
+        loading={checkout.quoteLoading}
+        syncing={checkout.syncing}
+        error={checkout.quoteError}
+        stockWarning={stockWarning}
+        customer={invoice.customer}
+        voucherCode={invoice.voucher?.code}
+        redeemPoints={checkout.redeemPoints}
+        onRedeemChange={checkout.setRedeemPoints}
+        onRetry={checkout.reloadQuote}
+      />
 
-      <p className="mt-5 mb-2 text-sm font-semibold text-slate-800">Phương thức thanh toán</p>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {METHODS.map(({ value, icon: Icon }) => (
-          <button
-            key={value}
-            onClick={() => setMethod(value)}
-            className={cn(
-              'flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border p-3 text-xs font-semibold transition',
-              method === value
-                ? 'border-primary-500 bg-primary-50 text-primary-700 ring-4 ring-primary-100'
-                : 'border-slate-200 text-slate-600 hover:border-slate-300',
-            )}
-          >
-            <Icon className="size-5" />
-            {PAYMENT_METHOD_LABEL[value]}
-          </button>
-        ))}
-      </div>
+      {checkout.quote && due > 0 && (
+        <>
+          {form.split && (
+            <div className="mt-5 rounded-lg border border-slate-100 bg-slate-50/60 p-4 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-500">Tiền mặt khách đưa</span>
+                <span className="flex items-center gap-2 font-semibold text-slate-800">
+                  {formatCurrency(form.cashPart)}
+                  <button
+                    type="button"
+                    onClick={form.editCash}
+                    className="grid size-7 cursor-pointer place-items-center rounded-md text-slate-400 transition hover:bg-white hover:text-primary-700"
+                    aria-label="Sửa tiền mặt"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-3 border-t border-slate-200 pt-2">
+                <span className="font-semibold text-slate-800">Còn lại cần thanh toán</span>
+                <span className="text-xl font-extrabold text-primary-700">{formatCurrency(form.rest)}</span>
+              </div>
+            </div>
+          )}
 
-      {isCash && (
-        <div className="mt-5">
-          <div className="mb-2 flex items-center justify-between">
-            <label className="text-sm font-semibold text-slate-800">Tiền khách đưa</label>
-            {paid > 0 && (
+          <p className="mt-5 mb-2 text-sm font-semibold text-slate-800">{form.split ? 'Thanh toán phần còn lại bằng' : 'Phương thức thanh toán'}</p>
+          <div className={cn('grid gap-2', form.split ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4')}>
+            {methods.map(({ value, label, icon: Icon }) => (
               <button
+                key={value}
                 type="button"
-                onClick={resetPaid}
-                className="flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                onClick={() => form.setMethod(value)}
+                className={cn(
+                  'flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border p-3 text-xs font-semibold transition',
+                  form.method === value ? 'border-primary-500 bg-primary-50 text-primary-700 ring-4 ring-primary-100' : 'border-slate-200 text-slate-600 hover:border-slate-300',
+                )}
               >
-                <RotateCcw className="size-3.5" /> Nhập lại
+                <Icon className="size-5" />
+                {label}
               </button>
-            )}
+            ))}
           </div>
-          <div className="flex h-12 items-center rounded-lg border border-slate-200 px-4 focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-100">
-            <input
-              autoFocus
-              inputMode="numeric"
-              value={paid ? formatNumber(paid) : ''}
-              onChange={(e) => {
-                setPaid(parseNumber(e.target.value))
-                setNoteCounts({})
-              }}
-              onKeyDown={(e) => e.key === 'Enter' && submit()}
-              className="w-full text-lg font-bold text-slate-900 outline-none"
-              placeholder="0"
-            />
-            <span className="font-semibold text-slate-400">đ</span>
-          </div>
-          <div className="mt-3 grid grid-cols-5 gap-2">
-            {CASH_DENOMINATIONS.map((value) => {
-              const count = noteCounts[value] ?? 0
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => addNote(value)}
-                  className={cn(
-                    'relative h-11 cursor-pointer rounded-lg border text-sm font-semibold transition select-none active:scale-95',
-                    count > 0
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-slate-200 text-slate-700 hover:border-primary-300 hover:bg-slate-50',
-                  )}
-                >
-                  {formatNumber(value)}
-                  {count > 0 && (
-                    <span className="absolute -top-2 -right-2 grid h-5 min-w-5 place-items-center rounded-full bg-primary-600 px-1 text-[10px] font-bold text-white ring-2 ring-white">
-                      ×{count}
+
+          {form.method === 'cash' && (
+            <div className="mt-5">
+              <CashTendered label="Tiền khách đưa" value={form.tendered} target={due} onChange={form.setTendered} onEnter={submit} />
+              <div className={cn('mt-4 flex items-center justify-between rounded-lg px-4 py-3', form.shortfall === 0 ? 'bg-primary-50 text-primary-800' : 'bg-rose-50 text-rose-600')}>
+                <span className="text-sm font-semibold">{form.shortfall === 0 ? 'Tiền thừa trả khách' : 'Còn thiếu'}</span>
+                <span className="text-lg font-bold">{formatCurrency(form.shortfall || form.change)}</span>
+              </div>
+            </div>
+          )}
+
+          {method && (
+            <div className="mt-4 space-y-3">
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-semibold text-slate-600">
+                  {REFERENCE_LABEL[method]} <span className="font-normal text-slate-400">(không bắt buộc)</span>
+                </span>
+                <input
+                  value={form.reference}
+                  onChange={(e) => form.setReference(e.target.value)}
+                  maxLength={60}
+                  className="h-10 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-100"
+                />
+              </label>
+              {method === 'card' ? (
+                <p className="rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-700">Quẹt thẻ trên máy POS rồi xác nhận khi giao dịch thành công.</p>
+              ) : (
+                <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-slate-200 p-3 text-sm">
+                  <input type="checkbox" checked={form.received} onChange={(e) => form.setReceived(e.target.checked)} className="mt-0.5 size-4 accent-primary-600" />
+                  <span>
+                    <span className="font-semibold text-slate-800">Đã thấy tiền vào tài khoản</span>
+                    <span className="block text-xs text-slate-500">
+                      Bỏ trống nếu chưa nhận — đơn sẽ ở trạng thái “Chờ thanh toán”, xác nhận sau ở Quản lý đơn hàng.
                     </span>
-                  )}
-                </button>
-              )
-            })}
-            <button
-              type="button"
-              onClick={payExact}
-              className={cn(
-                'h-11 cursor-pointer rounded-lg text-sm font-bold transition select-none active:scale-95',
-                paid === total && Object.keys(noteCounts).length === 0
-                  ? 'bg-primary-600 text-white shadow-primary'
-                  : 'bg-primary-50 text-primary-700 hover:bg-primary-100',
+                  </span>
+                </label>
               )}
-            >
-              Đủ tiền
-            </button>
-          </div>
-          <div
-            className={cn(
-              'mt-4 flex items-center justify-between rounded-lg px-4 py-3',
-              change >= 0 ? 'bg-primary-50 text-primary-800' : 'bg-rose-50 text-rose-600',
-            )}
-          >
-            <span className="text-sm font-semibold">{change >= 0 ? 'Tiền thừa trả khách' : 'Còn thiếu'}</span>
-            <span className="text-lg font-bold">{formatCurrency(Math.abs(change))}</span>
-          </div>
-        </div>
-      )}
-
-      {method === 'transfer' && (
-        <div className="mt-5 flex flex-col items-center gap-4 rounded-lg border border-slate-100 bg-slate-50/60 p-5 sm:flex-row">
-          <div className="rounded-lg bg-white p-2 shadow-soft">
-            <FakeQr seed={total} />
-          </div>
-          <dl className="space-y-1.5 text-sm">
-            <div>
-              <dt className="text-xs text-slate-400">Ngân hàng</dt>
-              <dd className="font-semibold text-slate-800">Vietcombank</dd>
             </div>
-            <div>
-              <dt className="text-xs text-slate-400">Số tài khoản</dt>
-              <dd className="font-semibold text-slate-800">0123 456 789</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-slate-400">Chủ tài khoản</dt>
-              <dd className="font-semibold text-slate-800">CONG TY FOTECH</dd>
-            </div>
-            <p className="pt-1 text-[11px] text-slate-400">* Mã QR minh họa — sẽ tạo VietQR thật khi kết nối BE</p>
-          </dl>
-        </div>
-      )}
-
-      {(method === 'card' || method === 'ewallet') && (
-        <p className="mt-5 rounded-lg bg-sky-50 px-4 py-3 text-sm text-sky-700">
-          Vui lòng thực hiện giao dịch trên {method === 'card' ? 'máy POS' : 'ứng dụng ví'} và xác nhận khi hoàn tất.
-        </p>
+          )}
+        </>
       )}
     </Modal>
   )

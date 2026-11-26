@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui/Card'
+import { PrintReceipt } from '@/modules/orders/components/Receipt'
 import { CartPanel } from '@/modules/sales/components/CartPanel'
 import { CategoryTabs } from '@/modules/sales/components/CategoryTabs'
 import { PaymentModal } from '@/modules/sales/components/PaymentModal'
@@ -20,8 +21,9 @@ export default function SalesPage() {
     promoBadges,
     handleAdd,
     handleSearchSubmit,
-    openPayment, 
-    handleConfirmPayment,
+    openPayment,
+    handleOrderCreated,
+    printer,
     handleClosePayment,
   } = useSalesPage()
 
@@ -79,7 +81,15 @@ export default function SalesPage() {
         />
       </div>
 
-      <PaymentModal open={paymentOpen} total={totals.total} onClose={handleClosePayment} onConfirm={handleConfirmPayment} />
+      <PaymentModal
+        open={paymentOpen}
+        invoice={active}
+        printingId={printer.printingId}
+        onClose={handleClosePayment}
+        onCreated={handleOrderCreated}
+        onPrint={printer.print}
+      />
+      <PrintReceipt data={printer.receipt} />
     </div>
   )
 }

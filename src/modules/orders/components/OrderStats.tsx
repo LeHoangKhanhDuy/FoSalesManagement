@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import { CircleX, Clock, DollarSign, ReceiptText, type LucideIcon } from 'lucide-react'
+import { RetryButton } from '@/components/common/RetryButton'
 import { cn } from '@/lib/cn'
 import { formatCompact, formatCurrency, formatNumber } from '@/lib/format'
 import type { OrderStats as Stats } from '@/modules/orders/types/orders.types'
@@ -12,8 +13,24 @@ interface StatItem {
   tone: string
 }
 
-export const OrderStats = memo(function OrderStats({ stats, loading }: { stats: Stats; loading: boolean }) {
-  if (loading) {
+interface OrderStatsProps {
+  stats: Stats | null
+  loading: boolean
+  error?: string
+  onRetry: () => void
+}
+
+export const OrderStats = memo(function OrderStats({ stats, loading, error, onRetry }: OrderStatsProps) {
+  if (!stats && error) {
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-lg bg-white p-4 text-sm text-rose-600">
+        {error}
+        <RetryButton onClick={onRetry} />
+      </div>
+    )
+  }
+
+  if (loading || !stats) {
     return (
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -27,7 +44,7 @@ export const OrderStats = memo(function OrderStats({ stats, loading }: { stats: 
     {
       label: 'Tổng doanh thu',
       value: formatCompact(stats.revenue),
-      hint: 'Từ đơn hoàn thành',
+      hint: 'Từ đơn đã thanh toán',
       icon: DollarSign,
       tone: 'bg-primary-50 text-primary-600',
     },
@@ -47,8 +64,8 @@ export const OrderStats = memo(function OrderStats({ stats, loading }: { stats: 
     },
     {
       label: 'Hủy / Hoàn tiền',
-      value: formatNumber(stats.cancelled),
-      hint: formatCurrency(stats.cancelledAmount),
+      value: formatNumber(stats.cancelled + stats.refunded),
+      hint: `${formatCurrency(stats.cancelledAmount)} hủy · ${formatCurrency(stats.refundedAmount)} hoàn`,
       icon: CircleX,
       tone: 'bg-rose-50 text-rose-500',
     },

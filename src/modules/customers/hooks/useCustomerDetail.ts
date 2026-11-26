@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { customersService } from '@/modules/customers/services/customers.service'
 import type { CustomerWithStats, PointLog } from '@/modules/customers/types/customers.types'
-import type { OrderRecord } from '@/modules/orders/types/orders.types'
+import type { LegacyOrder as OrderRecord } from '@/modules/customers/mocks/orders.mock'
 
 export type CustomerDetailTab = 'orders' | 'points'
 
