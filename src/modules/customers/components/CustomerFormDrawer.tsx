@@ -1,5 +1,4 @@
 import { useRef } from 'react'
-import { Check } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { Drawer } from '@/components/ui/Drawer'
@@ -20,9 +19,8 @@ interface Props {
 }
 
 const GENDERS: [Gender, string][] = [
-  ['female', 'Nữ'],
   ['male', 'Nam'],
-  ['other', 'Khác'],
+  ['female', 'Nữ'],
 ]
 
 export function CustomerFormDrawer({ state: openState, ...props }: Props) {
@@ -48,7 +46,7 @@ function FormContent({ state, open, customers, saving, onClose, onSubmit }: Omit
           <Button variant="outline" onClick={onClose} disabled={saving}>
             Hủy
           </Button>
-          <Button className="ml-auto" leftIcon={<Check className="size-4" />} onClick={submit} loading={saving}>
+          <Button className="ml-auto" onClick={submit} loading={saving}>
             {isEdit ? 'Lưu thay đổi' : 'Thêm khách hàng'}
           </Button>
         </>
@@ -60,15 +58,35 @@ function FormContent({ state, open, customers, saving, onClose, onSubmit }: Omit
             <input autoFocus value={v.name} onChange={(e) => set('name', e.target.value)} placeholder="VD: Nguyễn Văn An" className={inputClass(errors.name)} />
           </Field>
           <Field label="Số điện thoại" required error={errors.phone}>
-            <input inputMode="tel" value={v.phone} onChange={(e) => set('phone', e.target.value.replace(/[^\d\s]/g, ''))} placeholder="09xx xxx xxx" className={inputClass(errors.phone)} />
+            <input
+              inputMode="tel"
+              value={v.phone}
+              onChange={(e) => set('phone', e.target.value.replace(/[^\d\s]/g, ''))}
+              placeholder="09xx xxx xxx"
+              className={inputClass(errors.phone)}
+            />
           </Field>
           <Field label="Ngày sinh" error={errors.birthday}>
-            <DatePicker value={v.birthday ? new Date(v.birthday) : undefined} onChange={(d) => set('birthday', d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : undefined)} disableFuture placeholder="dd/mm/yyyy" align="end" />
+            <DatePicker
+              value={v.birthday ? new Date(v.birthday) : undefined}
+              onChange={(d) => set('birthday', d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : undefined)}
+              disableFuture
+              placeholder="dd/mm/yyyy"
+              align="end"
+            />
           </Field>
           <Field label="Giới tính">
             <div className="flex gap-2">
               {GENDERS.map(([g, l]) => (
-                <button key={g} type="button" onClick={() => set('gender', v.gender === g ? undefined : g)} className={cn('h-10 flex-1 cursor-pointer rounded-lg border text-sm font-semibold transition', v.gender === g ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 text-slate-600 hover:border-slate-300')}>
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => set('gender', v.gender === g ? undefined : g)}
+                  className={cn(
+                    'h-10 flex-1 cursor-pointer rounded-lg border text-sm font-semibold transition',
+                    v.gender === g ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 text-slate-600 hover:border-slate-300',
+                  )}
+                >
                   {l}
                 </button>
               ))}
@@ -83,7 +101,14 @@ function FormContent({ state, open, customers, saving, onClose, onSubmit }: Omit
         </div>
       </FormSection>
       <FormSection title="Ghi chú">
-        <textarea value={v.note ?? ''} onChange={(e) => set('note', e.target.value)} rows={3} maxLength={300} placeholder="Sở thích, thói quen mua hàng, lưu ý khi giao..." className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none placeholder:text-slate-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100" />
+        <textarea
+          value={v.note ?? ''}
+          onChange={(e) => set('note', e.target.value)}
+          rows={3}
+          maxLength={300}
+          placeholder="Sở thích, thói quen mua hàng, lưu ý khi giao..."
+          className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none placeholder:text-slate-400 focus:border-primary-500 focus:ring-4 focus:ring-primary-100"
+        />
         {isEdit && (
           <div className="mt-3 flex items-center justify-between rounded-lg border border-slate-100 p-3">
             <div>

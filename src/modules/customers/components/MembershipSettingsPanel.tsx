@@ -1,19 +1,18 @@
-import { RotateCcw, Save, Star } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Field, inputClass, NumberInput } from '@/components/ui/FormField'
 import { cn } from '@/lib/cn'
 import { formatCurrency, formatNumber } from '@/lib/format'
 import { useMembershipSettings } from '@/modules/customers/hooks/useMembershipSettings'
-import type { CustomerWithStats, MembershipSettings } from '@/modules/customers/types/customers.types'
+import type { CustomerTab, MembershipSettings } from '@/modules/customers/types/customers.types'
 import { TIER_STYLE } from '@/modules/customers/utils/customers.utils'
 
 interface Props {
   settings: MembershipSettings
-  customers: CustomerWithStats[]
+  counts: Record<CustomerTab, number>
   onSave: (s: MembershipSettings) => Promise<void>
 }
 
-export function MembershipSettingsPanel({ settings, customers, onSave }: Props) {
+export function MembershipSettingsPanel({ settings, counts, onSave }: Props) {
   const m = useMembershipSettings(settings, onSave)
   const { draft, errors } = m
 
@@ -21,8 +20,8 @@ export function MembershipSettingsPanel({ settings, customers, onSave }: Props) 
     <div className="space-y-5 p-4">
       <div className="grid gap-4 rounded-lg border border-slate-100 p-4 lg:grid-cols-[1fr_220px_220px]">
         <div>
-          <p className="flex items-center gap-2 font-bold text-slate-900">
-            <Star className="size-4 fill-amber-400 text-amber-400" /> Quy tắc tích điểm
+          <p className="flex items-center gap-2 font-bold text-slate-900 uppercase">
+            Quy tắc tích điểm
           </p>
           <p className="mt-1 text-sm text-slate-500">
             Mỗi {formatCurrency(draft.amountPerPoint)} thanh toán = 1 điểm (nhân hệ số theo hạng). 1 điểm có giá trị {formatCurrency(draft.pointValue)} khi đổi quà.
@@ -40,7 +39,7 @@ export function MembershipSettingsPanel({ settings, customers, onSave }: Props) 
         {draft.tiers.map((t, i) => {
           const style = TIER_STYLE[t.tier]
           const Icon = style.icon
-          const members = customers.filter((c) => c.tier === t.tier).length
+          const members = counts[t.tier]
           return (
             <div key={t.tier} className={cn('overflow-hidden rounded-lg border', errors[t.tier] ? 'border-rose-300' : 'border-slate-100')}>
               <div className="flex items-center justify-between p-4" style={{ background: style.gradient, color: style.text }}>
@@ -82,10 +81,10 @@ export function MembershipSettingsPanel({ settings, customers, onSave }: Props) 
       <div className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
         <p className="text-xs text-slate-500">Hạng được xét theo tổng chi tiêu (gồm chi tiêu chuyển từ hệ thống cũ). Giảm theo hạng tự áp dụng tại quầy khi chọn khách.</p>
         <div className="flex shrink-0 gap-2">
-          <Button variant="outline" leftIcon={<RotateCcw className="size-4" />} onClick={m.reset} disabled={!m.dirty || m.saving}>
+          <Button variant="outline" onClick={m.reset} disabled={!m.dirty || m.saving}>
             Hoàn tác
           </Button>
-          <Button leftIcon={<Save className="size-4" />} onClick={m.save} disabled={!m.dirty} loading={m.saving}>
+          <Button onClick={m.save} disabled={!m.dirty} loading={m.saving}>
             Lưu cấu hình
           </Button>
         </div>

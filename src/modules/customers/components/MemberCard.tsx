@@ -15,7 +15,7 @@ export function MemberCard({ customer, settings }: { customer: CustomerWithStats
       <div className="absolute -bottom-16 left-10 size-40 rounded-full bg-white/5" />
       <div className="relative flex items-start justify-between">
         <div>
-          <p className="text-[11px] font-semibold tracking-widest uppercase" style={{ color: style.muted }}>FoSales Member</p>
+          <p className="text-[11px] font-semibold tracking-widest uppercase" style={{ color: style.muted }}>Membership</p>
           <p className="mt-1 flex items-center gap-1.5 text-lg font-bold">
             <Icon className="size-5" /> Hạng {tier.label}
           </p>

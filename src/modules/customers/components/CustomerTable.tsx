@@ -65,7 +65,7 @@ export function CustomerTable({ customers, settings, loading, hasActiveFilters, 
                             {blocked && <Lock className="size-3.5 shrink-0 text-slate-400" aria-label="Đã khóa" />}
                           </p>
                           <p className="text-xs text-slate-400">
-                            {formatPhone(c.phone)} · {c.id.toUpperCase()}
+                            {formatPhone(c.phone)} · {c.code ?? c.id}
                           </p>
                         </div>
                       </div>

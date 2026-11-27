@@ -38,12 +38,12 @@ export function Modal({ open, onClose, title, description, children, footer, cla
         role="dialog"
         aria-modal="true"
         className={cn(
-          'relative flex max-h-[92vh] w-full max-w-lg animate-scale-in flex-col rounded-2xl bg-white shadow-2xl will-change-transform',
+          'relative flex max-h-[92vh] w-full max-w-lg animate-scale-in flex-col rounded-lg bg-white shadow-2xl will-change-transform',
           className,
         )}
       >
         {(title || !hideClose) && (
-          <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-4">
+          <div className="flex items-start justify-between gap-4 px-6 py-4">
             <div>
               {title && <h2 className="text-lg font-bold text-slate-900">{title}</h2>}
               {description && <p className="mt-0.5 text-sm text-slate-500">{description}</p>}

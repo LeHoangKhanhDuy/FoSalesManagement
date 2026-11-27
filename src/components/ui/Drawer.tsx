@@ -84,7 +84,7 @@ export function Drawer({ open, onClose, title, description, headerExtra, childre
           </button>
         </header>
         <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
-        {footer && <footer className="flex items-center gap-2 border-t border-slate-100 px-6 py-4">{footer}</footer>}
+        {footer && <footer className="flex items-center gap-2 px-6 py-4">{footer}</footer>}
       </aside>
     </div>,
     document.body,

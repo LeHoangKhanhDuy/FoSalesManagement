@@ -4,6 +4,7 @@ export type Gender = 'male' | 'female' | 'other'
 export type CustomerStatus = 'active' | 'blocked'
 
 export interface CustomerProfile extends Customer {
+  code?: string
   email?: string
   gender?: Gender
   birthday?: string

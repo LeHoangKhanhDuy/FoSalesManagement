@@ -1,6 +1,4 @@
 import { Crown, Gem, Medal, UserRound, type LucideIcon } from 'lucide-react'
-import { removeAccents } from '@/lib/format'
-import type { LegacyOrder as OrderRecord } from '@/modules/customers/mocks/orders.mock'
 import type {
   CustomerFilters,
   CustomerFormValues,
@@ -15,7 +13,6 @@ import type {
 } from '@/modules/customers/types/customers.types'
 import type { CustomerTier } from '@/modules/sales/types/sales.types'
 
-const DAY = 86_400_000
 
 export const CUSTOMER_PAGE_SIZE = 10
 
@@ -103,13 +100,8 @@ export const POINT_LOG_LABEL: Record<PointLogType, { label: string; tone: string
 
 export const ADJUST_REASONS = ['Tặng điểm sinh nhật', 'Bù điểm đơn hàng', 'Khuyến mãi tích điểm', 'Trừ điểm nhập sai', 'Đổi quà tại quầy']
 
-export const EMPTY_STATS: CustomerStats = { spent: 0, orders: 0, avgOrder: 0, orders30: 0 }
-
 export const tierConfig = (settings: MembershipSettings, tier: CustomerTier): TierConfig =>
   settings.tiers.find((t) => t.tier === tier) ?? settings.tiers[0]
-
-export const resolveTier = (settings: MembershipSettings, totalSpent: number): CustomerTier =>
-  [...settings.tiers].sort((a, b) => b.minSpent - a.minSpent).find((t) => totalSpent >= t.minSpent)?.tier ?? 'retail'
 
 export const nextTierInfo = (settings: MembershipSettings, tier: CustomerTier, totalSpent: number) => {
   const idx = TIER_ORDER.indexOf(tier)
@@ -120,52 +112,9 @@ export const nextTierInfo = (settings: MembershipSettings, tier: CustomerTier, t
   return { next, remaining: Math.max(0, next.minSpent - totalSpent), progress: Math.min(100, Math.max(0, ((totalSpent - cur.minSpent) / span) * 100)) }
 }
 
-export const calcEarnedPoints = (settings: MembershipSettings, tier: CustomerTier, amount: number) =>
-  Math.floor((amount / settings.amountPerPoint) * tierConfig(settings, tier).pointMultiplier)
-
-export const customerOrders = (orders: OrderRecord[], customerId: string) => orders.filter((o) => o.customer?.id === customerId)
-
-export const computeStats = (orders: OrderRecord[], now = Date.now()): CustomerStats => {
-  const done = orders.filter((o) => o.status === 'completed')
-  const spent = done.reduce((s, o) => s + o.totals.total, 0)
-  const times = done.map((o) => o.createdAt).sort()
-  return {
-    spent,
-    orders: done.length,
-    avgOrder: done.length ? Math.round(spent / done.length) : 0,
-    lastOrderAt: times.at(-1),
-    firstOrderAt: times[0],
-    orders30: done.filter((o) => now - new Date(o.createdAt).getTime() <= 30 * DAY).length,
-  }
-}
-
 export const totalSpent = (c: Pick<CustomerProfile, 'legacySpent'>, stats: CustomerStats) => c.legacySpent + stats.spent
 
 export const isBirthdayMonth = (c: CustomerProfile, now = new Date()) => !!c.birthday && Number(c.birthday.slice(5, 7)) === now.getMonth() + 1
-
-export const matchSegment = (c: CustomerWithStats, segment: CustomerSegment, now = Date.now()) => {
-  if (segment === 'all') return true
-  if (segment === 'blocked') return c.status === 'blocked'
-  if (segment === 'birthday') return isBirthdayMonth(c, new Date(now))
-  if (segment === 'new30') return now - new Date(c.createdAt).getTime() <= 30 * DAY
-  return !c.stats.lastOrderAt || now - new Date(c.stats.lastOrderAt).getTime() > 60 * DAY
-}
-
-export const matchKeyword = (c: CustomerProfile, keyword: string) => {
-  const k = removeAccents(keyword.trim())
-  if (!k) return true
-  const digits = k.replace(/\D/g, '')
-  return removeAccents(c.name).includes(k) || (digits.length >= 3 && c.phone.includes(digits)) || (c.email ?? '').toLowerCase().includes(k)
-}
-
-export const sortCustomers = (list: CustomerWithStats[], sort: CustomerSort) =>
-  [...list].sort((a, b) => {
-    if (sort === 'spent') return totalSpent(b, b.stats) - totalSpent(a, a.stats)
-    if (sort === 'points') return b.points - a.points
-    if (sort === 'recent') return (b.stats.lastOrderAt ?? '').localeCompare(a.stats.lastOrderAt ?? '')
-    if (sort === 'name') return a.name.split(' ').at(-1)!.localeCompare(b.name.split(' ').at(-1)!, 'vi')
-    return b.createdAt.localeCompare(a.createdAt)
-  })
 
 export const ageOf = (birthday?: string, now = new Date()) => {
   if (!birthday) return null
@@ -194,7 +143,7 @@ export const exportCustomersCsv = (list: CustomerWithStats[], settings: Membersh
   const head = ['Mã', 'Họ tên', 'Điện thoại', 'Email', 'Giới tính', 'Ngày sinh', 'Hạng', 'Điểm', 'Tổng chi tiêu', 'Số đơn', 'Mua gần nhất', 'Trạng thái']
   const gender = { male: 'Nam', female: 'Nữ', other: 'Khác' }
   const rows = list.map((c) => [
-    c.id,
+    c.code ?? c.id,
     c.name,
     c.phone,
     c.email ?? '',

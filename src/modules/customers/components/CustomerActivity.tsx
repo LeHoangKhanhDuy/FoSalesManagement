@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn'
 import { formatCurrency, formatDateTime, formatNumber } from '@/lib/format'
 import type { PointLog } from '@/modules/customers/types/customers.types'
 import { POINT_LOG_LABEL } from '@/modules/customers/utils/customers.utils'
-import type { LegacyOrder as OrderRecord } from '@/modules/customers/mocks/orders.mock'
+import type { OrderSummary as OrderRecord } from '@/modules/orders/types/orders.types'
 import { ORDER_STATUS } from '@/modules/orders/utils/orders.utils'
 
 export function CustomerOrders({ orders }: { orders: OrderRecord[] }) {

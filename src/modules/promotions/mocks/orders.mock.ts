@@ -1,4 +1,4 @@
-import { MOCK_CUSTOMERS } from '@/modules/customers/mocks/customers.mock'
+import { MOCK_CUSTOMERS } from '@/modules/promotions/mocks/customers.mock'
 import { MOCK_PRODUCTS } from '@/modules/sales/mocks/products.mock'
 import { MOCK_PROMOTIONS } from '@/modules/promotions/mocks/promotions.mock'
 import { priceCart } from '@/modules/promotions/utils/promotion-engine'
