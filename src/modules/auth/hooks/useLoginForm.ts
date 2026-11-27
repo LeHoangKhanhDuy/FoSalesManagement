@@ -44,7 +44,7 @@ export function useLoginForm(onSuccess: () => void, defaultUsername?: string) {
     setLoading(true)
     try {
       const { user, expiresAt } = await authService.login({ username: username.trim(), password, remember })
-      authStore.set({ user, expiresAt }, remember)
+      authStore.set({ user, expiresAt, draftId: crypto.randomUUID() }, remember)
       authStore.markRestored()
       onSuccess()
     } catch (err) {

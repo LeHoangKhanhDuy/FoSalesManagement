@@ -10,6 +10,7 @@ export interface AuthUser {
 }
 
 export interface AuthSession {
+  draftId?: string
   user: AuthUser
   expiresAt?: string
 }

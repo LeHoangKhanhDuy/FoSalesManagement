@@ -25,7 +25,7 @@ const restoreSession = () => {
   restoring ??= authService
     .me()
     .then((user) => {
-      if (authStore.get() === initial) authStore.set({ ...initial, user })
+      if (authStore.get() === initial) authStore.set({ ...initial, user, draftId: initial?.user.id === user.id && initial.draftId ? initial.draftId : crypto.randomUUID() })
     })
     .catch((error: unknown) => {
       if (error instanceof HttpError && (error.status === 401 || error.status === 403) && authStore.get() === initial) authStore.set(null)

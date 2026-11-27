@@ -75,9 +75,14 @@ let restored = false
 
 const notify = () => listeners.forEach((fn) => fn())
 
+export const invoiceStorageKey = (draftId: string) => 'fosales_pos_invoices:' + draftId
+
 const persist = (session: AuthSession | null, remember: boolean) => {
+  const previous = current
   current = session
   try {
+    localStorage.removeItem('fosales_pos_invoices')
+    if (previous?.draftId && previous.draftId !== session?.draftId) localStorage.removeItem(invoiceStorageKey(previous.draftId))
     localStorage.removeItem(SESSION_KEY)
     sessionStorage.removeItem(SESSION_KEY)
     if (session) {
