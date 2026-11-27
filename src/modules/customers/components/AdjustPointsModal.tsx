@@ -35,7 +35,7 @@ function AdjustContent({ customer, pointValue, saving, onClose, onConfirm }: Omi
       open
       onClose={onClose}
       title="Điều chỉnh điểm thành viên"
-      description={`${customer.name} · Hiện có ${formatNumber(customer.points)} điểm`}
+      description={`${customer.name} | Points: ${formatNumber(customer.points)} điểm`}
       className="max-w-md"
       footer={
         <>
@@ -66,7 +66,7 @@ function AdjustContent({ customer, pointValue, saving, onClose, onConfirm }: Omi
       </p>
       <div className="flex flex-wrap gap-2">
         {ADJUST_REASONS.map((r) => (
-          <button key={r} type="button" onClick={() => setReason(r)} className={cn('h-8 cursor-pointer rounded-full border px-3 text-xs font-semibold', reason === r ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 text-slate-600 hover:border-slate-300')}>
+          <button key={r} type="button" onClick={() => setReason(r)} className={cn('h-8 cursor-pointer rounded-lg border px-3 text-xs font-semibold', reason === r ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 text-slate-600 hover:border-slate-300')}>
             {r}
           </button>
         ))}

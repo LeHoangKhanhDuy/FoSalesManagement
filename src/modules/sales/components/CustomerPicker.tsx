@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Search, Star, UserPlus, UserRound, X } from 'lucide-react'
+import { customersService } from '@/modules/customers/services/customers.service'
+import { toast } from 'sonner'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { useClickOutside } from '@/hooks/useClickOutside'
@@ -31,7 +33,16 @@ export function CustomerPicker({ customer, onChange }: CustomerPickerProps) {
 
   useEffect(() => {
     if (!open) return
-    salesService.searchCustomers(debounced).then(setResults)
+    let active = true
+    const term = debounced.trim()
+    const exact = /^KH\d{6}$/i.test(term) ? { code: term } : /^0\d{9}$/.test(term) ? { phone: term } : null
+    const request = exact ? customersService.lookup(exact).then((c) => [c]) : salesService.searchCustomers(term)
+    request.then((rows) => { if (active) setResults(rows) }).catch((error) => {
+      if (!active) return
+      setResults([])
+      if (error?.status !== 404) toast.error('Không tra cứu được khách hàng')
+    })
+    return () => { active = false }
   }, [debounced, open])
 
   if (customer) {

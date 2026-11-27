@@ -1,19 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useQuery } from '@/hooks/useQuery'
 import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/useDebounce'
 import { formatNumber } from '@/lib/format'
 import { customersService } from '@/modules/customers/services/customers.service'
-import type { AdjustPointsPayload, CustomerFilters, CustomerFormValues, CustomerTab, CustomerWithStats, MembershipSettings } from '@/modules/customers/types/customers.types'
-import { CUSTOMER_PAGE_SIZE, DEFAULT_CUSTOMER_FILTERS, exportCustomersCsv, isBirthdayMonth, matchKeyword, matchSegment, sortCustomers, TIER_ORDER } from '@/modules/customers/utils/customers.utils'
+import type { AdjustPointsPayload, CustomerFilters, CustomerFormValues, CustomerWithStats, MembershipSettings } from '@/modules/customers/types/customers.types'
+import { CUSTOMER_PAGE_SIZE, DEFAULT_CUSTOMER_FILTERS, exportCustomersCsv } from '@/modules/customers/utils/customers.utils'
 
 export type CustomerPageTab = 'customers' | 'membership'
 export type CustomerFormState = { mode: 'create' } | { mode: 'edit'; customer: CustomerWithStats } | null
 
 export function useCustomersPage() {
   const [view, setView] = useState<CustomerPageTab>('customers')
-  const [customers, setCustomers] = useState<CustomerWithStats[]>([])
-  const [settings, setSettings] = useState<MembershipSettings | null>(null)
-  const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<CustomerFilters>(DEFAULT_CUSTOMER_FILTERS)
   const [page, setPage] = useState(1)
   const [form, setForm] = useState<CustomerFormState>(null)
@@ -25,18 +23,27 @@ export function useCustomersPage() {
   const [deleting, setDeleting] = useState(false)
   const keyword = useDebounce(filters.keyword, 250)
 
-  const reload = useCallback(() => {
-    setLoading(true)
-    Promise.all([customersService.getCustomers(), customersService.getMembership()])
-      .then(([c, s]) => {
-        setCustomers(c)
-        setSettings(s)
-      })
-      .catch(() => toast.error('Không tải được danh sách khách hàng'))
-      .finally(() => setLoading(false))
-  }, [])
-
-  useEffect(reload, [reload])
+  const params = { ...filters, keyword, page, pageSize: CUSTOMER_PAGE_SIZE }
+  const list = useQuery(customersService.list, view === 'membership' ? { ...DEFAULT_CUSTOMER_FILTERS, page: 1, pageSize: 1 } : params)
+  const summary = useQuery(customersService.stats, null)
+  const membership = useQuery(customersService.getMembership, null)
+  const settings = membership.data
+  const customers = list.data?.items ?? []
+  const total = list.data?.total ?? 0
+  const counts = list.data?.tierCounts ?? { all: 0, retail: 0, silver: 0, gold: 0, diamond: 0 }
+  const stats = summary.data ?? { total: 0, active30: 0, returning: 0, new30: 0, points: 0, birthday: 0 }
+  const detailQuery = useQuery(customersService.detail, detailId ?? '', { enabled: !!detailId })
+  const attempt = useRef({ signature: '', key: '' })
+  const reload = () => {
+    list.reload()
+    summary.reload()
+    membership.reload()
+    if (detailId) detailQuery.reload()
+  }
+  useEffect(() => {
+    const last = Math.max(1, Math.ceil(total / CUSTOMER_PAGE_SIZE))
+    if (view === 'customers' && list.data && !list.loading && page > last) setPage(last)
+  }, [view, page, total, list.data, list.loading])
 
   const updateFilter = useCallback(<K extends keyof CustomerFilters>(key: K, value: CustomerFilters[K]) => {
     setFilters((f) => ({ ...f, [key]: value }))
@@ -47,37 +54,14 @@ export function useCustomersPage() {
     setPage(1)
   }, [])
 
-  const searched = useMemo(() => customers.filter((c) => matchKeyword(c, keyword) && matchSegment(c, filters.segment)), [customers, keyword, filters.segment])
-  const counts = useMemo(
-    () => Object.fromEntries((['all', ...TIER_ORDER] as CustomerTab[]).map((t) => [t, t === 'all' ? searched.length : searched.filter((c) => c.tier === t).length])) as Record<CustomerTab, number>,
-    [searched],
-  )
-  const filtered = useMemo(() => sortCustomers(filters.tab === 'all' ? searched : searched.filter((c) => c.tier === filters.tab), filters.sort), [searched, filters.tab, filters.sort])
-  const totalPages = Math.max(1, Math.ceil(filtered.length / CUSTOMER_PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages)
-  const paged = useMemo(() => filtered.slice((currentPage - 1) * CUSTOMER_PAGE_SIZE, currentPage * CUSTOMER_PAGE_SIZE), [filtered, currentPage])
   const hasActiveFilters = filters.keyword !== '' || filters.tab !== 'all' || filters.segment !== 'all'
-
-  const stats = useMemo(() => {
-    const now = Date.now()
-    return {
-      total: customers.length,
-      new30: customers.filter((c) => now - new Date(c.createdAt).getTime() <= 30 * 86_400_000).length,
-      returning: customers.filter((c) => c.stats.orders30 >= 2).length,
-      active30: customers.filter((c) => c.stats.orders30 >= 1).length,
-      points: customers.reduce((s, c) => s + c.points, 0),
-      birthday: customers.filter((c) => c.status === 'active' && isBirthdayMonth(c)).length,
-    }
-  }, [customers])
-
-  const upsert = (c: CustomerWithStats) => setCustomers((list) => (list.some((x) => x.id === c.id) ? list.map((x) => (x.id === c.id ? c : x)) : [c, ...list]))
 
   const submitForm = async (values: CustomerFormValues) => {
     if (!form) return
     setSaving(true)
     try {
       const saved = await customersService.saveCustomer(form.mode === 'edit' ? form.customer.id : null, values)
-      upsert(saved)
+      reload()
       toast.success(form.mode === 'edit' ? `Đã cập nhật "${saved.name}"` : `Đã thêm khách hàng "${saved.name}"`)
       setForm(null)
     } catch (e) {
@@ -87,22 +71,26 @@ export function useCustomersPage() {
     }
   }
 
-  const toggleBlock = useCallback(async (c: CustomerWithStats) => {
+  const toggleBlock = async (c: CustomerWithStats) => {
     const status = c.status === 'blocked' ? 'active' : 'blocked'
     try {
-      upsert(await customersService.setStatus(c.id, status))
+      await customersService.setStatus(c.id, status)
+      reload()
       toast.success(status === 'blocked' ? `Đã khóa ${c.name}` : `Đã mở khóa ${c.name}`)
     } catch {
       toast.error('Cập nhật trạng thái thất bại')
     }
-  }, [])
+  }
 
   const submitPoints = async (payload: AdjustPointsPayload) => {
     if (!pointsId) return
     setAdjusting(true)
     try {
-      const { customer } = await customersService.adjustPoints(pointsId, payload)
-      upsert(customer)
+      const signature = JSON.stringify([pointsId, payload])
+      if (attempt.current.signature !== signature) attempt.current = { signature, key: crypto.randomUUID() }
+      const { customer } = await customersService.adjustPoints(pointsId, payload, attempt.current.key)
+      attempt.current.signature = ''
+      reload()
       toast.success(`${payload.points > 0 ? 'Cộng' : 'Trừ'} ${formatNumber(Math.abs(payload.points))} điểm cho ${customer.name}`)
       setPointsId(null)
     } catch (e) {
@@ -117,7 +105,7 @@ export function useCustomersPage() {
     setDeleting(true)
     try {
       await customersService.deleteCustomer(deleteTarget.id)
-      setCustomers((list) => list.filter((c) => c.id !== deleteTarget.id))
+      reload()
       setDetailId(null)
       toast.success(`Đã xóa "${deleteTarget.name}"`)
       setDeleteTarget(null)
@@ -129,15 +117,21 @@ export function useCustomersPage() {
   }
 
   const saveSettings = async (next: MembershipSettings) => {
-    const list = await customersService.saveMembership(next)
-    setSettings(structuredClone(next))
-    setCustomers(list)
+    await customersService.saveMembership(next)
+    reload()
   }
 
-  const exportCsv = () => {
-    if (!settings || !filtered.length) return toast.info('Không có khách hàng để xuất')
-    exportCustomersCsv(filtered, settings)
-    toast.success(`Đã xuất ${filtered.length} khách hàng`)
+  const exportCsv = async () => {
+    if (!settings || !total) return toast.info('Không có khách hàng để xuất')
+    try {
+      const rows: CustomerWithStats[] = []
+      for (let index = 1; ; index++) {
+        const batch = await customersService.list({ ...params, page: index, pageSize: 100 })
+        rows.push(...batch.items)
+        if (!batch.items.length || rows.length >= batch.total) break
+      }
+      exportCustomersCsv(rows, settings)
+    } catch { toast.error('Xuất danh sách thất bại') }
   }
 
   return {
@@ -145,7 +139,8 @@ export function useCustomersPage() {
     setView,
     customers,
     settings,
-    loading,
+    loading: list.loading,
+    error: list.error ?? summary.error ?? membership.error ?? (detailId ? detailQuery.error : undefined),
     reload,
     stats,
     filters,
@@ -153,9 +148,9 @@ export function useCustomersPage() {
     resetFilters,
     hasActiveFilters,
     counts,
-    filtered,
-    paged,
-    page: currentPage,
+    total,
+    paged: customers,
+    page,
     setPage,
     form,
     saving,
@@ -163,7 +158,7 @@ export function useCustomersPage() {
     openEdit: useCallback((customer: CustomerWithStats) => setForm({ mode: 'edit', customer }), []),
     closeForm: useCallback(() => !saving && setForm(null), [saving]),
     submitForm,
-    detail: useMemo(() => customers.find((c) => c.id === detailId) ?? null, [customers, detailId]),
+    detail: detailQuery.data?.id === detailId ? detailQuery.data : null,
     openDetail: useCallback((c: CustomerWithStats) => setDetailId(c.id), []),
     closeDetail: useCallback(() => setDetailId(null), []),
     pointsTarget: useMemo(() => customers.find((c) => c.id === pointsId) ?? null, [customers, pointsId]),

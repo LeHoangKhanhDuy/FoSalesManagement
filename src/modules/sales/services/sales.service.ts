@@ -14,7 +14,7 @@ export const salesService = {
 
   searchCustomers: (keyword: string): Promise<Customer[]> => customersService.searchActive(keyword),
 
-  quickCreateCustomer: (name: string, phone: string): Promise<Customer> => customersService.saveCustomer(null, { name, phone, status: 'active' }),
+  quickCreateCustomer: (name: string, phone: string): Promise<Customer> => customersService.quickCreate(name, phone),
 
   applyVoucher: (code: string, customerId: string | null): Promise<Voucher> => promotionsService.validateVoucher(code, customerId),
 }

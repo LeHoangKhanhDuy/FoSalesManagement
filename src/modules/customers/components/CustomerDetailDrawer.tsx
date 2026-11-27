@@ -1,5 +1,5 @@
-import { Cake, Mail, MapPin, Pencil, Phone, Star, StickyNote, UserRound } from 'lucide-react'
-import { Avatar } from '@/components/ui/Avatar'
+import { Cake, Mail, MapPin, Phone, StickyNote, UserRound } from 'lucide-react'
+import { Pagination } from '@/components/ui/Pagination'
 import { Button } from '@/components/ui/Button'
 import { Drawer } from '@/components/ui/Drawer'
 import { useLastValue } from '@/hooks/useLastValue'
@@ -25,7 +25,7 @@ const GENDER = { male: 'Nam', female: 'Nữ', other: 'Khác' }
 export function CustomerDetailDrawer({ customer: open, settings, onClose, onEdit, onPoints }: Props) {
   const c = useLastValue(open)
   const detail = useCustomerDetail(open)
-  if (!c || !settings) return null
+  if (!c) return null
   const age = ageOf(c.birthday)
   const info = [
     { icon: Phone, value: formatPhone(c.phone), href: `tel:${c.phone}` },
@@ -36,7 +36,7 @@ export function CustomerDetailDrawer({ customer: open, settings, onClose, onEdit
     c.note && { icon: StickyNote, value: c.note },
   ].filter((x): x is { icon: typeof Phone; value: string; href?: string } => !!x)
   const tabs: [CustomerDetailTab, string][] = [
-    ['orders', `Đơn hàng (${detail.orders.length})`],
+    ['orders', `Đơn hàng (${c.stats.orders})`],
     ['points', 'Lịch sử điểm'],
   ]
 
@@ -46,15 +46,14 @@ export function CustomerDetailDrawer({ customer: open, settings, onClose, onEdit
       onClose={onClose}
       title={
         <span className="flex items-center gap-3">
-          <Avatar name={c.name} className="size-10" />
           <span className="min-w-0">
             <span className="flex items-center gap-2">
               <span className="truncate">{c.name}</span>
               <TierBadge tier={c.tier} settings={settings} />
             </span>
             <span className="block text-xs font-medium text-slate-400">
-              {c.id.toUpperCase()} · Tham gia {new Date(c.createdAt).toLocaleDateString('vi-VN')}
-              {c.status === 'blocked' && <span className="ml-1 font-semibold text-rose-500">· Đã khóa</span>}
+              {c.code ?? c.id} | Tham gia {new Date(c.createdAt).toLocaleDateString('vi-VN')}
+              {c.status === 'blocked' && <span className="ml-1 font-semibold text-rose-500">| Đã khóa</span>}
             </span>
           </span>
         </span>
@@ -62,20 +61,20 @@ export function CustomerDetailDrawer({ customer: open, settings, onClose, onEdit
       className="max-w-[620px]"
       footer={
         <>
-          <Button variant="outline" leftIcon={<Star className="size-4" />} onClick={() => onPoints(c)}>
+          <Button variant="outline" onClick={() => onPoints(c)}>
             Điều chỉnh điểm
           </Button>
-          <Button className="ml-auto" leftIcon={<Pencil className="size-4" />} onClick={() => onEdit(c)}>
+          <Button className="ml-auto" onClick={() => onEdit(c)}>
             Sửa thông tin
           </Button>
         </>
       }
     >
-      <MemberCard customer={c} settings={settings} />
+      {settings && <MemberCard customer={c} settings={settings} />}
 
       <div className="mt-4 grid grid-cols-4 gap-2">
         {[
-          ['Chi tiêu tại FoSales', formatCurrency(c.stats.spent)],
+          ['Tổng chi tiêu', formatCurrency(c.stats.spent)],
           ['Đơn hoàn thành', String(c.stats.orders)],
           ['TB mỗi đơn', formatCurrency(c.stats.avgOrder)],
           ['Mua gần nhất', c.stats.lastOrderAt ? new Date(c.stats.lastOrderAt).toLocaleDateString('vi-VN') : '—'],
@@ -110,7 +109,8 @@ export function CustomerDetailDrawer({ customer: open, settings, onClose, onEdit
           </button>
         ))}
       </div>
-      {detail.loading ? (
+
+      {detail.error ? <p role="alert">{detail.error}</p> : detail.loading ? (
         <div className="space-y-2">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="h-14 animate-pulse rounded-lg bg-slate-50" />
@@ -121,6 +121,7 @@ export function CustomerDetailDrawer({ customer: open, settings, onClose, onEdit
       ) : (
         <PointHistory logs={detail.logs} />
       )}
+      {detail.total > 10 && <Pagination page={detail.page} pageSize={10} total={detail.total} onPageChange={detail.setPage} />}
     </Drawer>
   )
 }
