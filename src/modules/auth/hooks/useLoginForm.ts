@@ -1,4 +1,4 @@
-import { useEffect, useState, type KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { errorMessage, HttpError } from '@/lib/http'
 import { authService } from '@/modules/auth/services/auth.service'
 import { authStore } from '@/modules/auth/utils/auth.utils'
@@ -15,6 +15,7 @@ export function useLoginForm(onSuccess: () => void, defaultUsername?: string) {
   const [loading, setLoading] = useState(false)
   const [lockedUntil, setLockedUntil] = useState(0)
   const [now, setNow] = useState(() => Date.now())
+  const submitting = useRef(false)
 
   const lockLeft = Math.max(0, Math.ceil((lockedUntil - now) / 1000))
 
@@ -33,12 +34,13 @@ export function useLoginForm(onSuccess: () => void, defaultUsername?: string) {
   const detectCaps = (e: KeyboardEvent) => setCapsLock(e.getModifierState?.('CapsLock') ?? false)
 
   const submit = async () => {
-    if (loading || lockLeft) return
+    if (submitting.current || lockLeft) return
     const e: Errors = {}
     if (!username.trim()) e.username = 'Nhập tên đăng nhập hoặc số điện thoại'
     if (!password) e.password = 'Nhập mật khẩu'
     setErrors(e)
     if (Object.keys(e).length) return
+    submitting.current = true
     setLoading(true)
     try {
       const { user, expiresAt } = await authService.login({ username: username.trim(), password, remember })
@@ -54,6 +56,7 @@ export function useLoginForm(onSuccess: () => void, defaultUsername?: string) {
       }
       setErrors({ form: errorMessage(err) })
     } finally {
+      submitting.current = false
       setLoading(false)
     }
   }

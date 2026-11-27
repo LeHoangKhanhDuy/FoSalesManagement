@@ -46,7 +46,7 @@ export function ResetPasswordForm({ f, r, onBack, onChangeAccount }: Props) {
       }}
       className="animate-fade-in"
     >
-      <button type="button" onClick={onChangeAccount} className="mb-6 flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-800">
+      <button type="button" onClick={onChangeAccount} disabled={r.loading} className="mb-6 flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-800 disabled:cursor-not-allowed disabled:text-slate-400">
         <ArrowLeft className="size-4" /> Đổi tài khoản
       </button>
       <h1 className="text-[28px] font-extrabold tracking-tight text-slate-900">Đặt lại mật khẩu</h1>
@@ -73,12 +73,13 @@ export function ResetPasswordForm({ f, r, onBack, onChangeAccount }: Props) {
             autoComplete="one-time-code"
             value={r.values.otp}
             onChange={(e) => r.set('otp', e.target.value)}
+            disabled={r.loading}
             placeholder={`${OTP_LENGTH} chữ số`}
             className={cn(inputClass, r.values.otp && 'font-mono tracking-[0.3em]')}
           />
         </Field>
         <Field label="Mật khẩu mới" error={r.errors.newPassword} icon={<LockKeyhole className="size-[18px] text-slate-400" />}>
-          <input type={type} autoComplete="new-password" value={r.values.newPassword} onChange={(e) => r.set('newPassword', e.target.value)} placeholder="Ít nhất 8 ký tự, gồm chữ và số" className={inputClass} />
+          <input type={type} autoComplete="new-password" value={r.values.newPassword} onChange={(e) => r.set('newPassword', e.target.value)} placeholder="Ít nhất 8 ký tự, gồm chữ và số" className={inputClass} disabled={r.loading} />
           <button
             type="button"
             onClick={r.toggleVisible}
@@ -89,7 +90,7 @@ export function ResetPasswordForm({ f, r, onBack, onChangeAccount }: Props) {
           </button>
         </Field>
         <Field label="Nhập lại mật khẩu mới" error={r.errors.confirm} icon={<KeyRound className="size-[18px] text-slate-400" />}>
-          <input type={type} autoComplete="new-password" value={r.values.confirm} onChange={(e) => r.set('confirm', e.target.value)} placeholder="Nhập lại mật khẩu mới" className={inputClass} />
+          <input type={type} autoComplete="new-password" value={r.values.confirm} onChange={(e) => r.set('confirm', e.target.value)} placeholder="Nhập lại mật khẩu mới" className={inputClass} disabled={r.loading} />
         </Field>
       </div>
 
@@ -97,7 +98,7 @@ export function ResetPasswordForm({ f, r, onBack, onChangeAccount }: Props) {
         Đặt lại mật khẩu
       </Button>
       <div className="mt-4 flex items-center justify-between text-sm font-semibold">
-        <button type="button" onClick={onBack} className="cursor-pointer text-slate-500 hover:text-slate-800">
+        <button type="button" onClick={onBack} disabled={r.loading} className="cursor-pointer text-slate-500 hover:text-slate-800 disabled:cursor-not-allowed disabled:text-slate-400">
           Quay lại đăng nhập
         </button>
         <button

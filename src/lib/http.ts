@@ -21,7 +21,6 @@ type RequestOptions = Omit<RequestInit, 'body'> & {
 }
 
 const CSRF_COOKIE = 'fs_csrf'
-const CSRF_STORAGE_KEY = 'fosales_csrf'
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 const ACCESS_AT_KEY = 'fosales_access_at'
 const ACCESS_TTL_MS = 15 * 60_000
@@ -37,6 +36,7 @@ type RefreshResult = 'ok' | 'invalid' | 'failed'
 
 let refreshing: Promise<RefreshResult> | null = null
 let invalidUntil = 0
+let csrfFallback: string | undefined
 
 export const setUnauthorizedHandler = (handler: () => void) => {
   onUnauthorized = handler
@@ -48,21 +48,13 @@ const readCookie = (name: string) => {
 }
 
 const csrfToken = () => {
-  try {
-    return readCookie(CSRF_COOKIE) ?? localStorage.getItem(CSRF_STORAGE_KEY) ?? undefined
-  } catch {
-    return undefined
-  }
+  return readCookie(CSRF_COOKIE) ?? csrfFallback
 }
 
 const rememberCsrf = (data: unknown) => {
   const token = (data as { csrfToken?: unknown } | null)?.csrfToken
   if (typeof token !== 'string') return
-  try {
-    localStorage.setItem(CSRF_STORAGE_KEY, token)
-  } catch {
-    return
-  }
+  csrfFallback = token
 }
 
 const markAccessIssued = () => {
@@ -94,8 +86,8 @@ const accessJustIssued = () => {
 }
 
 export const clearCsrf = () => {
+  csrfFallback = undefined
   try {
-    localStorage.removeItem(CSRF_STORAGE_KEY)
     localStorage.removeItem(ACCESS_AT_KEY)
   } catch {
     return

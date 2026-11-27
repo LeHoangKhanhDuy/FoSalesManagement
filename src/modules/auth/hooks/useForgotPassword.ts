@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useCountdown } from '@/hooks/useCountdown'
 import { errorMessage, HttpError } from '@/lib/http'
@@ -13,6 +13,7 @@ export function useForgotPassword() {
   const [target, setTarget] = useState<string | null>(null)
   const resend = useCountdown()
   const expiry = useCountdown()
+  const requesting = useRef(false)
 
   const request = async () => {
     const res = await authService.forgotPassword({ account: account.trim() })
@@ -30,9 +31,10 @@ export function useForgotPassword() {
   }
 
   const submit = async () => {
-    if (loading) return
+    if (requesting.current) return
     const invalid = validateAccount(account)
     if (invalid) return setError(invalid)
+    requesting.current = true
     setLoading(true)
     setError(undefined)
     try {
@@ -41,12 +43,14 @@ export function useForgotPassword() {
     } catch (e) {
       setError(handleError(e, 'Không gửi được yêu cầu, vui lòng thử lại'))
     } finally {
+      requesting.current = false
       setLoading(false)
     }
   }
 
   const resendCode = async () => {
-    if (loading || resend.left) return
+    if (requesting.current || resend.left) return
+    requesting.current = true
     setLoading(true)
     try {
       await request()
@@ -54,6 +58,7 @@ export function useForgotPassword() {
     } catch (e) {
       toast.error(handleError(e, 'Không gửi lại được mã'))
     } finally {
+      requesting.current = false
       setLoading(false)
     }
   }
@@ -62,6 +67,7 @@ export function useForgotPassword() {
     setSent(false)
     setTarget(null)
     expiry.stop()
+    resend.stop()
   }
 
   return {
