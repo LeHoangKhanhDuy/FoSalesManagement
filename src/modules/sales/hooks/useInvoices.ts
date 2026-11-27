@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
+import { authStore, invoiceStorageKey } from '@/modules/auth/utils/auth.utils'
 import type { Promotion } from '@/modules/promotions/types/promotions.types'
 import { priceCart } from '@/modules/promotions/utils/promotion-engine'
 import type { Customer, Invoice, InvoiceTotals, Product, Voucher } from '@/modules/sales/types/sales.types'
@@ -18,7 +19,7 @@ const initState = (): InvoiceState => {
 }
 
 export function useInvoices(promotions: Promotion[], products: Product[], memberOf: (tier: Customer['tier']) => { tier: string; label: string; discountPercent: number } | null) {
-  const [state, setState] = useLocalStorage<InvoiceState>('fosales_pos_invoices', initState)
+  const [state, setState] = useLocalStorage<InvoiceState>(invoiceStorageKey(authStore.get()!.draftId ?? authStore.get()!.user.id), initState)
   const active = state.invoices.find((i) => i.id === state.activeId) ?? state.invoices[0] ?? createInvoice(1)
   const pricing = useMemo(
     () => priceCart({ items: active.items, promotions, voucher: active.voucher ?? null, member: active.customer ? memberOf(active.customer.tier) : null, products }),
