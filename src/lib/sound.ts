@@ -1,4 +1,13 @@
+import camOnQuyKhachAudio from '@/assets/audio/CamOnQuyKhach.mp3'
+import daNhanThanhToanAudio from '@/assets/audio/DaNhanThanhToan.mp3'
+
 type Tone = 'success' | 'complete' | 'warning' | 'error'
+type VoiceClip = 'thankYou' | 'paymentReceived'
+
+const VOICE_CLIPS: Record<VoiceClip, string> = {
+  thankYou: camOnQuyKhachAudio,
+  paymentReceived: daNhanThanhToanAudio,
+}
 
 const PATTERNS: Record<Tone, { freq: number; duration: number; gap?: number }[]> = {
   success: [{ freq: 1320, duration: 0.07 }],
@@ -32,6 +41,22 @@ export const playTone = (tone: Tone) => {
       osc.stop(t + duration + 0.02)
       t += duration + gap
     }
+  } catch {
+    return
+  }
+}
+
+let activeAudio: HTMLAudioElement | null = null
+
+export const playVoice = (clip: VoiceClip) => {
+  try {
+    if (activeAudio) {
+      activeAudio.pause()
+      activeAudio.currentTime = 0
+    }
+    const audio = new Audio(VOICE_CLIPS[clip])
+    activeAudio = audio
+    void audio.play().catch(() => {})
   } catch {
     return
   }

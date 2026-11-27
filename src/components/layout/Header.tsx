@@ -30,11 +30,15 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
   const handleLogout = async () => {
     if (loggingOut) return
     setLoggingOut(true)
-    await logout()
+    const succeeded = await logout()
     setLoggingOut(false)
     setUserOpen(false)
-    toast.success('Đã đăng xuất')
-    navigate(PATHS.login, { replace: true })
+    if (succeeded) {
+      toast.success('Đã đăng xuất')
+      navigate(PATHS.login, { replace: true })
+    } else {
+      toast.error('Không thể đăng xuất. Vui lòng thử lại')
+    }
   }
 
   useClickOutside(storeRef, () => setStoreOpen(false), storeOpen)

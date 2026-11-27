@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useQuery } from '@/hooks/useQuery'
 import { errorMessage, HttpError } from '@/lib/http'
+import { playVoice } from '@/lib/sound'
 import { ordersService, toOrderQuote } from '@/modules/orders/services/orders.service'
 import type { OrderDetail, PaymentInput, QuoteRequest, StockWarning } from '@/modules/orders/types/orders.types'
 import type { Invoice } from '@/modules/sales/types/sales.types'
@@ -49,6 +50,7 @@ export function useCheckout(invoice: Invoice, onCreated: (order: OrderDetail) =>
       )
       setOrder(result)
       created.current(result)
+      if (result.status !== 'pending') playVoice('thankYou')
       toast.success(result.status === 'pending' ? `Đã tạo đơn ${result.code} — chờ xác nhận chuyển khoản` : `Thanh toán thành công đơn ${result.code}`)
     } catch (e) {
       if (!(e instanceof HttpError)) {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { errorMessage, HttpError } from '@/lib/http'
 import { authService } from '@/modules/auth/services/auth.service'
@@ -10,6 +10,7 @@ export function useResetPassword(account: string, onDone: (account: string) => v
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [visible, setVisible] = useState(false)
+  const submitting = useRef(false)
 
   const set = (field: keyof ResetValues, value: string) => {
     const next = { ...values, [field]: field === 'otp' ? value.replace(/\D/g, '').slice(0, OTP_LENGTH) : value }
@@ -18,11 +19,12 @@ export function useResetPassword(account: string, onDone: (account: string) => v
   }
 
   const submit = async () => {
-    if (loading) return
+    if (submitting.current) return
     setSubmitted(true)
     const invalid = validateReset(values)
     setErrors(invalid)
     if (Object.keys(invalid).length) return
+    submitting.current = true
     setLoading(true)
     try {
       await authService.resetPassword({ account, otp: values.otp, newPassword: values.newPassword })
@@ -33,11 +35,13 @@ export function useResetPassword(account: string, onDone: (account: string) => v
       setErrors({ [field]: errorMessage(e, 'Không đặt lại được mật khẩu') })
       if (field === 'otp') setValues((v) => ({ ...v, otp: '' }))
     } finally {
+      submitting.current = false
       setLoading(false)
     }
   }
 
   const reset = () => {
+    submitting.current = false
     setValues(EMPTY_RESET)
     setErrors({})
     setSubmitted(false)
