@@ -9,11 +9,9 @@ interface ProductCodeProps {
   className?: string
 }
 
-export function ProductCode({ sku, barcode, extra, className }: ProductCodeProps) {
+export function ProductCode({barcode, extra, className }: ProductCodeProps) {
   return (
     <span className={cn('flex min-w-0 items-center gap-1.5 text-xs text-slate-400', className)}>
-      {sku && <span className="shrink-0">{sku}</span>}
-      {sku && barcode && <span className="shrink-0 text-slate-300">·</span>}
       {barcode && (
         <span className="inline-flex shrink-0 items-center gap-1 tabular-nums" title={`Mã vạch ${barcode}`}>
           <Barcode className="size-3 shrink-0" />
@@ -22,7 +20,7 @@ export function ProductCode({ sku, barcode, extra, className }: ProductCodeProps
       )}
       {extra && (
         <>
-          <span className="shrink-0 text-slate-300">·</span>
+          <span className="shrink-0 text-slate-300">|</span>
           <span className="truncate">{extra}</span>
         </>
       )}

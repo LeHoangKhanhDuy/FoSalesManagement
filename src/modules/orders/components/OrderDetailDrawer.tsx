@@ -11,6 +11,7 @@ import { cn } from '@/lib/cn'
 import { formatCurrency, formatDateTime, formatNumber } from '@/lib/format'
 import type { OrderAction, OrderDetail, OrderPayment, OrderSummary } from '@/modules/orders/types/orders.types'
 import { availableActions, ORDER_STATUS, PAYMENT_METHOD_LABEL } from '@/modules/orders/utils/orders.utils'
+import { useOrderProductImages } from '@/modules/orders/hooks/useOrderProductImages'
 import { ProductThumb } from '@/modules/sales/components/ProductThumb'
 import { TIER_LABEL } from '@/modules/sales/utils/constants'
 
@@ -92,6 +93,7 @@ const PaymentRow = ({ p }: { p: OrderPayment }) => (
 
 export function OrderDetailDrawer({ summary: openSummary, order: openOrder, loading, error, printing, onRetry, onClose, onAction, onPrint }: OrderDetailDrawerProps) {
   const summary = useLastValue(openSummary)
+  const productImages = useOrderProductImages(openSummary && openOrder?.id === openSummary.id ? openOrder : null)
   const lastOrder = useLastValue(openOrder)
   if (!summary) return null
   const order = lastOrder?.id === summary.id ? lastOrder : null
@@ -185,7 +187,7 @@ export function OrderDetailDrawer({ summary: openSummary, order: openOrder, load
               const gross = l.price * l.quantity
               return (
                 <li key={l.id} className={cn('flex items-center gap-3 p-3', l.isGift && 'bg-violet-50/50')}>
-                  <ProductThumb categoryId={l.categoryId ?? ''} image={l.image} alt={l.name} size="sm" />
+                  <ProductThumb categoryId={l.categoryId ?? ''} image={l.image || productImages?.get(l.productId)} alt={l.name} size="sm" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-slate-800">
                       {l.name}
@@ -194,7 +196,7 @@ export function OrderDetailDrawer({ summary: openSummary, order: openOrder, load
                         <span className="ml-1.5 rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold text-rose-600">Đã trả {l.returnedQty}</span>
                       )}
                     </p>
-                    <ProductCode sku={l.sku} barcode={l.barcode} extra={l.isGift ? `Tặng ${l.quantity}` : `SL: ${l.quantity} × ${formatCurrency(l.price)}`} />
+                    <ProductCode barcode={l.barcode} extra={l.isGift ? `Tặng ${l.quantity}` : `SL: ${l.quantity} × ${formatCurrency(l.price)}`} />
                   </div>
                   <div className="text-right">
                     {l.productDiscount > 0 && <p className="text-[11px] text-slate-400 line-through">{formatCurrency(gross)}</p>}
