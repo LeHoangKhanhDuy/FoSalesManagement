@@ -1,29 +1,25 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Bell, Check, ChevronDown, LoaderCircle, LogOut, Menu, Search, Settings, Store, UserRound } from 'lucide-react'
+import { Bell, ChevronDown, LoaderCircle, LogOut, Menu, Search, Settings, Store, UserRound } from 'lucide-react'
 import { Kbd } from '@/components/ui/Kbd'
 import { useClickOutside } from '@/hooks/useClickOutside'
 import { useHotkey } from '@/hooks/useHotkey'
-import { cn } from '@/lib/cn'
+import type { CurrentStore } from '@/modules/stores/services/stores.service'
 import { useAuth } from '@/modules/auth/hooks/useAuth'
 import { PATHS } from '@/routes/paths'
 
-const STORES = [
-  { id: 'hcm-01', name: 'FoTech Mart Quận 1', code: 'CN-HCM01' },
-  { id: 'hcm-07', name: 'FoTech Mart Quận 7', code: 'CN-HCM07' },
-  { id: 'hn-01', name: 'FoTech Mart Cầu Giấy', code: 'CN-HN01' },
-]
+interface Props {
+  onOpenMenu: () => void
+  store: CurrentStore | null
+  storeLoading: boolean
+}
 
-export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
-  const [storeId, setStoreId] = useState(STORES[0].id)
-  const [storeOpen, setStoreOpen] = useState(false)
+export function Header({ onOpenMenu, store, storeLoading }: Props) {
   const [userOpen, setUserOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
-  const storeRef = useRef<HTMLDivElement>(null)
   const userRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
-  const store = STORES.find((s) => s.id === storeId) ?? STORES[0]
   const { user, roleLabel, initials, logout } = useAuth()
   const navigate = useNavigate()
 
@@ -41,7 +37,6 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
     }
   }
 
-  useClickOutside(storeRef, () => setStoreOpen(false), storeOpen)
   useClickOutside(userRef, () => setUserOpen(false), userOpen)
   useHotkey('ctrl+k', () => searchRef.current?.focus())
 
@@ -55,42 +50,17 @@ export function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
         <Menu className="size-5" />
       </button>
 
-      <div ref={storeRef} className="relative">
-        <button
-          onClick={() => setStoreOpen((v) => !v)}
-          className="flex h-12 cursor-pointer items-center gap-3 rounded-lg border border-slate-200 bg-white pr-3 pl-2 shadow-soft transition hover:border-slate-300"
-        >
-          <span className="grid size-8 place-items-center rounded-lg bg-primary-50 text-primary-600">
-            <Store className="size-[18px]" />
-          </span>
-          <span className="hidden text-left leading-tight sm:block">
-            <span className="block text-[13px] font-bold text-slate-900">{store.name}</span>
-            <span className="block text-[10px] font-semibold tracking-wide text-slate-400">{store.code}</span>
-          </span>
-          <ChevronDown className={cn('size-4 text-slate-400 transition', storeOpen && 'rotate-180')} />
-        </button>
-        {storeOpen && (
-          <div className="absolute top-14 left-0 w-64 animate-slide-up rounded-lg border border-slate-100 bg-white p-1.5 shadow-card">
-            <p className="px-2.5 py-1.5 text-[11px] font-bold tracking-wider text-slate-400 uppercase">Chi nhánh</p>
-            {STORES.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => {
-                  setStoreId(s.id)
-                  setStoreOpen(false)
-                }}
-                className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-left hover:bg-slate-50"
-              >
-                <span className="flex-1">
-                  <span className="block text-sm font-semibold text-slate-800">{s.name}</span>
-                  <span className="block text-[11px] text-slate-400">{s.code}</span>
-                </span>
-                {s.id === storeId && <Check className="size-4 text-primary-600" />}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <button
+        onClick={() => navigate(PATHS.settings)}
+        aria-label="Xem thông tin cửa hàng"
+        className="flex h-12 cursor-pointer items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 shadow-soft hover:border-slate-300"
+      >
+        <span className="grid size-8 place-items-center rounded-lg bg-primary-50 text-primary-600"><Store className="size-[18px]" /></span>
+        <span className="hidden text-left leading-tight sm:block">
+          <span className="block text-[13px] font-bold text-slate-900">{store?.name ?? (storeLoading ? 'Đang tải cửa hàng…' : 'Thông tin cửa hàng')}</span>
+          <span className="block text-[10px] font-semibold tracking-wide text-slate-400">{store?.code}</span>
+        </span>
+      </button>
 
       <div className="mx-auto hidden w-full max-w-md md:block">
         <label className="flex h-11 items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3.5 transition focus-within:border-primary-500 focus-within:ring-4 focus-within:ring-primary-100">

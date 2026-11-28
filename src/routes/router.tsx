@@ -6,6 +6,7 @@ import { GuestOnly, RequireAuth } from '@/components/common/RouteGuards'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { PATHS } from '@/routes/paths'
 
+const StoreSettingsPage = lazy(() => import('@/modules/stores/pages/StoreSettingsPage'))
 const LoginPage = lazy(() => import('@/modules/auth/pages/LoginPage'))
 const SalesPage = lazy(() => import('@/modules/sales/pages/SalesPage'))
 const OrdersPage = lazy(() => import('@/modules/orders/pages/OrdersPage'))
@@ -120,6 +121,7 @@ export const router = createBrowserRouter([
           </Loadable>
         ),
       },
+      { path: PATHS.settings, element: <Loadable><StoreSettingsPage /></Loadable> },
       { path: '*', element: <ComingSoon /> },
     ],
   },
