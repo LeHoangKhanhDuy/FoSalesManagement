@@ -48,7 +48,7 @@ function Screen({ order, products, onUpdate, onClose }: Props & { order: Purchas
         <div className="min-w-0">
           <p className="text-xs font-semibold tracking-wider text-primary-600 uppercase">Nhận hàng</p>
           <p className="truncate text-sm font-bold text-slate-900">
-            {order.code} · {order.supplierName}
+            {order.code} | {order.supplierName}
           </p>
         </div>
         <ol className="mx-auto hidden items-center gap-2 md:flex">

@@ -60,7 +60,6 @@ export const ReceivingLineItem = memo(function ReceivingLineItem({ line, highlig
                 className="size-4 cursor-pointer accent-primary-600"
                 aria-label={`Đếm đủ ${line.name}`}
               />
-              Đủ
             </label>
           )}
           <button type="button" onClick={() => setOpen((v) => !v)} className={cn('grid size-9 cursor-pointer place-items-center rounded-lg text-slate-400 hover:bg-slate-100', open && 'bg-slate-100 text-slate-700')} aria-label="Chi tiết">
