@@ -8,6 +8,7 @@ import { describeVoucher } from '@/modules/sales/utils/cart.utils'
 
 interface VoucherInputProps {
   voucher: Voucher | null
+  cartTotal: number
   discount: number
   issue?: string
   customerId: string | null
@@ -15,7 +16,7 @@ interface VoucherInputProps {
   onRemove: () => void
 }
 
-export const VoucherInput = memo(function VoucherInput({ voucher, discount, issue, customerId, onApply, onRemove }: VoucherInputProps) {
+export const VoucherInput = memo(function VoucherInput({ voucher, cartTotal, discount, issue, customerId, onApply, onRemove }: VoucherInputProps) {
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -27,7 +28,7 @@ export const VoucherInput = memo(function VoucherInput({ voucher, discount, issu
     setLoading(true)
     setError(null)
     try {
-      onApply(await salesService.applyVoucher(value, customerId))
+      onApply(await salesService.applyVoucher(value, customerId, cartTotal))
       setCode('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không áp dụng được mã giảm giá')

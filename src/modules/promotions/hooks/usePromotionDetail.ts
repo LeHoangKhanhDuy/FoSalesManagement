@@ -1,26 +1,10 @@
-import { useEffect, useState } from 'react'
-import type { LegacyOrder as OrderRecord } from '@/modules/promotions/mocks/orders.mock'
+import { useState } from 'react'
+import { useQuery } from '@/hooks/useQuery'
 import { promotionsService } from '@/modules/promotions/services/promotions.service'
 import type { PromotionWithUsage } from '@/modules/promotions/types/promotions.types'
 
 export function usePromotionDetail(promotion: PromotionWithUsage | null) {
-  const [orders, setOrders] = useState<OrderRecord[]>([])
-  const [loading, setLoading] = useState(false)
-  const id = promotion?.id
-  const count = promotion?.usage.count
-
-  useEffect(() => {
-    if (!id) return
-    let alive = true
-    setLoading(true)
-    promotionsService
-      .getOrdersOf(id)
-      .then((o) => alive && setOrders(o))
-      .finally(() => alive && setLoading(false))
-    return () => {
-      alive = false
-    }
-  }, [id, count])
-
-  return { orders, loading }
+  const [page, setPage] = useState(1)
+  const history = useQuery(promotionsService.redemptions, { id: promotion?.id ?? '', page }, { enabled: !!promotion })
+  return { orders: history.data?.items ?? [], total: history.data?.total ?? 0, page, setPage, loading: history.loading, error: history.error }
 }

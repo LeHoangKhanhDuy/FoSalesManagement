@@ -87,7 +87,7 @@ export const PaymentSummary = memo(function PaymentSummary(props: PaymentSummary
           <div className="min-w-0 flex-1 text-xs">
             <p className="font-semibold text-slate-800">Dùng điểm</p>
             <p className="text-slate-500">
-              Có {formatNumber(customer.points)} điểm · tối đa {formatNumber(maxPoints)}
+              Có {formatNumber(customer.points)} điểm | Tối đa: {formatNumber(maxPoints)}
             </p>
           </div>
           <input

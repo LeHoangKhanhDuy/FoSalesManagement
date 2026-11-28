@@ -1,6 +1,6 @@
 import { Gift, PackageMinus, ReceiptText, TicketPercent, type LucideIcon } from 'lucide-react'
 import type { BadgeProps } from '@/components/ui/Badge'
-import { formatCurrency, removeAccents } from '@/lib/format'
+import { formatCurrency } from '@/lib/format'
 import type {
   DiscountType,
   Promotion,
@@ -12,9 +12,7 @@ import type {
   PromotionStatus,
   PromotionTab,
   PromotionUsage,
-  PromotionWithUsage,
 } from '@/modules/promotions/types/promotions.types'
-import type { Voucher } from '@/modules/sales/types/sales.types'
 
 const DAY = 86_400_000
 
@@ -52,24 +50,6 @@ export const PROMOTION_SORTS: { value: PromotionSort; label: string }[] = [
 
 export const DEFAULT_PROMOTION_FILTERS: PromotionFilters = { keyword: '', tab: 'all', kind: 'all', sort: 'newest' }
 
-export const EMPTY_USAGE: PromotionUsage = { count: 0, discount: 0, revenue: 0, last30Count: 0, last30Discount: 0 }
-
-export const isAutoKind = (kind: PromotionKind) => kind !== 'voucher'
-
-export const getPromotionStatus = (p: Promotion, usageCount = 0, now = Date.now()): PromotionStatus => {
-  if (p.state === 'draft' || p.state === 'paused' || p.state === 'ended') return p.state
-  if (new Date(p.startAt).getTime() > now) return 'scheduled'
-  if (p.endAt && new Date(p.endAt).getTime() < now) return 'ended'
-  if (p.usageLimit && usageCount >= p.usageLimit) return 'ended'
-  return 'running'
-}
-
-export const isRunningAt = (p: Promotion, at: number) =>
-  p.state !== 'draft' &&
-  new Date(p.startAt).getTime() <= at &&
-  (!p.endAt || new Date(p.endAt).getTime() >= at) &&
-  !((p.state === 'ended' || p.state === 'paused') && p.updatedAt && new Date(p.updatedAt).getTime() < at)
-
 export const endedReason = (p: Promotion, usage: PromotionUsage) => {
   if (p.state === 'ended') return 'Kết thúc sớm'
   if (p.usageLimit && usage.count >= p.usageLimit) return 'Hết lượt sử dụng'
@@ -103,42 +83,7 @@ export const calcDiscount = (base: number, type: DiscountType, value: number, ma
   return Math.max(0, Math.min(rounded, base))
 }
 
-export const toVoucher = (p: Promotion): Voucher => ({
-  id: p.id,
-  code: p.code,
-  name: p.name,
-  type: p.discountType,
-  value: p.discountValue,
-  maxDiscount: p.maxDiscount,
-  minOrder: p.minOrder,
-  expiresAt: p.endAt,
-  scope: p.scope,
-  stackable: p.stackable,
-})
-
 export const daysLeft = (iso?: string, now = Date.now()) => (iso ? Math.ceil((new Date(iso).getTime() - now) / DAY) : null)
-
-export const filterPromotions = (list: PromotionWithUsage[], filters: PromotionFilters, keyword: string, now = Date.now()) => {
-  const k = removeAccents(keyword.trim())
-  return list.filter(
-    (p) =>
-      (filters.kind === 'all' || p.kind === filters.kind) &&
-      (!k || removeAccents(p.name).includes(k) || p.code.toLowerCase().includes(k)) &&
-      (filters.tab === 'all' || getPromotionStatus(p, p.usage.count, now) === filters.tab),
-  )
-}
-
-export const sortPromotions = (list: PromotionWithUsage[], sort: PromotionSort) =>
-  [...list].sort((a, b) => {
-    if (sort === 'usage') return b.usage.count - a.usage.count
-    if (sort === 'ending') return (a.endAt ?? '9999').localeCompare(b.endAt ?? '9999')
-    return b.createdAt.localeCompare(a.createdAt)
-  })
-
-export const generatePromoCode = (prefix = '') => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  return prefix + Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
-}
 
 export const emptyPromotionForm = (kind: PromotionKind, code: string): PromotionFormValues => {
   const start = new Date()

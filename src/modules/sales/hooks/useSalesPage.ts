@@ -17,7 +17,7 @@ export function useSalesPage() {
   const [completedOrder, setCompletedOrder] = useState<OrderDetail | null>(null)
   const printer = useReceiptPrinter()
   const productState = useProducts()
-  const promo = useActivePromotions(productState.products)
+  const promo = useActivePromotions()
   const invoice = useInvoices(promo.promotions, productState.products, promo.memberOf)
   const { active, totals, pricing } = invoice
   const focusSearch = useCallback(() => searchRef.current?.focus(), [])

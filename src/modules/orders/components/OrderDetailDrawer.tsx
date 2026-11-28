@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Ban, CircleAlert, CircleCheck, Clock, NotebookPen, Printer, Undo2, UserRound } from 'lucide-react'
+import { Ban, CircleAlert, CircleCheck, Clock, NotebookPen, Undo2, UserRound } from 'lucide-react'
 import { ProductCode } from '@/components/common/ProductCode'
 import { RetryButton } from '@/components/common/RetryButton'
 import { Avatar } from '@/components/ui/Avatar'
@@ -115,14 +115,14 @@ export function OrderDetailDrawer({ summary: openSummary, order: openOrder, load
       }
       footer={
         <>
-          <Button variant="outline" leftIcon={<Printer className="size-4" />} loading={printing} onClick={() => onPrint(view)}>
+          <Button variant="outline" loading={printing} onClick={() => onPrint(view)}>
             In hóa đơn
           </Button>
           <div className="ml-auto flex gap-2">
             {availableActions(view).map((a) => {
-              const { label, icon: Icon, variant } = ACTION_BUTTONS[a]
+              const { label, variant } = ACTION_BUTTONS[a]
               return (
-                <Button key={a} variant={variant} leftIcon={<Icon className="size-4" />} onClick={() => onAction(view, a, order?.payments)}>
+                <Button key={a} variant={variant} onClick={() => onAction(view, a, order?.payments)}>
                   {label}
                 </Button>
               )

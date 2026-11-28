@@ -102,7 +102,7 @@ export const CartPanel = memo(function CartPanel(props: CartPanelProps) {
           />
         </label>
 
-        <VoucherInput
+        <VoucherInput cartTotal={totals.subtotal}
           voucher={voucher}
           discount={pricing.voucherDiscount}
           issue={pricing.voucherIssue}

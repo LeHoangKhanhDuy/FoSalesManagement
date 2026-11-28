@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { formatNumber, parseNumber } from '@/lib/format'
-import { suggestCashAmounts } from '@/modules/sales/utils/cart.utils'
 
 const CASH_DENOMINATIONS = [1_000, 2_000, 5_000, 10_000, 20_000, 50_000, 100_000, 200_000, 500_000]
 
@@ -24,7 +23,6 @@ export function CashTendered({ label, value, target, onChange, onEnter }: CashTe
     onChange(value + note)
     setNoteCounts((c) => ({ ...c, [note]: (c[note] ?? 0) + 1 }))
   }
-  const suggestions = suggestCashAmounts(target, 4).filter((v) => v !== target)
 
   return (
     <div>
@@ -86,20 +84,6 @@ export function CashTendered({ label, value, target, onChange, onEnter }: CashTe
           Đủ tiền
         </button>
       </div>
-      {suggestions.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {suggestions.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => set(s)}
-              className="h-7 cursor-pointer rounded-full border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 hover:border-primary-300 hover:text-primary-700"
-            >
-              {formatNumber(s)}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   )
 }

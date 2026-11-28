@@ -44,7 +44,7 @@ export interface PromotionUsage {
   lastUsedAt?: string
 }
 
-export type PromotionWithUsage = Promotion & { usage: PromotionUsage }
+export type PromotionWithUsage = Promotion & { usage: PromotionUsage; status: PromotionStatus }
 
 export type PromotionTab = PromotionStatus | 'all'
 export type PromotionSort = 'newest' | 'ending' | 'usage'

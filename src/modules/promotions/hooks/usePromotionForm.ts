@@ -1,16 +1,17 @@
+import { toast } from 'sonner'
 import { useMemo, useState } from 'react'
 import type { PromotionFormState } from '@/modules/promotions/hooks/usePromotionsPage'
 import { promotionsService } from '@/modules/promotions/services/promotions.service'
-import type { Promotion, PromotionFormValues, PromotionKind, PromotionScope } from '@/modules/promotions/types/promotions.types'
-import { emptyPromotionForm, generatePromoCode, promotionToForm } from '@/modules/promotions/utils/promotions.utils'
+import type { Promotion, PromotionFormValues, PromotionScope } from '@/modules/promotions/types/promotions.types'
+import { emptyPromotionForm, promotionToForm } from '@/modules/promotions/utils/promotions.utils'
 
 export type PromotionFormErrors = Partial<Record<'code' | 'name' | 'discountValue' | 'minOrder' | 'scope' | 'buyProductId' | 'giftProductId' | 'buyQty' | 'giftQty' | 'startAt' | 'endAt', string>>
 
 const initial = (state: NonNullable<PromotionFormState>): PromotionFormValues => {
-  if (state.mode === 'create') return emptyPromotionForm(state.kind, state.kind === 'voucher' ? '' : promotionsService.nextAutoCode())
+  if (state.mode === 'create') return emptyPromotionForm(state.kind, '')
   const v = promotionToForm(state.promotion)
   if (state.mode === 'edit') return v
-  return { ...v, name: `${v.name} (bản sao)`, code: v.kind === 'voucher' ? generatePromoCode() : promotionsService.nextAutoCode() }
+  return { ...v, name: `${v.name} (bản sao)`, code: '' }
 }
 
 export function usePromotionForm(state: NonNullable<PromotionFormState>, promotions: Promotion[], onSubmit: (v: PromotionFormValues, activate: boolean) => void) {
@@ -53,13 +54,13 @@ export function usePromotionForm(state: NonNullable<PromotionFormState>, promoti
   const setScope = (patch: Partial<PromotionScope>) => setValues((v) => ({ ...v, scope: { ...v.scope, ...patch } }))
   const toggleInScope = (key: 'categoryIds' | 'productIds', id: string) =>
     setValues((v) => ({ ...v, scope: { ...v.scope, [key]: v.scope[key].includes(id) ? v.scope[key].filter((x) => x !== id) : [...v.scope[key], id] } }))
-  const setKind = (kind: PromotionKind) => setValues((v) => ({ ...emptyPromotionForm(kind, kind === 'voucher' ? '' : promotionsService.nextAutoCode()), name: v.name, description: v.description, startAt: v.startAt, endAt: v.endAt }))
-
   const submit = (activate: boolean) => {
     setSubmitted(true)
     if (Object.keys(validate(values)).length) return
     onSubmit(values, activate)
   }
 
-  return { values, errors, set, setScope, toggleInScope, setKind, submit, isDraft, isEdit: !!editingId, generateCode: () => set('code', generatePromoCode()) }
+  return { values, errors, set, setScope, toggleInScope, submit, isDraft, isEdit: !!editingId, generateCode: async () => {
+    try { set('code', (await promotionsService.generateCode()).code) } catch { toast.error('Không tạo được mã giảm giá') }
+  } }
 }

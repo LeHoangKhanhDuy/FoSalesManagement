@@ -16,5 +16,5 @@ export const salesService = {
 
   quickCreateCustomer: (name: string, phone: string): Promise<Customer> => customersService.quickCreate(name, phone),
 
-  applyVoucher: (code: string, customerId: string | null): Promise<Voucher> => promotionsService.validateVoucher(code, customerId),
+  applyVoucher: (code: string, customerId: string | null, cartTotal: number): Promise<Voucher> => promotionsService.validateVoucher(code, customerId, cartTotal),
 }

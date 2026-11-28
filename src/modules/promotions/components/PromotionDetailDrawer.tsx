@@ -1,4 +1,5 @@
-import { CircleAlert, CirclePause, CirclePlay, Copy, Pencil, ReceiptText } from 'lucide-react'
+import { Pagination } from '@/components/ui/Pagination'
+import { ReceiptText } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Drawer } from '@/components/ui/Drawer'
@@ -9,7 +10,7 @@ import { cn } from '@/lib/cn'
 import { formatCurrency, formatDateTime } from '@/lib/format'
 import { usePromotionDetail } from '@/modules/promotions/hooks/usePromotionDetail'
 import type { PromotionWithUsage } from '@/modules/promotions/types/promotions.types'
-import { appliesText, endedReason, getPromotionStatus, type Namers, offerText, periodText, PROMOTION_KINDS, PROMOTION_STATUS } from '@/modules/promotions/utils/promotions.utils'
+import { appliesText, endedReason, type Namers, offerText, periodText, PROMOTION_KINDS, PROMOTION_STATUS } from '@/modules/promotions/utils/promotions.utils'
 
 interface Props {
   promotion: PromotionWithUsage | null
@@ -22,9 +23,9 @@ interface Props {
 
 export function PromotionDetailDrawer({ promotion: open, names, onClose, onEdit, onDuplicate, onState }: Props) {
   const p = useLastValue(open)
-  const { orders, loading } = usePromotionDetail(open)
+  const { orders, loading, error, page, setPage, total } = usePromotionDetail(open)
   if (!p) return null
-  const statusKey = getPromotionStatus(p, p.usage.count)
+  const statusKey = p.status
   const status = PROMOTION_STATUS[statusKey]
   const kind = PROMOTION_KINDS[p.kind]
   const Icon = kind.icon
@@ -61,22 +62,22 @@ export function PromotionDetailDrawer({ promotion: open, names, onClose, onEdit,
       }
       footer={
         <>
-          <Button variant="outline" leftIcon={<Copy className="size-4" />} onClick={() => onDuplicate(p)}>
+          <Button variant="outline" onClick={() => onDuplicate(p)}>
             Nhân bản
           </Button>
           <div className="ml-auto flex gap-2">
             {(statusKey === 'running' || statusKey === 'scheduled') && (
-              <Button variant="outline" leftIcon={<CirclePause className="size-4" />} onClick={() => onState(p, 'paused')}>
+              <Button variant="outline" onClick={() => onState(p, 'paused')}>
                 Tạm dừng
               </Button>
             )}
             {(statusKey === 'paused' || statusKey === 'draft') && (
-              <Button variant="outline" leftIcon={<CirclePlay className="size-4" />} onClick={() => onState(p, 'active')}>
+              <Button variant="outline" onClick={() => onState(p, 'active')}>
                 {statusKey === 'draft' ? 'Kích hoạt' : 'Tiếp tục'}
               </Button>
             )}
             {statusKey !== 'ended' && (
-              <Button leftIcon={<Pencil className="size-4" />} onClick={() => onEdit(p)}>
+              <Button onClick={() => onEdit(p)}>
                 Sửa
               </Button>
             )}
@@ -86,12 +87,12 @@ export function PromotionDetailDrawer({ promotion: open, names, onClose, onEdit,
     >
       {statusKey === 'ended' && (
         <p className="mb-4 flex gap-2 rounded-lg bg-slate-100 p-3 text-sm text-slate-600">
-          <CircleAlert className="mt-0.5 size-4 shrink-0" /> Chương trình đã kết thúc: {endedReason(p, p.usage).toLowerCase()}.
+          Chương trình đã kết thúc: {endedReason(p, p.usage).toLowerCase()}.
         </p>
       )}
       {statusKey === 'paused' && (
         <p className="mb-4 flex gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
-          <CircleAlert className="mt-0.5 size-4 shrink-0" /> Đang tạm dừng — POS không áp dụng chương trình này cho tới khi tiếp tục.
+          Đang tạm dừng — POS không áp dụng chương trình này cho tới khi tiếp tục.
         </p>
       )}
 
@@ -119,7 +120,7 @@ export function PromotionDetailDrawer({ promotion: open, names, onClose, onEdit,
       </dl>
 
       <FormSection title={`Đơn hàng áp dụng (${p.usage.count})`}>
-        {loading ? (
+        {error ? <p role="alert">{error}</p> : loading ? (
           <div className="space-y-2">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="h-14 animate-pulse rounded-lg bg-slate-50" />
@@ -128,20 +129,20 @@ export function PromotionDetailDrawer({ promotion: open, names, onClose, onEdit,
         ) : orders.length ? (
           <ul className="divide-y divide-slate-100 rounded-lg border border-slate-100">
             {orders.map((o) => {
-              const amount = o.promotions?.find((x) => x.id === p.id)?.amount ?? 0
+              const amount = o.discount
               return (
                 <li key={o.id} className="flex items-center gap-3 p-3">
                   <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-slate-50 text-slate-400">
                     <ReceiptText className="size-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-slate-800">{o.code}</p>
+                    <p className="text-sm font-semibold text-slate-800">{o.orderCode}{o.revokedAt && " · Đã thu hồi"}</p>
                     <p className="truncate text-xs text-slate-400">
-                      {formatDateTime(new Date(o.createdAt))} · {o.customer?.name ?? 'Khách lẻ'}
+                      {formatDateTime(new Date(o.createdAt))} | {o.customer?.name ?? 'Khách lẻ'}
                     </p>
                   </div>
                   <div className="text-right text-sm">
-                    <p className="font-bold text-slate-900">{formatCurrency(o.totals.total)}</p>
+                    <p className="font-bold text-slate-900">{formatCurrency(o.revenue)}</p>
                     <p className={cn('text-xs font-semibold', p.kind === 'gift' ? 'text-violet-600' : 'text-rose-500')}>
                       {p.kind === 'gift' ? 'Quà ' : '-'}
                       {formatCurrency(amount)}
@@ -155,6 +156,7 @@ export function PromotionDetailDrawer({ promotion: open, names, onClose, onEdit,
           <EmptyState icon={<ReceiptText />} title="Chưa có đơn hàng áp dụng" className="py-8" />
         )}
       </FormSection>
+      {total > 10 && <Pagination page={page} pageSize={10} total={total} onPageChange={setPage} />}
     </Drawer>
   )
 }

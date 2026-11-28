@@ -20,23 +20,21 @@ export default function PromotionsPage() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-slate-900">Khuyến mãi</h1>
-          <p className="text-sm text-slate-500">Quản lý mã giảm giá và chương trình khuyến mãi tự động áp dụng tại quầy</p>
+          <h1 className="text-[22px] font-bold tracking-tight text-slate-900">Quản lý khuyến mãi</h1>
+          <p className="text-sm text-slate-500">Quản lý mã giảm giá và theo dõi lượt sử dụng tại quầy</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={page.reload} title="Tải lại" aria-label="Tải lại">
             <RefreshCw className={page.loading ? 'size-4 animate-spin' : 'size-4'} />
           </Button>
-          <Button variant="outline" onClick={() => page.openCreate('voucher')}>
+          <Button leftIcon={<Plus className="size-4" />} onClick={() => page.openCreate('voucher')}>
             Tạo mã giảm giá
-          </Button>
-          <Button leftIcon={<Plus className="size-4" />} onClick={() => page.openCreate('product')}>
-            Tạo khuyến mãi
           </Button>
         </div>
       </div>
 
-      <PromotionStats stats={page.stats} loading={page.loading} onTab={(t) => page.updateFilter('tab', t)} />
+      {page.error && <p role="alert">{page.error}</p>}
+      <PromotionStats stats={page.stats} loading={page.statsLoading} onTab={(t) => page.updateFilter('tab', t)} />
 
       <Card className="overflow-hidden">
         <PromotionFilters filters={page.filters} counts={page.counts} onChange={page.updateFilter} onReset={page.resetFilters} hasActiveFilters={page.hasActiveFilters} />
@@ -51,13 +49,13 @@ export default function PromotionsPage() {
           onState={page.changeState}
           onConfirm={page.requestConfirm}
         />
-        {!page.loading && page.filtered.length > 0 && (
-          <Pagination page={page.page} pageSize={PROMOTION_PAGE_SIZE} total={page.filtered.length} onPageChange={page.setPage} unit="chương trình" className="border-t border-slate-100 px-4 py-3" />
+        {!page.loading && page.total > 0 && (
+          <Pagination page={page.page} pageSize={PROMOTION_PAGE_SIZE} total={page.total} onPageChange={page.setPage} unit="chương trình" className="border-t border-slate-100 px-4 py-3" />
         )}
       </Card>
 
       <PromotionFormDrawer state={page.form} promotions={page.promotions} categories={page.categories} products={page.products} saving={page.saving} onClose={page.closeForm} onSubmit={page.submitForm} />
-      <PromotionDetailDrawer promotion={page.detail} names={names} onClose={page.closeDetail} onEdit={page.openEdit} onDuplicate={page.openDuplicate} onState={page.changeState} />
+      <PromotionDetailDrawer key={page.detail?.id} promotion={page.detail} names={names} onClose={page.closeDetail} onEdit={page.openEdit} onDuplicate={page.openDuplicate} onState={page.changeState} />
       <PromotionConfirmModal confirm={page.confirm} loading={page.confirming} onClose={page.closeConfirm} onConfirm={page.confirmAction} />
     </div>
   )

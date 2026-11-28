@@ -5,7 +5,7 @@ import { Dropdown, DropdownItem, DropdownSeparator } from '@/components/ui/Dropd
 import { EmptyState } from '@/components/ui/EmptyState'
 import { cn } from '@/lib/cn'
 import type { PromotionWithUsage } from '@/modules/promotions/types/promotions.types'
-import { appliesText, daysLeft, getPromotionStatus, type Namers, offerText, periodText, PROMOTION_KINDS, PROMOTION_STATUS } from '@/modules/promotions/utils/promotions.utils'
+import { appliesText, daysLeft, type Namers, offerText, periodText, PROMOTION_KINDS, PROMOTION_STATUS } from '@/modules/promotions/utils/promotions.utils'
 
 interface Props {
   promotions: PromotionWithUsage[]
@@ -49,7 +49,7 @@ export function PromotionTable({ promotions, names, loading, hasActiveFilters, o
               ))
             : promotions.map((p) => {
                 const kind = PROMOTION_KINDS[p.kind]
-                const statusKey = getPromotionStatus(p, p.usage.count)
+                const statusKey = p.status
                 const status = PROMOTION_STATUS[statusKey]
                 const left = daysLeft(p.endAt)
                 const progress = p.usageLimit ? Math.min(100, (p.usage.count / p.usageLimit) * 100) : 0
@@ -64,7 +64,7 @@ export function PromotionTable({ promotions, names, loading, hasActiveFilters, o
                         <div className="min-w-0">
                           <p className="truncate font-semibold text-slate-900 group-hover:text-primary-700">{p.name}</p>
                           <p className="flex items-center gap-1.5 text-xs text-slate-400">
-                            <span className={cn('font-mono font-semibold', p.kind === 'voucher' ? 'rounded bg-primary-50 px-1.5 text-primary-700' : '')}>{p.code}</span>· {kind.short}
+                            <span className={cn('font-mono font-semibold', p.kind === 'voucher' ? 'rounded bg-primary-50 px-1.5 text-primary-700' : '')}>{p.code}</span>| {kind.short}
                           </p>
                         </div>
                       </div>
