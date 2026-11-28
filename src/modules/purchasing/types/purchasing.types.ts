@@ -22,6 +22,7 @@ export type ShortageAction = 'backorder' | 'cancel'
 export type ExcessAction = 'accept' | 'return'
 
 export interface ReceivingLine {
+  beforeCheck?: { scannedQty: number; damagedQty: number }
   productId: string
   name: string
   sku: string

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, PauseCircle, Trash2, X } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { ReceivingCheckIn } from '@/modules/purchasing/components/ReceivingCheckIn'
 import { ReceivingCount } from '@/modules/purchasing/components/ReceivingCount'
@@ -79,10 +79,10 @@ function Screen({ order, products, onUpdate, onClose }: Props & { order: Purchas
                 onBlur={() => setConfirmDiscard(false)}
                 className={cn('flex h-9 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition', confirmDiscard ? 'bg-rose-600 text-white' : 'text-slate-500 hover:bg-rose-50 hover:text-rose-600')}
               >
-                <Trash2 className="size-4" /> {confirmDiscard ? 'Bấm lần nữa để hủy' : 'Hủy phiên'}
+                {confirmDiscard ? 'Bấm lần nữa để hủy' : 'Hủy phiên'}
               </button>
               <button onClick={receiving.pause} className="flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                <PauseCircle className="size-4" /> Lưu tạm & thoát
+                Lưu tạm & thoát
               </button>
             </>
           )}
