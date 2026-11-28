@@ -55,7 +55,7 @@ export function useReceiving({ order, products, onUpdate, onClose }: Options) {
   const setApprovedBy = (approvedBy: string) => setDraft((d) => ({ ...d, approvedBy }))
 
   const updateLine = useCallback((productId: string, patch: Partial<ReceivingLine>) => {
-    setDraft((d) => ({ ...d, lines: d.lines.map((l) => (l.productId === productId ? { ...l, ...patch, damagedQty: Math.min(patch.damagedQty ?? l.damagedQty, patch.scannedQty ?? l.scannedQty) } : l)) }))
+    setDraft((d) => ({ ...d, lines: d.lines.map((l) => (l.productId === productId ? { ...l, ...(patch.scannedQty !== undefined && { beforeCheck: undefined }), ...patch, damagedQty: Math.min(patch.damagedQty ?? l.damagedQty, patch.scannedQty ?? l.scannedQty) } : l)) }))
   }, [])
 
   const notify = useCallback((f: Omit<ScanFlash, 'key'>) => {
@@ -78,7 +78,7 @@ export function useReceiving({ order, products, onUpdate, onClose }: Options) {
         line = productToExtraLine(product)
         lines = [line, ...lines]
       }
-      const next = { ...line, scannedQty: Math.max(0, line.scannedQty + quantity) }
+      const next = { ...line, beforeCheck: undefined, scannedQty: Math.max(0, line.scannedQty + quantity) }
       next.damagedQty = Math.min(next.damagedQty, next.scannedQty)
       const state = getLineState(next)
       const result: ReceivingScan['result'] = state === 'extra' ? 'extra' : state === 'over' ? 'over' : state === 'complete' ? 'complete' : 'ok'
@@ -124,7 +124,7 @@ export function useReceiving({ order, products, onUpdate, onClose }: Options) {
       ...d,
       scans: d.scans.slice(1),
       lines: d.lines
-        .map((l) => (l.productId === last.productId ? { ...l, scannedQty: Math.max(0, l.scannedQty - last.quantity), damagedQty: Math.min(l.damagedQty, Math.max(0, l.scannedQty - last.quantity)) } : l))
+        .map((l) => (l.productId === last.productId ? { ...l, beforeCheck: undefined, scannedQty: Math.max(0, l.scannedQty - last.quantity), damagedQty: Math.min(l.damagedQty, Math.max(0, l.scannedQty - last.quantity)) } : l))
         .filter((l) => !(l.extra && l.scannedQty === 0)),
     }))
     toast.info(`Đã hoàn tác: ${last.name} (−${last.quantity})`)

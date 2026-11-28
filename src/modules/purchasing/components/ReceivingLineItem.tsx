@@ -1,5 +1,5 @@
 import { memo, useState } from 'react'
-import { ChevronDown, Minus, PackagePlus, Plus, X } from 'lucide-react'
+import { ChevronDown, Minus, Plus, X } from 'lucide-react'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { inputClass, NumberInput } from '@/components/ui/FormField'
 import { cn } from '@/lib/cn'
@@ -32,7 +32,7 @@ export const ReceivingLineItem = memo(function ReceivingLineItem({ line, highlig
             <span className={cn('size-2 shrink-0 rounded-full', meta.dot)} />
             <p className="truncate text-sm font-semibold text-slate-900">{line.name}</p>
           </div>
-          <ProductCode sku={line.sku} barcode={line.barcode} />
+          <ProductCode barcode={line.barcode} />
           <div className="mt-1.5 h-1.5 w-full max-w-[240px] overflow-hidden rounded-full bg-slate-100">
             <div className={cn('h-full rounded-full transition-all', state === 'complete' ? 'bg-primary-500' : state === 'partial' ? 'bg-amber-400' : 'bg-rose-400')} style={{ width: `${percent}%` }} />
           </div>
@@ -49,10 +49,18 @@ export const ReceivingLineItem = memo(function ReceivingLineItem({ line, highlig
           <button type="button" onClick={() => onAdd(line.productId, 1)} className="grid size-9 cursor-pointer place-items-center rounded-lg border border-slate-200 text-slate-500 hover:border-primary-300 hover:text-primary-700" aria-label="Thêm 1">
             <Plus className="size-4" />
           </button>
-          {line.packSize > 1 && (
-            <button type="button" onClick={() => onAdd(line.productId, line.packSize)} className="flex h-9 cursor-pointer items-center gap-1 rounded-lg bg-primary-50 px-2.5 text-xs font-bold text-primary-700 hover:bg-primary-100" title={`+1 thùng (${line.packSize})`} aria-label={`Thêm 1 thùng (${line.packSize})`}>
-              <PackagePlus className="size-4" /> {line.packSize}
-            </button>
+          {!line.extra && (
+            <label className="flex h-9 cursor-pointer items-center gap-2 rounded-lg px-2 text-xs font-semibold text-primary-700 hover:bg-primary-50">
+              <input
+                type="checkbox"
+                checked={state === 'complete'}
+                onChange={(event) => onUpdate(line.productId, event.target.checked
+                  ? { scannedQty: line.expectedQty, beforeCheck: { scannedQty: line.scannedQty, damagedQty: line.damagedQty } }
+                  : { scannedQty: line.beforeCheck?.scannedQty ?? 0, damagedQty: line.beforeCheck?.damagedQty ?? 0, beforeCheck: undefined })}
+                className="size-4 cursor-pointer accent-primary-600"
+                aria-label={`Đếm đủ ${line.name}`}
+              />
+            </label>
           )}
           <button type="button" onClick={() => setOpen((v) => !v)} className={cn('grid size-9 cursor-pointer place-items-center rounded-lg text-slate-400 hover:bg-slate-100', open && 'bg-slate-100 text-slate-700')} aria-label="Chi tiết">
             <ChevronDown className={cn('size-4 transition', open && 'rotate-180')} />

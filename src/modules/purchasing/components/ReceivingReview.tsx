@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowLeft, CircleAlert, ShieldCheck, Warehouse } from 'lucide-react'
+import { CircleAlert, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { inputClass, NumberInput } from '@/components/ui/FormField'
 import { cn } from '@/lib/cn'
@@ -60,7 +60,11 @@ export function ReceivingReview({ receiving }: { receiving: Receiving }) {
         {[
           ['Giá trị cần nhận', formatCurrency(summary.expectedValue), 'text-slate-900'],
           ['Giá trị nhập kho', formatCurrency(summary.acceptedValue), 'text-primary-600'],
-          ['Chênh lệch', `${summary.diffValue > 0 ? '+' : ''}${formatCurrency(summary.diffValue)} (${diffPct}%)`, summary.diffValue < 0 ? 'text-amber-600' : summary.diffValue > 0 ? 'text-rose-500' : 'text-slate-900'],
+          [
+            'Chênh lệch',
+            `${summary.diffValue > 0 ? '+' : ''}${formatCurrency(summary.diffValue)} (${diffPct}%)`,
+            summary.diffValue < 0 ? 'text-amber-600' : summary.diffValue > 0 ? 'text-rose-500' : 'text-slate-900',
+          ],
           ['Số lượng nhập kho', `${summary.accepted} đv`, 'text-slate-900'],
         ].map(([l, v, c]) => (
           <div key={l} className="rounded-lg bg-white p-4">
@@ -114,7 +118,7 @@ export function ReceivingReview({ receiving }: { receiving: Receiving }) {
               {!rows.length && (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-sm text-primary-600">
-                    Tất cả dòng hàng khớp với đơn đặt 🎉
+                    Toàn bộ danh mục hàng hóa đều trùng khớp với đơn đặt hàng (PO)
                   </td>
                 </tr>
               )}
@@ -136,7 +140,12 @@ export function ReceivingReview({ receiving }: { receiving: Receiving }) {
             <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-700">
               <CircleAlert className="size-4" /> Chênh lệch vượt {APPROVAL_THRESHOLD * 100}% — cần quản lý duyệt
             </p>
-            <input value={draft.approvedBy} onChange={(e) => receiving.setApprovedBy(e.target.value)} placeholder="Tên quản lý duyệt *" className={cn(inputClass(approvalError ? 'x' : undefined), 'mt-2 h-9')} />
+            <input
+              value={draft.approvedBy}
+              onChange={(e) => receiving.setApprovedBy(e.target.value)}
+              placeholder="Tên quản lý duyệt *"
+              className={cn(inputClass(approvalError ? 'x' : undefined), 'mt-2 h-9')}
+            />
           </div>
         ) : (
           <div className="flex items-center gap-2 rounded-lg bg-primary-50 p-3 text-xs font-semibold text-primary-700">
@@ -146,11 +155,11 @@ export function ReceivingReview({ receiving }: { receiving: Receiving }) {
       </div>
 
       <div className="flex justify-between">
-        <Button variant="outline" leftIcon={<ArrowLeft className="size-4" />} onClick={() => receiving.setStep('count')} disabled={submitting}>
+        <Button variant="outline" onClick={() => receiving.setStep('count')} disabled={submitting}>
           Quay lại kiểm đếm
         </Button>
-        <Button size="lg" leftIcon={<Warehouse className="size-5" />} onClick={confirm} loading={submitting} disabled={!summary.accepted}>
-          Xác nhận nhập kho ({summary.accepted} đv)
+        <Button size="lg" onClick={confirm} loading={submitting} disabled={!summary.accepted}>
+          Xác nhận nhập kho ({summary.accepted} kiện)
         </Button>
       </div>
     </div>
