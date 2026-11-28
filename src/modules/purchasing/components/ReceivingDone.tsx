@@ -18,15 +18,15 @@ export function ReceivingDone({ receipt, order, onClose }: { receipt: GoodsRecei
         </div>
         <h2 className="mt-4 text-xl font-bold text-slate-900">Nhập kho thành công</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Phiếu <span className="font-semibold text-slate-800">{receipt.code}</span> · {formatDateTime(new Date(receipt.receivedAt))} · Đơn {order.code} chuyển sang{' '}
-          <span className="font-semibold text-slate-800">{PO_STATUS[order.status].label}</span>
+          Phiếu <span className="font-semibold text-slate-800">{receipt.code}</span> | {formatDateTime(new Date(receipt.receivedAt))} | Đơn {order.code}
         </p>
+        <span className="font-semibold text-slate-800">{PO_STATUS[order.status].label}</span>
         <div className="mt-6 grid grid-cols-4 gap-2 text-left">
           {[
-            ['Nhập kho', `${accepted} đv`],
+            ['Nhập kho', `${accepted} kiện`],
             ['Giá trị', formatCurrency(receipt.value)],
-            ['Hư hỏng', `${damaged} đv`],
-            ['Chờ giao bù', `${remaining} đv`],
+            ['Hư hỏng', `${damaged} kiện`],
+            ['Chờ giao bù', `${remaining} kiện`],
           ].map(([l, v]) => (
             <div key={l} className="rounded-lg bg-slate-50 p-3">
               <p className="text-[11px] text-slate-500">{l}</p>
